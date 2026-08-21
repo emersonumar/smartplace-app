@@ -48,6 +48,11 @@ input:focus{outline:2px solid #39FF1455}
 .inpt{display:flex;gap:8px;background:var(--p2);border:1px solid var(--l);border-radius:11px;padding:9px 12px;align-items:center;margin-top:4px}
 .inpt span{color:var(--t3);font-size:.84rem;flex:1}
 .breve{background:var(--l);color:var(--t2);font-weight:700;border-radius:8px;padding:6px 12px;font-size:.72rem}
+.acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
+.acao:hover{border-color:#39FF1466}
+.acao b{font-size:.86rem;display:block}
+.acao small{color:var(--t3);font-size:.73rem}
+.acao.rodando{opacity:.6;pointer-events:none}
 </style></head><body><div class="wrap" id="app"></div>
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -141,6 +146,13 @@ function telaPainel(d){
     <div class="card kpi"><div class="lbl">Avaliações respondidas</div><div class="val">50/50</div><div class="sub">100% no tom da marca</div></div>
   </div>
   <h2>A IA trabalhou por você</h2><div class="card feed">${acoes}</div>
+  <h2>Ações rápidas — um clique e a IA faz</h2>
+  <div class="grid">
+    <button class="acao" data-acao="promocao_geral"><b>🏷️ Colocar tudo em promoção</b><small>aplica % nos anúncios sem desconto (ML)</small></button>
+    <button class="acao" data-acao="renovar_relampago"><b>⚡ Renovar relâmpago agora</b><small>3 dias, mesmos preços (TikTok)</small></button>
+    <button class="acao" data-acao="responder_avaliacoes"><b>⭐ Responder avaliações agora</b><small>tom da marca; nota baixa fica pra você (Shopee)</small></button>
+    <button class="acao" data-acao="saude_loja"><b>🩺 Checar saúde da loja</b><small>promoções, frete, saldo de ads, avaliações</small></button>
+  </div>
   <h2>Fale com a IA</h2>
   <div class="card chat">
     <div class="bub u">aplica 10% de desconto no que está sem promoção no Mercado Livre</div>
@@ -151,6 +163,36 @@ function telaPainel(d){
   </div>
   <h2>Automações</h2><div class="grid">${autos}</div>`;
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); render(); };
+  document.querySelectorAll(".acao").forEach(b=>b.onclick = async()=>{
+    const acao = b.dataset.acao;
+    const { data:{ session } } = await sb.auth.getSession();
+    const chama = async (params)=>{
+      b.classList.add("rodando");
+      try{
+        const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
+          method:"POST",
+          headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE" },
+          body: JSON.stringify({ acao, params })
+        });
+        return await r.json();
+      } finally { b.classList.remove("rodando"); }
+    };
+    if(acao === "promocao_geral"){
+      const pct = prompt("Qual desconto aplicar nos anúncios sem promoção? (5 a 60%)","15");
+      if(!pct) return;
+      const previa = await chama({ percentual:+pct, confirmar:false });
+      if(!previa.success) return alert("Ops: " + previa.error);
+      const q = previa.resultado.quantidade;
+      if(!q) return alert("Todos os anúncios já estão com promoção — nada a fazer ✅");
+      if(!confirm("Vou aplicar " + pct + "% de desconto em " + q + " anúncio(s) que estão sem promoção. Confirmar?")) return;
+      const r = await chama({ percentual:+pct, confirmar:true });
+      alert(r.success ? "Feito! Desconto aplicado em " + r.resultado.aplicados + " anúncio(s) ✅" : "Ops: " + r.error);
+    } else {
+      const r = await chama({});
+      alert(r.success ? "Feito ✅\n\n" + JSON.stringify(r.resultado, null, 1).replace(/[{}"]/g,"") : "Ops: " + r.error);
+    }
+    render();
+  });
   document.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
     await sb.rpc("sp_alternar_automacao",{ p_tipo: b.dataset.tipo, p_ligada: b.dataset.ligada!=="true" });
     render();
