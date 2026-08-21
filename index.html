@@ -3,36 +3,36 @@
 <title>SmartPlace AI</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-:root{--g:#0A140C;--p:#101E14;--p2:#0D1810;--l:#1E3524;--n:#39FF14;--nd:#39FF1422;--gold:#FFD700;
---t:#EAF5EC;--t2:#A9C4AD;--t3:#6B8F6B;--sans:'Manrope',system-ui,sans-serif;--disp:'Sora',var(--sans);--mono:'JetBrains Mono',monospace}
+:root{--g:#050B14;--p:#0A1526;--p2:#071120;--l:#16324A;--n:#38E1FF;--nd:#38E1FF1E;--acc:#F5A623;--gold:#FFD700;
+--t:#E6F1FA;--t2:#A6BDD2;--t3:#6A87A3;--sans:'Manrope',system-ui,sans-serif;--disp:'Sora',var(--sans);--mono:'JetBrains Mono',monospace}
 *{margin:0;box-sizing:border-box}body{background:var(--g);color:var(--t);font-family:var(--sans);min-height:100vh}
 .wrap{max-width:1100px;margin:0 auto;padding:0 18px 40px}
 .top{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--l);flex-wrap:wrap}
 .logo{font-family:var(--disp);font-weight:700;font-size:1.2rem}.logo em{font-style:normal;color:var(--n)}
-.live{display:flex;align-items:center;gap:6px;background:var(--nd);border:1px solid #39FF1455;color:var(--n);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:99px}
+.live{display:flex;align-items:center;gap:6px;background:var(--nd);border:1px solid #38E1FF55;color:var(--n);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:99px;font-family:var(--mono)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--n)}
 .sair{margin-left:auto;color:var(--t3);font-size:.8rem;cursor:pointer;background:none;border:0;font-family:var(--sans)}
 h2{font-family:var(--disp);font-size:.76rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin:26px 0 10px}
 .card{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:16px 18px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
 .conn{display:flex;gap:12px;align-items:center}
-.mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-family:var(--disp);font-size:.8rem;color:#0A140C;flex:none}
+.mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-family:var(--disp);font-size:.8rem;color:#04101C;flex:none}
 .state{margin-left:auto;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;text-decoration:none}
-.on{color:var(--n);background:var(--nd);border:1px solid #39FF1444}
-.off{color:#06130A;background:var(--n);cursor:pointer;border:0;font-family:var(--sans)}
+.on{color:var(--n);background:var(--nd);border:1px solid #38E1FF44}
+.off{color:#1A0F00;background:var(--acc);cursor:pointer;border:0;font-family:var(--sans)}
 .feed .ev{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--l);font-size:.85rem;color:var(--t2)}
 .feed .ev:last-child{border-bottom:0}
 .t{font-family:var(--mono);font-size:.7rem;color:var(--t3);flex:none;width:84px}
 .auto{display:flex;gap:12px;align-items:center}
 .tgl{margin-left:auto;width:36px;height:20px;border-radius:99px;position:relative;flex:none;cursor:pointer;border:0}
 .tgl.on2{background:var(--n)}.tgl.off2{background:var(--l)}
-.tgl::after{content:'';position:absolute;top:2.5px;width:15px;height:15px;border-radius:50%;background:#06130A}
+.tgl::after{content:'';position:absolute;top:2.5px;width:15px;height:15px;border-radius:50%;background:#04101C}
 .tgl.on2::after{right:2.5px}.tgl.off2::after{left:2.5px;background:var(--t3)}
 .alerta{border-left:3px solid var(--gold);padding:10px 14px;background:var(--p2);border-radius:8px;color:var(--t2);font-size:.85rem;margin-bottom:8px}
 .centro{max-width:400px;margin:8vh auto;display:flex;flex-direction:column;gap:12px}
 input{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:12px 14px;color:var(--t);font-family:var(--sans);font-size:.95rem}
-input:focus{outline:2px solid #39FF1455}
-.btn{background:var(--n);color:#06130A;font-weight:800;border-radius:10px;padding:12px;border:0;font-size:.95rem;cursor:pointer;font-family:var(--sans)}
+input:focus{outline:2px solid #38E1FF55}
+.btn{background:var(--acc);color:#1A0F00;font-weight:800;border-radius:10px;padding:12px;border:0;font-size:.95rem;cursor:pointer;font-family:var(--sans)}
 .link{color:var(--t3);font-size:.82rem;text-align:center;cursor:pointer;background:none;border:0;font-family:var(--sans)}
 .erro{color:#FF7B7B;font-size:.83rem;text-align:center;min-height:1.2em}
 .vazio{color:var(--t3);font-size:.85rem;padding:8px 0}
@@ -42,14 +42,13 @@ input:focus{outline:2px solid #39FF1455}
 .exemplo{font-size:.62rem;color:var(--t3);border:1px solid var(--l);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:middle}
 .chat{display:flex;flex-direction:column;gap:8px}
 .bub{max-width:92%;padding:9px 13px;border-radius:12px;font-size:.84rem;line-height:1.45}
-.u{align-self:flex-end;background:#1E3524;border-bottom-right-radius:4px}
+.u{align-self:flex-end;background:#16324A;border-bottom-right-radius:4px}
 .ai{align-self:flex-start;background:var(--p2);border:1px solid var(--l);border-bottom-left-radius:4px;color:var(--t2)}
 .ai b{color:var(--n)}
 .inpt{display:flex;gap:8px;background:var(--p2);border:1px solid var(--l);border-radius:11px;padding:9px 12px;align-items:center;margin-top:4px}
 .inpt span{color:var(--t3);font-size:.84rem;flex:1}
-.breve{background:var(--l);color:var(--t2);font-weight:700;border-radius:8px;padding:6px 12px;font-size:.72rem}
 .acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
-.acao:hover{border-color:#39FF1466}
+.acao:hover{border-color:#38E1FF66}
 .acao b{font-size:.86rem;display:block}
 .acao small{color:var(--t3);font-size:.73rem}
 .acao.rodando{opacity:.6;pointer-events:none}
@@ -65,6 +64,34 @@ avaliacoes:["Avaliações respondidas","notas baixas viram alerta"],frete_gratis
 sentinela_ads:["Sentinela de verba de ads","avisa antes de acabar"],relatorio_email:["Relatório seg·qua·sex","resumo no seu e-mail"]};
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+// ── chat com a IA (histórico vive na sessão da página) ──
+let HIST = [];
+const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
+function bolhas(extra){
+  const msgs = HIST.map(m=>`<div class="bub ${m.role==="user"?"u":"ai"}">${m.role==="user"?esc(m.content):fmt(m.content)}</div>`).join("");
+  return (msgs || `<div class="bub ai">Oi! 👋 Sou a IA da sua loja. Me pede coisas como: <b>"checa a saúde da loja"</b>, <b>"aplica 15% no que está sem promoção"</b> ou <b>"como estão minhas vendas?"</b></div>`) + (extra||"");
+}
+async function enviarChat(){
+  const inp = document.getElementById("chatIn"), box = document.getElementById("chatMsgs");
+  const txt = (inp.value||"").trim(); if(!txt) return;
+  inp.value = ""; HIST.push({role:"user",content:txt});
+  box.innerHTML = bolhas(`<div class="bub ai" style="opacity:.7">⚙️ trabalhando na sua loja…</div>`);
+  box.scrollTop = box.scrollHeight;
+  const { data:{ session } } = await sb.auth.getSession();
+  let resp;
+  try{
+    const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-chat",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE" },
+      body: JSON.stringify({ mensagens: HIST })
+    });
+    const d = await r.json();
+    resp = d.success ? d.resposta : "Ops: " + d.error;
+  }catch(_){ resp = "Ops, falha de conexão — tenta de novo?"; }
+  HIST.push({role:"assistant",content:resp});
+  box.innerHTML = bolhas(); box.scrollTop = box.scrollHeight;
+}
 
 async function render(){
   const { data:{ session } } = await sb.auth.getSession();
@@ -155,14 +182,14 @@ function telaPainel(d){
   </div>
   <h2>Fale com a IA</h2>
   <div class="card chat">
-    <div class="bub u">aplica 10% de desconto no que está sem promoção no Mercado Livre</div>
-    <div class="bub ai"><b>Feito ✓</b> — 6 anúncios estavam sem promoção. Apliquei 10% por 30 dias e ativei o alerta de vencimento.</div>
-    <div class="bub u">cadastra a cinta modeladora no TikTok igual está na Shopee</div>
-    <div class="bub ai"><b>Publicado ✓</b> — 12 variações no ar com título otimizado pelas buscas do canal.</div>
-    <div class="inpt"><span>Peça qualquer coisa…</span><span class="breve">EM BREVE</span></div>
+    <div class="chat" id="chatMsgs" style="max-height:340px;overflow-y:auto">${bolhas()}</div>
+    <div class="inpt"><input id="chatIn" placeholder="Peça qualquer coisa… ex.: aplica 15% no que está sem promoção" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
+      <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
   </div>
   <h2>Automações</h2><div class="grid">${autos}</div>`;
-  document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); render(); };
+  document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST = []; render(); };
+  document.getElementById("chatSend").onclick = enviarChat;
+  document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
   document.querySelectorAll(".acao").forEach(b=>b.onclick = async()=>{
     const acao = b.dataset.acao;
     const { data:{ session } } = await sb.auth.getSession();
