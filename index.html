@@ -1,0 +1,132 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartPlace AI</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--g:#0A140C;--p:#101E14;--p2:#0D1810;--l:#1E3524;--n:#39FF14;--nd:#39FF1422;--gold:#FFD700;
+--t:#EAF5EC;--t2:#A9C4AD;--t3:#6B8F6B;--sans:'Manrope',system-ui,sans-serif;--disp:'Sora',var(--sans);--mono:'JetBrains Mono',monospace}
+*{margin:0;box-sizing:border-box}body{background:var(--g);color:var(--t);font-family:var(--sans);min-height:100vh}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px 40px}
+.top{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--l);flex-wrap:wrap}
+.logo{font-family:var(--disp);font-weight:700;font-size:1.2rem}.logo em{font-style:normal;color:var(--n)}
+.live{display:flex;align-items:center;gap:6px;background:var(--nd);border:1px solid #39FF1455;color:var(--n);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:99px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--n)}
+.sair{margin-left:auto;color:var(--t3);font-size:.8rem;cursor:pointer;background:none;border:0;font-family:var(--sans)}
+h2{font-family:var(--disp);font-size:.76rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin:26px 0 10px}
+.card{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:16px 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.conn{display:flex;gap:12px;align-items:center}
+.mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-family:var(--disp);font-size:.8rem;color:#0A140C;flex:none}
+.state{margin-left:auto;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;text-decoration:none}
+.on{color:var(--n);background:var(--nd);border:1px solid #39FF1444}
+.off{color:#06130A;background:var(--n);cursor:pointer;border:0;font-family:var(--sans)}
+.feed .ev{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--l);font-size:.85rem;color:var(--t2)}
+.feed .ev:last-child{border-bottom:0}
+.t{font-family:var(--mono);font-size:.7rem;color:var(--t3);flex:none;width:84px}
+.auto{display:flex;gap:12px;align-items:center}
+.tgl{margin-left:auto;width:36px;height:20px;border-radius:99px;position:relative;flex:none;cursor:pointer;border:0}
+.tgl.on2{background:var(--n)}.tgl.off2{background:var(--l)}
+.tgl::after{content:'';position:absolute;top:2.5px;width:15px;height:15px;border-radius:50%;background:#06130A}
+.tgl.on2::after{right:2.5px}.tgl.off2::after{left:2.5px;background:var(--t3)}
+.alerta{border-left:3px solid var(--gold);padding:10px 14px;background:var(--p2);border-radius:8px;color:var(--t2);font-size:.85rem;margin-bottom:8px}
+.centro{max-width:400px;margin:8vh auto;display:flex;flex-direction:column;gap:12px}
+input{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:12px 14px;color:var(--t);font-family:var(--sans);font-size:.95rem}
+input:focus{outline:2px solid #39FF1455}
+.btn{background:var(--n);color:#06130A;font-weight:800;border-radius:10px;padding:12px;border:0;font-size:.95rem;cursor:pointer;font-family:var(--sans)}
+.link{color:var(--t3);font-size:.82rem;text-align:center;cursor:pointer;background:none;border:0;font-family:var(--sans)}
+.erro{color:#FF7B7B;font-size:.83rem;text-align:center;min-height:1.2em}
+.vazio{color:var(--t3);font-size:.85rem;padding:8px 0}
+</style></head><body><div class="wrap" id="app"></div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const sb = createClient("https://ssgeggkaweixaqxxtbqm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE");
+const OAUTH = "https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-oauth";
+const app = document.getElementById("app");
+const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML"],shopee:["Shopee","#FF6B35","S"],tiktok:["TikTok Shop","#4DE8F4","TT"]};
+const AUTOS = {nunca_sem_desconto:["Nunca sem desconto","reaplica antes de vencer"],relampago_no_ar:["Relâmpago sempre no ar","renova sozinha"],
+avaliacoes:["Avaliações respondidas","notas baixas viram alerta"],frete_gratis:["Frete grátis garantido","patrulha os anúncios"],
+sentinela_ads:["Sentinela de verba de ads","avisa antes de acabar"],relatorio_email:["Relatório seg·qua·sex","resumo no seu e-mail"]};
+
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+async function render(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session) return telaLogin();
+  const { data, error } = await sb.rpc("sp_painel");
+  if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
+  if(data?.sem_loja) return telaOnboarding();
+  telaPainel(data);
+}
+
+function telaLogin(){
+  app.innerHTML = `
+  <div class="centro">
+    <div class="logo" style="text-align:center;font-size:1.6rem">Smart<em>Place</em> AI</div>
+    <p style="color:var(--t2);text-align:center;font-size:.9rem">Sua loja de marketplaces no piloto automático</p>
+    <input id="email" type="email" placeholder="seu e-mail">
+    <input id="senha" type="password" placeholder="senha">
+    <button class="btn" id="entrar">Entrar</button>
+    <button class="link" id="criar">Não tem conta? Criar agora</button>
+    <div class="erro" id="erro"></div>
+  </div>`;
+  const erro = m => document.getElementById("erro").textContent = m;
+  document.getElementById("entrar").onclick = async()=>{
+    const { error } = await sb.auth.signInWithPassword({ email: email.value, password: senha.value });
+    error ? erro("Login falhou: "+error.message) : render();
+  };
+  document.getElementById("criar").onclick = async()=>{
+    const { error } = await sb.auth.signUp({ email: email.value, password: senha.value });
+    error ? erro(error.message) : erro("Conta criada! Já pode entrar.");
+  };
+}
+
+function telaOnboarding(){
+  app.innerHTML = `
+  <div class="centro">
+    <div class="logo" style="text-align:center;font-size:1.5rem">Smart<em>Place</em> AI</div>
+    <p style="color:var(--t2);text-align:center">Qual o nome da sua loja?</p>
+    <input id="nome" placeholder="ex.: Bella Moda Fitness">
+    <button class="btn" id="ok">Criar minha loja</button>
+    <div class="erro" id="erro"></div>
+  </div>`;
+  document.getElementById("ok").onclick = async()=>{
+    const { error } = await sb.rpc("sp_criar_minha_loja",{ p_nome: nome.value || "Minha loja" });
+    error ? document.getElementById("erro").textContent = error.message : render();
+  };
+}
+
+function telaPainel(d){
+  const cx = Object.fromEntries((d.conexoes||[]).map(c=>[c.plataforma,c]));
+  const canais = Object.entries(NOMES).map(([k,[nome,cor,sigla]])=>{
+    const c = cx[k];
+    const on = c?.status === "conectada";
+    return `<div class="card conn"><div class="mark" style="background:${cor}">${sigla}</div>
+      <div><b style="font-size:.9rem">${nome}</b><br><small style="color:var(--t3);font-size:.75rem">${on?("conectada "+(c.conectada_em||"").slice(0,10)):"não conectado"}</small></div>
+      ${on?'<span class="state on">● Conectado</span>'
+          :`<a class="state off" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}">Conectar</a>`}</div>`;
+  }).join("");
+  const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
+  const acoes = (d.acoes||[]).length ? (d.acoes||[]).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
+    : "<p class='vazio'>Conecte um canal — as ações da IA vão aparecer aqui.</p>";
+  const autos = (d.automacoes||[]).map(a=>{
+    const [nome,sub] = AUTOS[a.tipo]||[a.tipo,""];
+    return `<div class="card auto"><div><b style="font-size:.85rem">${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
+      <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`;
+  }).join("");
+  app.innerHTML = `
+  <div class="top"><div class="logo">Smart<em>Place</em> AI</div>
+    <div class="live"><span class="dot"></span> IA operando</div>
+    <span style="color:var(--t2);font-size:.85rem">${esc(d.loja.nome)}</span>
+    <button class="sair" id="sair">sair</button></div>
+  ${alertas?'<h2>Alertas</h2>'+alertas:""}
+  <h2>Canais conectados</h2><div class="grid">${canais}</div>
+  <h2>A IA trabalhou por você</h2><div class="card feed">${acoes}</div>
+  <h2>Automações</h2><div class="grid">${autos}</div>`;
+  document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); render(); };
+  document.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
+    await sb.rpc("sp_alternar_automacao",{ p_tipo: b.dataset.tipo, p_ligada: b.dataset.ligada!=="true" });
+    render();
+  });
+}
+render();
+</script></body></html>
