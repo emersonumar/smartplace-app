@@ -36,10 +36,6 @@ input:focus{outline:2px solid #38E1FF55}
 .link{color:var(--t3);font-size:.82rem;text-align:center;cursor:pointer;background:none;border:0;font-family:var(--sans)}
 .erro{color:#FF7B7B;font-size:.83rem;text-align:center;min-height:1.2em}
 .vazio{color:var(--t3);font-size:.85rem;padding:8px 0}
-.kpi .lbl{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);font-weight:700}
-.kpi .val{font-family:var(--mono);font-size:1.5rem;font-weight:600;margin-top:5px}
-.kpi .sub{font-size:.73rem;color:var(--t2);margin-top:2px}
-.exemplo{font-size:.62rem;color:var(--t3);border:1px solid var(--l);border-radius:99px;padding:1px 8px;margin-left:6px;vertical-align:middle}
 .chat{display:flex;flex-direction:column;gap:8px}
 .bub{max-width:92%;padding:9px 13px;border-radius:12px;font-size:.84rem;line-height:1.45}
 .u{align-self:flex-end;background:#16324A;border-bottom-right-radius:4px}
@@ -141,7 +137,6 @@ function telaOnboarding(){
 
 function telaPainel(d){
   const cx = Object.fromEntries((d.conexoes||[]).map(c=>[c.plataforma,c]));
-  const temCanal = (d.conexoes||[]).some(c=>c.status==="conectada");
   const canais = Object.entries(NOMES).map(([k,[nome,cor,sigla]])=>{
     const c = cx[k];
     const on = c?.status === "conectada";
@@ -165,13 +160,6 @@ function telaPainel(d){
     <button class="sair" id="sair">sair</button></div>
   ${alertas?'<h2>Alertas</h2>'+alertas:""}
   <h2>Canais conectados</h2><div class="grid">${canais}</div>
-  <h2>Últimos 7 dias${temCanal?"":'<span class="exemplo">dados de exemplo — conecte um canal</span>'}</h2>
-  <div class="grid">
-    <div class="card kpi"><div class="lbl">Vendas via anúncios</div><div class="val">R$ 34.620</div><div class="sub" style="color:var(--n)">▲ 703 pedidos</div></div>
-    <div class="card kpi"><div class="lbl">Retorno do anúncio</div><div class="val" style="color:var(--n)">22,7x</div><div class="sub">cada R$ 1 vira R$ 22,70</div></div>
-    <div class="card kpi"><div class="lbl">Promoções ativas</div><div class="val">3 canais</div><div class="sub">relâmpago · desconto · cupom</div></div>
-    <div class="card kpi"><div class="lbl">Avaliações respondidas</div><div class="val">50/50</div><div class="sub">100% no tom da marca</div></div>
-  </div>
   <h2>A IA trabalhou por você</h2><div class="card feed">${acoes}</div>
   <h2>Ações rápidas — um clique e a IA faz</h2>
   <div class="grid">
