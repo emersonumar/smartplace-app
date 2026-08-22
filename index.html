@@ -384,7 +384,7 @@ function viewPedidos(c){
       <span class="chips" id="canalChips" style="margin:0"></span>
       <span style="margin-left:auto;display:flex;gap:8px;position:relative">
         <button class="mini" id="syncPed">↻ Sincronizar</button>
-        <button class="mini" id="btnNfe">🧾 Faturar (EmiNota)</button>
+        <button class="mini" id="btnNfe">🧾 Faturar</button>
         <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🏷️ Gerar etiqueta</button>
         <button class="mini" id="btnImp">🖨️ Imprimir ▾</button>
         <div id="impMenu" class="card" style="display:none;position:absolute;right:0;top:115%;z-index:30;min-width:260px;padding:8px">
@@ -402,7 +402,7 @@ function viewPedidos(c){
   const somaSel = lista => lista.filter(p=>SEL.has(p.pedido_id)).reduce((s,p)=>s+Number(p.total||0),0);
   const atualizaSel = lista=>{
     const n=SEL.size;
-    document.getElementById("btnNfe").textContent = "🧾 Faturar (EmiNota)"+(n?` (${n})`:"");
+    document.getElementById("btnNfe").textContent = "🧾 Faturar"+(n?` (${n})`:"");
     document.getElementById("btnEtq").textContent = "🏷️ Gerar etiqueta"+(n?` (${n})`:"");
     document.getElementById("selBar").innerHTML = n?`<span class="chip atv" style="cursor:default">${n} pedido(s) · ${brl(somaSel(lista))}</span> <button class="chip" id="limparSel">✕ Limpar seleção</button>`:"";
     const ls=document.getElementById("limparSel");
@@ -463,13 +463,13 @@ function viewPedidos(c){
     fill(await dados(true));
   };
   document.getElementById("btnEtq").onclick = gerarEtiquetas;
-  document.getElementById("btnNfe").onclick = ()=>alert("🧾 Faturamento automático de NF-e via EmiNota está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
+  document.getElementById("btnNfe").onclick = ()=>alert("🧾 O faturamento automático de NF-e direto da fila está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
   const menu=document.getElementById("impMenu");
   document.getElementById("btnImp").onclick = ()=>{ menu.style.display = menu.style.display==="none"?"block":"none"; };
   document.querySelectorAll(".impop").forEach(b=>b.onclick=()=>{
     menu.style.display="none";
     if(b.dataset.imp==="etq") return gerarEtiquetas();
-    alert("🧾 As DANFEs saem junto com a integração EmiNota (em andamento) — a nota fiscal nasce aqui e a impressão vem em lote, do jeito que você conhece.");
+    alert("🧾 As DANFEs chegam junto com o faturamento automático (em integração) — a nota fiscal vai nascer aqui e a impressão sai em lote.");
   });
 }
 async function gerarEtiquetas(){
