@@ -739,25 +739,72 @@ async function enviarChat(){
   const box2 = document.getElementById("chatMsgs");
   if(box2){ box2.innerHTML = bolhas(); box2.scrollTop = box2.scrollHeight; }
 }
-// ── Ads ──
+// ── Ads (gestão completa: gasto, ROAS, campanhas, análise da IA) ──
 function viewAds(c){
   c.innerHTML = `
-    <h1>Ads</h1><div class="sub-h1">Verba de anúncios dos seus canais num lugar só — com a sentinela de saldo de olho</div>
-    <div class="grid" id="adsgrid" style="margin-top:12px"><div class="card"><p class="vazio">carregando…</p></div></div>
+    <h1>Ads</h1><div class="sub-h1">Gestão dos anúncios pagos: gasto, cliques, ROAS por campanha — e a IA dizendo o que pausar, escalar ou trocar</div>
+    <div class="grid4" id="adskpi" style="margin-top:10px"><div class="card"><p class="vazio">carregando…</p></div></div>
+    <div style="margin:14px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn" id="adsIA" style="font-size:.88rem;padding:10px 18px">🧠 Análise da IA — ROAS, o que pausar, o que escalar</button>
+      <small style="color:var(--t3)">ela puxa os números reais e devolve o plano</small>
+    </div>
+    <div id="adsAnalise"></div>
+    <h2>Campanhas — últimos 30 dias</h2>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="adsCamp"><p class="vazio">carregando…</p></div>
     <div class="card" style="margin-top:12px"><b class="tit">🤖 Sentinela de verba</b><br>
-      <small style="color:var(--t2)">A automação <b>Sentinela de verba de ads</b> (aba Gestão IA) confere o saldo a cada rodada e te avisa por alerta e e-mail antes da verba acabar — pra campanha nunca parar por falta de saldo.</small></div>`;
-  acaoApi("ads_resumo").then(a=>{
-    const el=document.getElementById("adsgrid"); if(!el) return;
-    if(!a.success){ el.innerHTML=`<div class="card"><p class='vazio'>Ads indisponível agora: ${esc(a.error||"")}</p></div>`; return; }
-    const s=a.resultado.shopee, m=a.resultado.mercado_livre;
-    el.innerHTML = `
-      <div class="card kpi"><div class="lbl"><span class="badge" style="background:#FF6B35">S</span> Shopee Ads</div>
-        ${s?`<div class="val" style="color:var(--n)">${brl(s.saldo)}</div><div class="sub">saldo disponível agora</div>`:`<div class="val" style="color:var(--t3)">—</div><div class="sub">conecte a Shopee pra acompanhar</div>`}</div>
-      <div class="card kpi"><div class="lbl"><span class="badge" style="background:#FFE600">ML</span> Mercado Ads</div>
-        ${m?(m.advertiser_id?`<div class="val" style="color:var(--n)">ativo</div><div class="sub">${esc(m.nome||"")}</div>`:`<div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(m.info||"")}</div>`):`<div class="val" style="color:var(--t3)">—</div><div class="sub">conecte o Mercado Livre</div>`}</div>
-      <div class="card kpi"><div class="lbl"><span class="badge" style="background:#4DE8F4">TT</span> TikTok Ads (GMV Max)</div>
-        <div class="val" style="color:var(--t3)">em breve</div><div class="sub">integração em desenvolvimento</div></div>`;
+      <small style="color:var(--t2)">A automação <b>Sentinela de verba de ads</b> (aba Gestão IA) confere o saldo a cada rodada e avisa antes da verba acabar — campanha nunca para por falta de saldo.</small></div>`;
+  acaoApi("ads_dados").then(a=>{
+    const k=document.getElementById("adskpi"), t=document.getElementById("adsCamp");
+    if(!k) return;
+    if(!a.success){ k.innerHTML=`<div class="card"><p class="vazio">${esc(a.error||"indisponível")}</p></div>`; t.innerHTML="<p class='vazio'>—</p>"; return; }
+    const cn=a.resultado.canais||{};
+    const s=cn.shopee, m=cn.mercado_livre, tt=cn.tiktok;
+    const cards=[];
+    if(s){
+      cards.push(`<div class="card kpi"><div class="lbl"><span class="badge" style="background:#FF6B35">S</span> Gasto 30 dias</div><div class="val">${brl(s.d30?.gasto)}</div><div class="sub">7 dias: ${brl(s.d7?.gasto)} · saldo ${brl(s.saldo)}</div></div>`);
+      cards.push(`<div class="card kpi"><div class="lbl">ROAS 30 dias</div><div class="val" style="color:${s.roas30==null?"var(--t3)":s.roas30>=3?"#3ddc84":s.roas30>=1?"var(--acc)":"#FF9B9B"}">${s.roas30!=null?String(s.roas30).replace(".",",")+"x":"—"}</div><div class="sub">cada R$ 1 em ads virou R$ ${s.roas30!=null?String(s.roas30).replace(".",","):"—"}</div></div>`);
+      cards.push(`<div class="card kpi"><div class="lbl">Cliques / CTR</div><div class="val">${s.d30?.cliques??"—"}</div><div class="sub">CTR ${s.ctr30!=null?String(s.ctr30).replace(".",",")+"%":"—"} · ${s.d30?.impressoes??0} impressões</div></div>`);
+      cards.push(`<div class="card kpi"><div class="lbl">GMV via ads</div><div class="val" style="color:var(--n)">${brl(s.d30?.gmv)}</div><div class="sub">${s.d30?.pedidos??0} pedido(s) em 30 dias</div></div>`);
+    }
+    if(m) cards.push(`<div class="card kpi"><div class="lbl"><span class="badge" style="background:#FFE600">ML</span> Mercado Ads</div><div class="val" style="color:var(--t3)">${m.advertiser_id?"ativo":"—"}</div><div class="sub">${esc(m.info||"")}</div></div>`);
+    if(tt) cards.push(`<div class="card kpi"><div class="lbl"><span class="badge" style="background:#4DE8F4">TT</span> TikTok Ads</div><div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(tt.info||"")}</div></div>`);
+    if(!cards.length) cards.push(`<div class="card"><p class="vazio">Conecte um canal com anúncios pagos (Shopee Ads é o mais completo) pra ver gasto e ROAS aqui.</p></div>`);
+    k.innerHTML = cards.join("");
+    const camps = s?.campanhas||[];
+    const diag = x=>{
+      if(!x.cliques) return `<span class="pill ruim">💤 sem cliques</span>`;
+      if(x.roas==null||!x.gasto) return `<span class="pill ok">—</span>`;
+      if(x.roas<1) return `<span class="pill ruim">🔴 gastando sem retorno</span>`;
+      if(x.roas<3) return `<span class="pill" style="color:var(--acc);background:#F5A62322">🟡 ROAS baixo</span>`;
+      return `<span class="pill ok2">🟢 saudável</span>`;
+    };
+    t.innerHTML = camps.length? `<table class="tabela">
+      <tr><th>Campanha / Produto</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">CTR</th><th style="text-align:right">Pedidos</th><th style="text-align:right">GMV</th><th style="text-align:right">ROAS</th><th>Diagnóstico</th></tr>
+      ${camps.map(x=>`<tr><td>${esc(String(x.nome)).slice(0,50)}</td>
+        <td style="text-align:right;font-family:var(--mono)">${brl(x.gasto)}</td>
+        <td style="text-align:right;font-family:var(--mono)">${x.cliques}</td>
+        <td style="text-align:right;font-family:var(--mono)">${x.ctr!=null?String(x.ctr).replace(".",",")+"%":"—"}</td>
+        <td style="text-align:right;font-family:var(--mono)">${x.pedidos}</td>
+        <td style="text-align:right;font-family:var(--mono)">${brl(x.gmv)}</td>
+        <td style="text-align:right;font-family:var(--mono)"><b>${x.roas!=null?String(x.roas).replace(".",",")+"x":"—"}</b></td>
+        <td>${diag(x)}</td></tr>`).join("")}
+    </table>` : `<p class="vazio">${s?"Nenhuma campanha ativa encontrada nos últimos 30 dias.":"As campanhas aparecem quando um canal com ads estiver conectado (Shopee primeiro; Mercado Ads e TikTok na sequência)."}</p>`;
   });
+  document.getElementById("adsIA").onclick = async()=>{
+    const b=document.getElementById("adsIA"), area=document.getElementById("adsAnalise");
+    b.disabled=true; b.textContent="🧠 analisando seus ads…";
+    area.innerHTML=`<div class="card" style="margin-bottom:12px"><p class="vazio">⚙️ puxando os números e pensando…</p></div>`;
+    const { data:{ session } } = await sb.auth.getSession();
+    try{
+      const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-chat",{
+        method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
+        body: JSON.stringify({ mensagens:[{ role:"user", content:"Analise meus anúncios pagos agora: puxe os dados de ads, avalie gasto, CTR e ROAS geral e por campanha, e me diga objetivamente: o que pausar, o que escalar, onde trocar o criativo/anúncio e se vale testar outro produto. Se algum canal não tiver dados, diga o porquê em uma linha." }] })
+      });
+      const d = await r.json();
+      area.innerHTML = `<div class="card" style="margin-bottom:12px"><b class="tit">🧠 Análise da IA</b><div class="bub ai" style="max-width:100%;margin-top:10px">${d.success?fmt(d.resposta):"Ops: "+esc(d.error)}</div></div>`;
+    }catch(_){ area.innerHTML=`<div class="card"><p class="vazio">falha de conexão — tenta de novo</p></div>`; }
+    b.disabled=false; b.textContent="🧠 Análise da IA — ROAS, o que pausar, o que escalar";
+  };
 }
 
 // ── Canais ──
