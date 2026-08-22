@@ -106,7 +106,7 @@ avaliacoes:["Avaliações respondidas","responde 4-5★ no tom da marca; nota ba
 frete_gratis:["Frete grátis garantido","patrulha os anúncios e reativa o frete grátis que caiu","mercado_livre"],
 sentinela_ads:["Sentinela de verba de ads","confere o saldo de ads e avisa antes de acabar","shopee"],
 relatorio_email:["Relatório seg·qua·sex","resumo de tudo que a IA fez, no seu e-mail",null]};
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"]];
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -179,7 +179,7 @@ function shell(){
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais };
   app.innerHTML = alertas + `<div id="conteudo"></div>`;
   (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
 }
@@ -479,52 +479,27 @@ function viewPedidos(c){
 async function gerarEtiquetas(){
   if(!SEL.size) return alert("Marca os pedidos que você quer imprimir (caixinha da primeira coluna).");
   const area = document.getElementById("etqArea");
-  area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">⚙️ Buscando etiquetas oficiais no Mercado Livre…</p></div>`;
+  if(area) area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">⚙️ Buscando etiquetas oficiais no Mercado Livre…</p></div>`;
   const r = await acaoApi("gerar_etiquetas", { pedido_ids:[...SEL] });
-  if(!r.success){ area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">Ops: ${esc(r.error)}</p></div>`; return; }
-  const zpl = r.resultado.zpl;
-  const blocos = zpl.split("^XZ").map(s=>s.trim()).filter(s=>s.includes("^XA")).map(s=>s+"\n^XZ");
-  area.innerHTML = `<div class="card" style="margin-top:14px">
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <b class="tit">🏷️ ${r.resultado.etiquetas} etiqueta(s) pronta(s)</b>
-      <span style="margin-left:auto;display:flex;gap:8px">
-        <button class="mini" id="baixarZpl">⬇ Baixar .zpl (impressora térmica)</button>
-        <button class="mini" id="imprimirEtq">🖨️ Imprimir</button>
-      </span>
-    </div>
-    <div id="etqImgs" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px"><p class="vazio">renderizando pré-visualização…</p></div>
-  </div>`;
-  document.getElementById("baixarZpl").onclick = ()=>{
-    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([zpl],{type:"text/plain"}));
-    a.download="etiquetas-smartplace.zpl"; a.click();
-  };
-  const imgs = document.getElementById("etqImgs"); imgs.innerHTML="";
-  for(const bloco of blocos){
-    try{
-      const resp = await fetch("https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/",{ method:"POST", headers:{ "Accept":"image/png" }, body: bloco });
-      if(resp.ok){ const img=document.createElement("img"); img.className="etq"; img.src=URL.createObjectURL(await resp.blob()); imgs.appendChild(img); }
-    }catch(_){ /* pré-visualização é cortesia; o .zpl é o oficial */ }
-  }
-  if(!imgs.children.length) imgs.innerHTML="<p class='vazio'>Pré-visualização indisponível — o arquivo .zpl continua válido pra impressora.</p>";
-  document.getElementById("imprimirEtq").onclick = ()=>{
-    const w=window.open("","_blank");
-    w.document.write("<html><head><title>Etiquetas</title></head><body style='margin:0'>"+[...imgs.querySelectorAll("img")].map(i=>`<img src="${i.src}" style="width:100mm;display:block;page-break-after:always">`).join("")+"</body></html>");
-    w.document.close(); setTimeout(()=>w.print(), 400);
-  };
+  if(!r.success){ if(area) area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">Ops: ${esc(r.error)}</p></div>`; else alert("Ops: "+r.error); return; }
+  ZPL_ATUAL = r.resultado.zpl;
+  VIEW="etiquetas"; location.hash="etiquetas"; shell();
 }
 
 // ── Gestão IA (ações rápidas + chat + automações + histórico) ──
 function viewIA(c){
   const d = CACHE.painel;
-  const autos = (d.automacoes||[]).map(a=>{ const [nome,sub,cn] = AUTOS[a.tipo]||[a.tipo,"",null];
+  const autos = (d.automacoes||[]).filter(a=>a.tipo!=="relatorio_email").map(a=>{ const [nome,sub,cn] = AUTOS[a.tipo]||[a.tipo,"",null];
     const bd = cn && NOMES[cn] ? `<span class="badge" style="background:${NOMES[cn][1]}">${NOMES[cn][2]}</span> ` : "📧 ";
     return `<div class="card auto"><div><b style="font-size:.85rem">${bd}${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
       <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`; }).join("");
   const on = new Set((d.conexoes||[]).filter(x=>x.status==="conectada").map(x=>x.plataforma));
-  const acx = (acao,canal)=> on.has(canal)
-    ? `<button class="chip acx" data-acao="${acao}">${NOMES[canal][0]}</button>`
-    : `<button class="chip" disabled style="opacity:.4">${NOMES[canal][0]} · conecte</button>`;
-  const breve = canal => `<button class="chip" disabled style="opacity:.4">${NOMES[canal][0]} · em breve</button>`;
+  const chipCanal = (canal, rot, acao) => { const [nome,cor,sigla]=NOMES[canal];
+    const ic=`<span class="badge" style="background:${cor}">${sigla}</span>`;
+    return acao ? `<button class="chip acx" data-acao="${acao}" style="display:inline-flex;align-items:center;gap:7px">${ic} ${nome}</button>`
+      : `<button class="chip" disabled style="display:inline-flex;align-items:center;gap:7px;opacity:.45">${ic} ${nome} · ${rot}</button>`; };
+  const acx = (acao,canal)=> on.has(canal) ? chipCanal(canal,"",acao) : chipCanal(canal,"conecte");
+  const breve = canal => chipCanal(canal,"em breve");
   const feed = (d.acoes||[]).slice(0,10).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
     || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
   c.innerHTML = `
@@ -534,9 +509,9 @@ function viewIA(c){
       <div class="card"><b class="tit">🏷️ Colocar em promoção</b><br><small style="color:var(--t3);font-size:.75rem">aplica % de desconto nos anúncios que estão sem promoção</small>
         <div class="chips" style="margin:10px 0 0">${acx("promocao_geral","mercado_livre")}${breve("shopee")}</div></div>
       <div class="card"><b class="tit">⚡ Oferta relâmpago</b><br><small style="color:var(--t3);font-size:.75rem">renova a oferta por 3 dias com os mesmos preços</small>
-        <div class="chips" style="margin:10px 0 0">${acx("renovar_relampago","tiktok")}${breve("shopee")}</div></div>
+        <div class="chips" style="margin:10px 0 0">${acx("renovar_relampago","tiktok")}${chipCanal("shopee","manual no Seller Center")}</div></div>
       <div class="card"><b class="tit">⭐ Responder avaliações</b><br><small style="color:var(--t3);font-size:.75rem">responde no tom da marca; nota baixa fica pra você</small>
-        <div class="chips" style="margin:10px 0 0">${acx("responder_avaliacoes","shopee")}${breve("mercado_livre")}</div></div>
+        <div class="chips" style="margin:10px 0 0">${acx("responder_avaliacoes","shopee")}${chipCanal("mercado_livre","sem API de resposta")}</div></div>
       <div class="card"><b class="tit">🩺 Checar saúde da loja</b><br><small style="color:var(--t3);font-size:.75rem">promoções, frete grátis, saldo de ads e avaliações pendentes</small>
         <div class="chips" style="margin:10px 0 0">${on.size?`<button class="chip acx" data-acao="saude_loja">Todos os canais conectados</button>`:`<button class="chip" disabled style="opacity:.4">conecte um canal</button>`}</div></div>
     </div>
@@ -574,49 +549,162 @@ function viewIA(c){
   });
 }
 
-// ── Precificação ──
+// ── Etiquetas (visualizador ZPL) ──
+let ZPL_ATUAL = "";
+function viewEtiquetas(c){
+  c.innerHTML = `
+    <h1>Etiquetas — Visualizador ZPL</h1><div class="sub-h1">Gere pela aba Pedidos ou cole um código ZPL, visualize e mande pra impressora</div>
+    <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px"><b class="tit">Código ZPL</b>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <button class="mini" id="zplArq">⇪ Carregar arquivo</button>
+            <input type="file" id="zplFile" accept=".zpl,.txt" style="display:none">
+            <button class="mini" id="zplLimpar">Limpar</button>
+          </span></div>
+        <textarea id="zplTxt" style="width:100%;height:260px;margin-top:10px;background:var(--p2);border:1px solid var(--l);border-radius:10px;color:var(--t);font-family:var(--mono);font-size:.75rem;padding:10px" placeholder="^XA&#10;^FO50,50^A0N,50,50^FDSmartPlace^FS&#10;^XZ"></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
+          <select id="zplTam" class="busca" style="min-width:0"><option value="4x6">100×150 mm (envio)</option><option value="4x4">100×100 mm</option><option value="2x1">50×25 mm (produto)</option></select>
+          <select id="zplDpi" class="busca" style="min-width:0"><option value="8dpmm">8 dpmm (203 dpi)</option><option value="12dpmm">12 dpmm (300 dpi)</option></select>
+          <button class="btn" id="zplVer" style="padding:9px 18px;font-size:.85rem;margin-left:auto">👁 Visualizar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px"><b class="tit">Pré-visualização</b>
+          <span style="margin-left:auto;display:flex;gap:8px">
+            <button class="mini" id="zplBaixar">⬇ Baixar .zpl</button>
+            <button class="mini" id="zplImp" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🖨️ Imprimir</button>
+          </span></div>
+        <div id="zplPrev" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px"><p class="vazio">Cole o ZPL e clique em Visualizar — ou gere pela aba Pedidos.</p></div>
+      </div>
+    </div>`;
+  const txt = document.getElementById("zplTxt");
+  txt.value = ZPL_ATUAL || "";
+  const prev = ()=>renderZpl(txt.value);
+  document.getElementById("zplVer").onclick = prev;
+  document.getElementById("zplLimpar").onclick = ()=>{ txt.value=""; ZPL_ATUAL=""; document.getElementById("zplPrev").innerHTML="<p class='vazio'>vazio</p>"; };
+  document.getElementById("zplArq").onclick = ()=>document.getElementById("zplFile").click();
+  document.getElementById("zplFile").onchange = async e=>{ const f=e.target.files[0]; if(f){ txt.value = await f.text(); prev(); } };
+  document.getElementById("zplBaixar").onclick = ()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([txt.value],{type:"text/plain"})); a.download="etiquetas-smartplace.zpl"; a.click(); };
+  document.getElementById("zplImp").onclick = ()=>{
+    const imgs=[...document.querySelectorAll("#zplPrev img")]; if(!imgs.length) return alert("Clique em Visualizar primeiro.");
+    const w=window.open("","_blank");
+    w.document.write("<html><head><title>Etiquetas</title></head><body style='margin:0'>"+imgs.map(i=>`<img src="${i.src}" style="width:100mm;display:block;page-break-after:always">`).join("")+"</body></html>");
+    w.document.close(); setTimeout(()=>w.print(), 400);
+  };
+  if(ZPL_ATUAL) prev();
+}
+async function renderZpl(zpl){
+  ZPL_ATUAL = zpl;
+  const box = document.getElementById("zplPrev"); if(!box) return;
+  const blocos = String(zpl).split("^XZ").map(s=>s.trim()).filter(s=>s.includes("^XA")).map(s=>s+"\n^XZ");
+  if(!blocos.length){ box.innerHTML="<p class='vazio'>Nenhuma etiqueta válida (precisa de ^XA…^XZ).</p>"; return; }
+  const tam=document.getElementById("zplTam")?.value||"4x6", dpi=document.getElementById("zplDpi")?.value||"8dpmm";
+  box.innerHTML = `<p class="vazio">renderizando ${blocos.length} etiqueta(s)…</p>`;
+  const imgs=[];
+  for(const b of blocos){
+    try{
+      const r = await fetch(`https://api.labelary.com/v1/printers/${dpi}/labels/${tam}/0/`,{method:"POST",headers:{"Accept":"image/png"},body:b});
+      if(r.ok) imgs.push(URL.createObjectURL(await r.blob()));
+    }catch(_){ /* prévia é cortesia; o .zpl é o oficial */ }
+  }
+  box.innerHTML = imgs.length? imgs.map(u=>`<img class="etq" src="${u}">`).join("") : "<p class='vazio'>Pré-visualização indisponível agora — o arquivo .zpl continua válido pra impressora.</p>";
+}
+
+// ── Precificação (calculadora + tabela precificadora) ──
+const PRESET_CANAL = { ml:["Mercado Livre",14,6], shopee:["Shopee",20,4], tiktok:["TikTok Shop",13.6,2] };
 function viewPrecos(c){
   c.innerHTML = `
-    <h1>Precificação</h1><div class="sub-h1">Regras de piso e teto por produto — a IA nunca vende fora da faixa que você definir</div>
-    <div class="card" style="margin-top:10px"><b class="tit">➕ Nova regra</b>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
-        <input class="busca" id="rgProd" placeholder="Código do anúncio (ex.: MLB5449279904)" style="flex:2;min-width:220px">
-        <input class="busca" id="rgPiso" type="number" step="0.01" placeholder="Piso R$ (nunca abaixo)" style="flex:1;min-width:140px">
-        <input class="busca" id="rgTeto" type="number" step="0.01" placeholder="Teto R$ (nunca acima)" style="flex:1;min-width:140px">
-        <button class="mini" id="rgSalvar" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">Salvar regra</button>
+    <h1>Precificação</h1><div class="sub-h1">Calculadora de preço + tabela precificadora dos seus anúncios — a IA nunca vende fora do piso/teto</div>
+    <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
+      <div class="card">
+        <b class="tit">🧮 Calculadora de preço</b>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+          <label class="lb">Canal<select id="cCanal" class="busca w100">
+            <option value="ml">Mercado Livre</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select></label>
+          <label class="lb">Custo do produto (R$)<input id="cCusto" type="number" step="0.01" class="busca w100" placeholder="0,00"></label>
+          <label class="lb">Embalagem/extra (R$)<input id="cExtra" type="number" step="0.01" class="busca w100" value="0"></label>
+          <label class="lb">Taxa do canal (%)<input id="cTaxa" type="number" step="0.1" class="busca w100" value="14"></label>
+          <label class="lb">Taxa fixa (R$)<input id="cFixa" type="number" step="0.01" class="busca w100" value="6"></label>
+          <label class="lb">Imposto (%)<input id="cImp" type="number" step="0.01" class="busca w100" value="0"></label>
+          <label class="lb">Ads sobre o preço (%)<input id="cAds" type="number" step="0.1" class="busca w100" value="0"></label>
+          <label class="lb">Margem desejada (%)<input id="cMarg" type="number" step="0.1" class="busca w100" value="20"></label>
+        </div>
+        <button class="btn" id="cCalc" style="width:100%;margin-top:12px;font-size:.9rem">Calcular preço</button>
       </div>
-      <small style="color:var(--t3);font-size:.73rem">O código está na URL do anúncio ou na aba Pedidos. Pelo chat também funciona: <i>"define piso de R$ 89,90 pro anúncio X"</i> · <i>"tô caro na cinta Y?"</i></small></div>
-    <h2>Regras ativas</h2>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="regrascard"><p class="vazio">carregando…</p></div>`;
-  const carrega = ()=>acaoApi("regras_preco_listar").then(a=>{
-    const el=document.getElementById("regrascard"); if(!el) return;
-    const regras=a.success?(a.resultado.regras||[]):[];
-    CACHE.regras = regras;
-    el.innerHTML = regras.length ? `<table class="tabela">
-      <tr><th>Produto</th><th>Anúncio</th><th style="text-align:right">Piso</th><th style="text-align:right">Teto</th><th></th></tr>
-      ${regras.map(r=>`<tr><td>${esc(r.titulo||"—")}</td><td style="font-family:var(--mono);font-size:.75rem;color:var(--t3)">${esc(r.produto_id)}</td>
-        <td style="text-align:right;font-family:var(--mono)">${r.piso!=null?brl(r.piso):"—"}</td>
-        <td style="text-align:right;font-family:var(--mono)">${r.teto!=null?brl(r.teto):"—"}</td>
-        <td style="text-align:right"><button class="chip rgDel" data-id="${esc(r.produto_id)}" style="color:#FF9B9B">excluir</button></td></tr>`).join("")}
-    </table>` : "<p class='vazio'>Nenhuma regra ainda — crie na caixa acima.</p>";
-    document.querySelectorAll(".rgDel").forEach(b=>b.onclick=async()=>{
-      if(!confirm("Excluir a regra de "+b.dataset.id+"?")) return;
-      await acaoApi("regras_preco_excluir",{ produto_id:b.dataset.id }); carrega();
-    });
+      <div class="card" id="cRes"><b class="tit">Resultado</b><p class="vazio">Preencha o custo e clique em Calcular.</p></div>
+    </div>
+    <h2 style="display:flex;align-items:center;gap:10px">Tabela precificadora — seus anúncios<button class="mini" id="pRecalc">↻ recalcular com os parâmetros acima</button></h2>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="precCard"><p class="vazio">carregando anúncios…</p></div>`;
+  const V = id => Number(document.getElementById(id).value||0);
+  document.getElementById("cCanal").onchange = e=>{ const [,t,f]=PRESET_CANAL[e.target.value];
+    document.getElementById("cTaxa").value=t; document.getElementById("cFixa").value=f; };
+  dados().then(r=>{ const f=r.financeiro||{};
+    if(f.imposto_pct!=null && !V("cImp")) document.getElementById("cImp").value=f.imposto_pct;
+    if(f.taxa_pct!=null) document.getElementById("cTaxa").value=f.taxa_pct;
   });
-  carrega();
-  document.getElementById("rgSalvar").onclick = async()=>{
-    const prod=(document.getElementById("rgProd").value||"").trim();
-    const piso=document.getElementById("rgPiso").value, teto=document.getElementById("rgTeto").value;
-    if(!prod) return alert("Informe o código do anúncio (ex.: MLB...)");
-    if(!piso && !teto) return alert("Informe pelo menos o piso ou o teto");
-    const b=document.getElementById("rgSalvar"); b.disabled=true; b.textContent="salvando…";
-    const r=await acaoApi("regras_preco_definir",{ produto_id:prod, ...(piso?{piso:+piso}:{}), ...(teto?{teto:+teto}:{}) });
-    b.disabled=false; b.textContent="Salvar regra";
-    if(!r.success) return alert("Ops: "+r.error);
-    document.getElementById("rgProd").value=""; document.getElementById("rgPiso").value=""; document.getElementById("rgTeto").value="";
-    carrega();
+  const calc = ()=>{
+    const custo=V("cCusto")+V("cExtra"), fixa=V("cFixa");
+    const pct=(V("cTaxa")+V("cImp")+V("cAds"))/100, marg=V("cMarg")/100;
+    const el=document.getElementById("cRes");
+    if(!custo) return el.innerHTML=`<b class="tit">Resultado</b><p class="vazio">Informe o custo do produto.</p>`;
+    const den=1-pct-marg;
+    if(den<=0.01) return el.innerHTML=`<b class="tit">Resultado</b><p class="vazio">Taxas + margem passam de 100% — impossível. Reduza a margem ou as taxas.</p>`;
+    const sug=(custo+fixa)/den;
+    const sug90=Math.max(Math.floor(sug)+0.90, sug);
+    const linha=(p)=>{ const luc=p*(1-pct)-fixa-custo; return { p, luc, mg: p? luc/p*100 : 0 }; };
+    const cen=[linha(sug90),linha(sug90*1.05),linha(sug90*1.10),linha(sug90*1.20)];
+    const partes=[["Custo",custo,"#6A87A3"],["Taxas",sug90*(V("cTaxa")+V("cAds"))/100+fixa,"#F5A623"],["Imposto",sug90*V("cImp")/100,"#FF6B6B"],["Lucro",cen[0].luc,"#3ddc84"]];
+    const tot=partes.reduce((s,x)=>s+Math.max(0,x[1]),0)||1;
+    el.innerHTML=`<b class="tit">Resultado</b>
+      <div style="margin-top:12px"><div class="lbl" style="font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Preço de venda sugerido</div>
+      <div style="font-family:var(--mono);font-size:1.9rem;color:var(--n)">${brl(sug90)}</div>
+      <small style="color:var(--t3)">lucro de <b style="color:#3ddc84">${brl(cen[0].luc)}</b> por venda · margem ${cen[0].mg.toFixed(1).replace(".",",")}%</small></div>
+      <div style="display:flex;height:14px;border-radius:99px;overflow:hidden;margin:14px 0 4px">${partes.map(([n,v,cor])=>`<div title="${n}: ${brl(v)}" style="width:${Math.max(0,v)/tot*100}%;background:${cor}"></div>`).join("")}</div>
+      <small style="color:var(--t3)">${partes.map(([n,v,cor])=>`<span style="color:${cor}">●</span> ${n} ${brl(v)}`).join(" · ")}</small>
+      <table class="tabela" style="margin-top:14px"><tr><th>Cenário</th><th style="text-align:right">Preço</th><th style="text-align:right">Lucro</th><th style="text-align:right">Margem</th></tr>
+      ${[["Sugerido",cen[0]],["+5%",cen[1]],["+10%",cen[2]],["+20%",cen[3]]].map(([n,x])=>`<tr><td>${n}</td><td style="text-align:right;font-family:var(--mono)">${brl(x.p)}</td><td style="text-align:right;font-family:var(--mono);color:${x.luc>=0?"#3ddc84":"#FF9B9B"}">${brl(x.luc)}</td><td style="text-align:right;font-family:var(--mono)">${x.mg.toFixed(1).replace(".",",")}%</td></tr>`).join("")}</table>`;
   };
+  document.getElementById("cCalc").onclick = calc;
+  const carregaPrec = async()=>{
+    const a = await acaoApi("precificador_lista");
+    const el=document.getElementById("precCard"); if(!el) return;
+    if(!a.success) return el.innerHTML=`<p class="vazio">${esc(a.error||"indisponível")}</p>`;
+    const prods=(a.resultado.produtos||[]);
+    const pct=(V("cTaxa")+V("cImp")+V("cAds"))/100, marg=V("cMarg")/100, fixa=V("cFixa");
+    el.innerHTML = prods.length? `<table class="tabela">
+      <tr><th>Produto</th><th>Status</th><th style="text-align:right">Preço atual</th><th>Custo R$</th><th>Piso R$</th><th>Teto R$</th><th style="text-align:right">Margem atual</th><th style="text-align:right">Preço sugerido</th><th></th></tr>
+      ${prods.map(p=>{
+        const custo=p.custo!=null?Number(p.custo):null;
+        const mLuc = custo!=null? p.preco*(1-pct)-fixa-custo : null;
+        const mPct = mLuc!=null&&p.preco? mLuc/p.preco*100 : null;
+        const den=1-pct-marg;
+        const sug = custo!=null&&den>0.01? Math.floor((custo+fixa)/den)+0.90 : null;
+        return `<tr>
+          <td>${esc(p.titulo||"—").slice(0,48)}<br><small style="font-family:var(--mono);font-size:.68rem;color:var(--t3)">${esc(p.id)}</small></td>
+          <td><span class="pill ${p.status==="active"?"ok":"ruim"}">${p.status==="active"?"ativo":esc(p.status)}</span></td>
+          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.preco)}</b></td>
+          <td><input class="edt" data-id="${esc(p.id)}" data-campo="custo" type="number" step="0.01" value="${custo??""}" placeholder="—"></td>
+          <td><input class="edt" data-id="${esc(p.id)}" data-campo="piso" type="number" step="0.01" value="${p.piso??""}" placeholder="—"></td>
+          <td><input class="edt" data-id="${esc(p.id)}" data-campo="teto" type="number" step="0.01" value="${p.teto??""}" placeholder="—"></td>
+          <td style="text-align:right;font-family:var(--mono);color:${mPct==null?"var(--t3)":mPct>=0?"#3ddc84":"#FF9B9B"}">${mPct==null?"informe o custo":brl(mLuc)+"<br><small>"+mPct.toFixed(1).replace(".",",")+"%</small>"}</td>
+          <td style="text-align:right;font-family:var(--mono);color:var(--n)">${sug!=null?brl(sug):"—"}</td>
+          <td>${sug!=null?`<button class="mini aplicar" data-id="${esc(p.id)}" data-preco="${sug.toFixed(2)}">Aplicar</button>`:""}</td></tr>`;}).join("")}
+    </table>` : "<p class='vazio'>Nenhum anúncio encontrado — conecte o Mercado Livre.</p>";
+    document.querySelectorAll(".edt").forEach(i=>i.onchange=async()=>{
+      const r=await acaoApi("regras_preco_definir",{ produto_id:i.dataset.id, [i.dataset.campo]: i.value===""?null:+i.value });
+      if(!r.success) alert("Ops: "+r.error); else carregaPrec();
+    });
+    document.querySelectorAll(".aplicar").forEach(b=>b.onclick=async()=>{
+      if(!confirm("Mudar o preço do "+b.dataset.id+" para "+brl(+b.dataset.preco)+" no Mercado Livre?")) return;
+      b.disabled=true; b.textContent="aplicando…";
+      const r=await acaoApi("atualizar_preco",{ item_id:b.dataset.id, preco:+b.dataset.preco });
+      b.disabled=false; b.textContent="Aplicar";
+      r.success? carregaPrec() : alert("Ops: "+r.error);
+    });
+  };
+  carregaPrec();
+  document.getElementById("pRecalc").onclick = carregaPrec;
 }
 
 // ── Fale com a IA ──
