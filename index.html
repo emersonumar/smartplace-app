@@ -247,22 +247,57 @@ async function carregarDash(){
       <div class="card kpi"><div class="lbl">Valor total</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">no período filtrado</div></div>
       <div class="card kpi"><div class="lbl">Quantidade de pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">pagos no período</div></div>
       <div class="card kpi"><div class="lbl">Produtos vendidos</div><div class="val">${r.produtos_vendidos??"—"}</div><div class="sub">peças no período</div></div>
-      <div class="card kpi"><div class="lbl">Ticket médio</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>`;
-    const taxas = Object.values(r.por_canal||{}).reduce((s,v)=>s+(v.taxa||0),0);
+      <div class="card kpi"><div class="lbl">Ticket médio</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>
+      <div class="card kpi" id="metacard"></div>`;
+    const f = r.financeiro||{};
+    const meta = f.meta_mes ? Number(f.meta_mes) : null;
+    const mc = document.getElementById("metacard");
+    if(mc){
+      const agora = new Date(), diaMes = agora.getDate(), diasMes = new Date(agora.getFullYear(),agora.getMonth()+1,0).getDate();
+      if(meta){
+        const pctV = Math.min(100, Math.round(r.dias30.total/meta*100));
+        const pctP = Math.round(diaMes/diasMes*100);
+        const esperado = meta*diaMes/diasMes, delta = r.dias30.total-esperado;
+        mc.innerHTML = `<div class="lbl">🎯 Meta do mês (dia ${diaMes}/${diasMes})</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><small style="color:var(--t2);width:38px">Valor</small><div class="barra" style="flex:1;margin:0"><i style="width:${pctV}%;background:var(--n)"></i></div><small style="font-family:var(--mono);color:var(--n)">${pctV}%</small></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px"><small style="color:var(--t2);width:38px">Prazo</small><div class="barra" style="flex:1;margin:0"><i style="width:${pctP}%;background:var(--acc)"></i></div><small style="font-family:var(--mono);color:var(--acc)">${pctP}%</small></div>
+          <div class="sub" style="margin-top:7px">${brl(r.dias30.total)} de ${brl(meta)} · esperado ${brl(esperado)}<br><b style="color:${delta>=0?"var(--n)":"#FF9B9B"}">${delta>=0?"✓ adiantado ":"⚠ atrasado "}${brl(Math.abs(delta))}</b></div>`;
+      } else {
+        mc.innerHTML = `<div class="lbl">🎯 Meta do mês</div><div class="sub" style="margin:8px 0">Defina uma meta de faturamento pro mês e acompanhe aqui.</div><button class="mini" id="defMeta">definir meta</button>`;
+        const bm = document.getElementById("defMeta");
+        if(bm) bm.onclick = async()=>{ const v = prompt("Meta de faturamento do mês (R$):","30000"); if(!v) return;
+          await acaoApi("config_loja",{ set:{ meta_mes:+String(v).replace(/[^\d.,]/g,"").replace(",",".") } }); carregarDash(); };
+      }
+    }
     const fs = document.getElementById("finstrip");
-    if(fs) fs.innerHTML = `<div style="display:flex;gap:0;flex-wrap:wrap">
-      <div style="flex:1;min-width:160px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono)">${brl(r.dias30.total)}</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">FATURAMENTO</small></div>
-      <div style="flex:1;min-width:160px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono)">${brl(taxas)}</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">TAXAS DE VENDA (${r.dias30.total?Math.round(taxas/r.dias30.total*100):0}%)</small></div>
-      <div style="flex:1;min-width:160px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono);color:var(--n)">${brl(r.dias30.total-taxas)}</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">LÍQUIDO DE TAXAS</small></div>
-      <div style="flex:1;min-width:160px;padding:6px 14px"><b style="color:var(--t3)">em breve</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">CUSTO · MARGEM · LUCRO</small></div>
-    </div>`;
+    if(fs){
+      const cel = (valor,rot,cor)=>`<div style="flex:1;min-width:150px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono);${cor?`color:${cor}`:""}">${valor}</b><br><small style="color:var(--t3);font-size:.64rem;letter-spacing:.08em">${rot}</small></div>`;
+      fs.innerHTML = `<div style="display:flex;gap:0;flex-wrap:wrap;align-items:center">
+        ${cel(brl(f.faturamento_sem_frete),"FATURAMENTO SEM FRETE")}
+        ${cel(f.custo!=null?brl(f.custo):"—","PREÇO DE CUSTO"+(f.custo_pct!=null?` (${f.custo_pct}%)`:""))}
+        ${cel(f.margem_bruta_pct!=null?f.margem_bruta_pct.toFixed(2).replace(".",",")+"%":"—","MARGEM BRUTA")}
+        ${cel(f.impostos!=null?brl(f.impostos):"—","IMPOSTOS"+(f.imposto_pct!=null?` (${f.imposto_pct}%)`:""))}
+        ${cel(brl(f.taxa),"TAXA DE VENDA ("+(f.taxa_pct!=null?String(f.taxa_pct).replace(".",","):"0")+"%)")}
+        ${cel(f.contribuicao!=null?brl(f.contribuicao):"—","LUCRO"+(f.margem_contrib_pct!=null?` (${String(f.margem_contrib_pct).replace(".",",")}%)`:""),"#3ddc84")}
+        <button class="mini" id="cfgFin" title="configurar % de custo e imposto" style="margin:0 10px">⚙</button>
+      </div>`;
+      document.getElementById("cfgFin").onclick = async()=>{
+        const c = prompt("% de CUSTO sobre o faturamento (ex.: 27.2):", f.custo_pct??"");
+        if(c===null) return;
+        const i = prompt("% de IMPOSTO (ex.: 8.63):", f.imposto_pct??"");
+        if(i===null) return;
+        await acaoApi("config_loja",{ set:{ custo_pct:+String(c).replace(",","."), imposto_pct:+String(i).replace(",",".") } });
+        carregarDash();
+      };
+    }
     const gc = document.getElementById("grafcanal");
     if(gc) gc.innerHTML = grafCanais(r.por_canal||{});
     const csvB = document.getElementById("csv");
     if(csvB) csvB.onclick = ()=>{
-      const linhas = [["Loja","Pedidos","Ticket Medio","Quantidade","Taxas","Valor"].join(";")];
-      for(const [cn,v] of Object.entries(r.por_canal||{})) linhas.push([(NOMES[cn]||[cn])[0],v.pedidos,(v.pedidos?v.total/v.pedidos:0).toFixed(2),v.quantidade,(v.taxa||0).toFixed(2),v.total.toFixed(2)].join(";"));
-      linhas.push(["TOTAL",r.dias30.pedidos,r.dias30.ticket.toFixed(2),r.produtos_vendidos,taxas.toFixed(2),r.dias30.total.toFixed(2)].join(";"));
+      const num = v => v!=null ? Number(v).toFixed(2) : "";
+      const linhas = [["Loja","Pedidos","Ticket Medio","Quantidade","Custo","Valor","Frete","Valor Peca","Margem Bruta %","Impostos","Taxas","Margem Contribuicao %","Contribuicao R$"].join(";")];
+      for(const [cn,v] of Object.entries(r.por_canal||{})) linhas.push([(NOMES[cn]||[cn])[0],v.pedidos,num(v.pedidos?v.total/v.pedidos:0),v.quantidade,num(v.custo),num(v.total),num(v.frete),num(v.valor_peca),num(v.margem_bruta_pct),num(v.impostos),num(v.taxa),num(v.margem_contrib_pct),num(v.contribuicao)].join(";"));
+      linhas.push(["TOTAL",r.dias30.pedidos,num(r.dias30.ticket),r.produtos_vendidos,num(f.custo),num(r.dias30.total),num(f.frete),"",num(f.margem_bruta_pct),num(f.impostos),num(f.taxa),num(f.margem_contrib_pct),num(f.contribuicao)].join(";"));
       const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+linhas.join("\n")],{type:"text/csv"})); a.download="vendas-por-canal.csv"; a.click();
     };
     const g = document.getElementById("grafico");
@@ -275,22 +310,25 @@ async function carregarDash(){
         <div style="font-size:.78rem;color:var(--t2);margin-top:6px">Cancelados (${r.situacao.cancelados}/${tot})</div><div class="barra"><i style="width:${Math.round(r.situacao.cancelados/tot*100)}%;background:#FF6B6B"></i></div>`;
     }
     const pcEl = document.getElementById("porcanal");
+    const pct = v => v!=null ? String(typeof v==="number"?v.toFixed(2):v).replace(".",",")+"%" : "—";
+    const din = v => v!=null ? brl(v) : "—";
     if(pcEl){
       const linhas = Object.entries(r.por_canal||{});
+      const th = t=>`<th style="text-align:right">${t}</th>`;
+      const td = (x,extra)=>`<td style="text-align:right;font-family:var(--mono);white-space:nowrap;${extra||""}">${x}</td>`;
       pcEl.innerHTML = linhas.length ? `<table class="tabela">
-        <tr><th>Loja</th><th style="text-align:right">Pedidos</th><th style="text-align:right">Ticket médio</th><th style="text-align:right">Quantidade</th><th style="text-align:right">Taxas</th><th style="text-align:right">Valor</th></tr>
+        <tr><th>Loja</th>${["Pedidos","Ticket Médio","Quantidade","Custo","Valor","Frete","Valor Peça","Margem Bruta %","Impostos","Taxas","Margem Contrib. %","Contribuição R$"].map(th).join("")}</tr>
         ${linhas.map(([cn,v])=>{ const [nome,cor,sigla]=NOMES[cn]||[cn,"#888",cn];
-          return `<tr><td><span class="badge" style="background:${cor}">${sigla}</span> ${nome}</td>
-          <td style="text-align:right;font-family:var(--mono)">${v.pedidos}</td>
-          <td style="text-align:right;font-family:var(--mono)">${brl(v.pedidos?v.total/v.pedidos:0)}</td>
-          <td style="text-align:right;font-family:var(--mono)">${v.quantidade??"—"}</td>
-          <td style="text-align:right;font-family:var(--mono);color:var(--t3)">${brl(v.taxa)}</td>
-          <td style="text-align:right;font-family:var(--mono)"><b style="color:var(--n)">${brl(v.total)}</b></td></tr>`;}).join("")}
-        <tr><td><b>TOTAL</b></td><td style="text-align:right;font-family:var(--mono)"><b>${r.dias30.pedidos}</b></td>
-          <td style="text-align:right;font-family:var(--mono)">${brl(r.dias30.ticket)}</td>
-          <td style="text-align:right;font-family:var(--mono)">${r.produtos_vendidos??"—"}</td>
-          <td style="text-align:right;font-family:var(--mono);color:var(--t3)">${brl(linhas.reduce((s,[,v])=>s+(v.taxa||0),0))}</td>
-          <td style="text-align:right;font-family:var(--mono)"><b style="color:var(--n)">${brl(r.dias30.total)}</b></td></tr>
+          return `<tr><td style="white-space:nowrap"><span class="badge" style="background:${cor}">${sigla}</span> ${nome}</td>
+          ${td(v.pedidos)}${td(brl(v.pedidos?v.total/v.pedidos:0))}${td(v.quantidade??"—")}
+          ${td(din(v.custo),"color:var(--t3)")}${td("<b>"+brl(v.total)+"</b>")}${td(din(v.frete),"color:var(--t3)")}
+          ${td(din(v.valor_peca))}${td(pct(v.margem_bruta_pct))}${td(din(v.impostos),"color:var(--t3)")}
+          ${td(brl(v.taxa),"color:var(--t3)")}${td(pct(v.margem_contrib_pct))}${td("<b style='color:#3ddc84'>"+din(v.contribuicao)+"</b>")}</tr>`;}).join("")}
+        <tr><td><b>TOTAL</b></td>
+          ${td("<b>"+r.dias30.pedidos+"</b>")}${td(brl(r.dias30.ticket))}${td(r.produtos_vendidos??"—")}
+          ${td(din(f.custo),"color:var(--t3)")}${td("<b>"+brl(r.dias30.total)+"</b>")}${td(din(f.frete),"color:var(--t3)")}
+          ${td("—")}${td(pct(f.margem_bruta_pct))}${td(din(f.impostos),"color:var(--t3)")}
+          ${td(brl(f.taxa),"color:var(--t3)")}${td(pct(f.margem_contrib_pct))}${td("<b style='color:#3ddc84'>"+din(f.contribuicao)+"</b>")}</tr>
       </table>` : "<p class='vazio'>Sem vendas — sincronize na aba Pedidos.</p>";
     }
     const desenhaTop = modo=>{
