@@ -48,6 +48,14 @@ input:focus{outline:2px solid #38E1FF55}
 .acao b{font-size:.86rem;display:block}
 .acao small{color:var(--t3);font-size:.73rem}
 .acao.rodando{opacity:.6;pointer-events:none}
+.kpi .lbl{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);font-weight:700}
+.kpi .val{font-family:var(--mono);font-size:1.4rem;font-weight:600;margin-top:5px}
+.kpi .sub{font-size:.73rem;color:var(--t2);margin-top:2px}
+.mini{background:var(--nd);border:1px solid #38E1FF44;color:var(--n);border-radius:8px;padding:3px 10px;font-size:.68rem;cursor:pointer;font-family:var(--sans);font-weight:700;vertical-align:middle;margin-left:8px}
+.mini:disabled{opacity:.5}
+.ped{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--l);font-size:.83rem}
+.ped:last-child{border-bottom:0}
+.badge{font-size:.62rem;font-weight:800;border-radius:6px;padding:2px 7px;color:#04101C;flex:none;font-family:var(--disp)}
 </style></head><body><div class="wrap" id="app"></div>
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -60,6 +68,58 @@ avaliacoes:["Avaliações respondidas","notas baixas viram alerta"],frete_gratis
 sentinela_ads:["Sentinela de verba de ads","avisa antes de acabar"],relatorio_email:["Relatório seg·qua·sex","resumo no seu e-mail"]};
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+// ── chamadas às ações (JWT da sessão) ──
+async function acaoApi(acao, params){
+  const { data:{ session } } = await sb.auth.getSession();
+  const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE" },
+    body: JSON.stringify({ acao, params: params||{} })
+  });
+  return r.json();
+}
+const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+// ── vendas, pedidos, ads e precificação (dados reais) ──
+async function carregarDados(){
+  const k = document.getElementById("kpis"); if(!k) return;
+  const d = await acaoApi("dados_pedidos");
+  if(!document.getElementById("kpis")) return;
+  if(d.success){
+    const r = d.resultado;
+    k.innerHTML = `
+      <div class="card kpi"><div class="lbl">Vendas 7 dias</div><div class="val">${brl(r.dias7.total)}</div><div class="sub">${r.dias7.pedidos} pedido(s) · ticket ${brl(r.dias7.ticket)}</div></div>
+      <div class="card kpi"><div class="lbl">Vendas 30 dias</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">${r.dias30.pedidos} pedido(s) · ticket ${brl(r.dias30.ticket)}</div></div>
+      ${Object.entries(r.por_canal||{}).map(([c,v])=>`<div class="card kpi"><div class="lbl">${(NOMES[c]||[c])[0]}</div><div class="val" style="color:var(--n)">${brl(v.total)}</div><div class="sub">${v.pedidos} pedido(s) em 30 dias</div></div>`).join("")}`;
+    const pc = document.getElementById("pedcard");
+    pc.innerHTML = (r.ultimos||[]).length ? r.ultimos.map(p=>{
+      const [_, cor, sigla] = NOMES[p.canal]||[p.canal,"#888",p.canal];
+      const item = (p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
+      return `<div class="ped"><span class="badge" style="background:${cor}">${sigla}</span>
+        <span style="flex:1">${esc(item).slice(0,60)}<br><small style="color:var(--t3)">${esc(p.comprador||"")} · ${(p.criado_canal_em||"").slice(0,10)}</small></span>
+        <span style="color:var(--t3);font-size:.7rem">${esc(p.status||"")}</span>
+        <b style="font-family:var(--mono)">${brl(p.total)}</b></div>`;
+    }).join("") : "<p class='vazio'>Sem pedidos sincronizados — clica em ↻ sincronizar agora.</p>";
+  } else {
+    k.innerHTML = `<p class='vazio'>KPIs indisponíveis agora: ${esc(d.error||"")}</p>`;
+  }
+  acaoApi("ads_resumo").then(a=>{
+    const el=document.getElementById("adscard"); if(!el) return;
+    if(!a.success){ el.innerHTML="<b style='font-size:.85rem'>📣 Ads</b><br><small class='vazio'>indisponível agora</small>"; return; }
+    const s=a.resultado.shopee, m=a.resultado.mercado_livre;
+    const partes=[];
+    if(s) partes.push("Saldo Shopee Ads: <b>"+brl(s.saldo)+"</b>");
+    if(m) partes.push(m.advertiser_id?("Mercado Ads ativo — "+esc(m.nome||"")):esc(m.info||""));
+    el.innerHTML = `<b style="font-size:.85rem">📣 Ads</b><br><small style="color:var(--t2)">${partes.join("<br>")||"Conecte um canal pra ver a verba de anúncios"}</small>`;
+  });
+  acaoApi("regras_preco_listar").then(a=>{
+    const el=document.getElementById("precocard"); if(!el) return;
+    const regras=a.success?(a.resultado.regras||[]):[];
+    el.innerHTML = `<b style="font-size:.85rem">🏷️ Precificação</b><br>
+      <small style="color:var(--t2)">${regras.length} regra(s) de piso/teto ativa(s). Gerencie pelo chat: <i>"define piso de R$ 89,90 pro anúncio X"</i> · <i>"tô caro na cinta Y?"</i></small>`;
+  });
+}
 
 // ── chat com a IA (histórico vive na sessão da página) ──
 let HIST = [];
@@ -160,6 +220,15 @@ function telaPainel(d){
     <button class="sair" id="sair">sair</button></div>
   ${alertas?'<h2>Alertas</h2>'+alertas:""}
   <h2>Canais conectados</h2><div class="grid">${canais}</div>
+  <h2>Vendas reais</h2>
+  <div class="grid" id="kpis"><p class="vazio">carregando…</p></div>
+  <h2>Pedidos<button class="mini" id="syncPed">↻ sincronizar agora</button></h2>
+  <div class="card" id="pedcard"><p class="vazio">carregando…</p></div>
+  <h2>Ads e Precificação</h2>
+  <div class="grid">
+    <div class="card" id="adscard"><p class="vazio">carregando…</p></div>
+    <div class="card" id="precocard"><p class="vazio">carregando…</p></div>
+  </div>
   <h2>A IA trabalhou por você</h2><div class="card feed">${acoes}</div>
   <h2>Ações rápidas — um clique e a IA faz</h2>
   <div class="grid">
@@ -178,6 +247,13 @@ function telaPainel(d){
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST = []; render(); };
   document.getElementById("chatSend").onclick = enviarChat;
   document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
+  document.getElementById("syncPed").onclick = async()=>{
+    const b=document.getElementById("syncPed"); b.disabled=true; b.textContent="sincronizando…";
+    const r=await acaoApi("sincronizar_pedidos");
+    b.disabled=false; b.textContent="↻ sincronizar agora";
+    r.success ? carregarDados() : alert("Ops: "+r.error);
+  };
+  carregarDados();
   document.querySelectorAll(".acao").forEach(b=>b.onclick = async()=>{
     const acao = b.dataset.acao;
     const { data:{ session } } = await sb.auth.getSession();
