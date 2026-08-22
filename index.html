@@ -6,15 +6,24 @@
 :root{--g:#050B14;--p:#0A1526;--p2:#071120;--l:#16324A;--n:#38E1FF;--nd:#38E1FF1E;--acc:#F5A623;--gold:#FFD700;
 --t:#E6F1FA;--t2:#A6BDD2;--t3:#6A87A3;--sans:'Manrope',system-ui,sans-serif;--disp:'Sora',var(--sans);--mono:'JetBrains Mono',monospace}
 *{margin:0;box-sizing:border-box}body{background:var(--g);color:var(--t);font-family:var(--sans);min-height:100vh}
-.wrap{max-width:1100px;margin:0 auto;padding:0 18px 40px}
-.top{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--l);flex-wrap:wrap}
-.logo{font-family:var(--disp);font-weight:700;font-size:1.2rem}.logo em{font-style:normal;color:var(--n)}
-.live{display:flex;align-items:center;gap:6px;background:var(--nd);border:1px solid #38E1FF55;color:var(--n);font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:99px;font-family:var(--mono)}
+.topo{position:sticky;top:0;z-index:10;background:#050B14EE;backdrop-filter:blur(8px);border-bottom:1px solid var(--l)}
+.topo-in{max-width:1180px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:56px}
+.logo{font-family:var(--disp);font-weight:700;font-size:1.1rem;white-space:nowrap}.logo em{font-style:normal;color:var(--n)}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav button{background:none;border:0;color:var(--t2);font-family:var(--sans);font-weight:600;font-size:.84rem;padding:17px 13px;cursor:pointer;border-bottom:2px solid transparent}
+.nav button:hover{color:var(--t)}
+.nav button.atv{color:var(--n);border-bottom-color:var(--n)}
+.dir{margin-left:auto;display:flex;align-items:center;gap:12px}
+.live{display:flex;align-items:center;gap:6px;background:var(--nd);border:1px solid #38E1FF55;color:var(--n);font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:99px;font-family:var(--mono);white-space:nowrap}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--n)}
-.sair{margin-left:auto;color:var(--t3);font-size:.8rem;cursor:pointer;background:none;border:0;font-family:var(--sans)}
-h2{font-family:var(--disp);font-size:.76rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin:26px 0 10px}
+.sair{color:var(--t3);font-size:.8rem;cursor:pointer;background:none;border:0;font-family:var(--sans)}
+.wrap{max-width:1180px;margin:0 auto;padding:6px 18px 48px}
+h2{font-family:var(--disp);font-size:.74rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin:24px 0 10px}
+h1{font-family:var(--disp);font-size:1.25rem;margin:22px 0 2px}
+.sub-h1{color:var(--t3);font-size:.83rem;margin-bottom:4px}
 .card{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:16px 18px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .conn{display:flex;gap:12px;align-items:center}
 .mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-family:var(--disp);font-size:.8rem;color:#04101C;flex:none}
 .state{margin-left:auto;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;text-decoration:none}
@@ -28,134 +37,80 @@ h2{font-family:var(--disp);font-size:.76rem;font-weight:600;letter-spacing:.13em
 .tgl.on2{background:var(--n)}.tgl.off2{background:var(--l)}
 .tgl::after{content:'';position:absolute;top:2.5px;width:15px;height:15px;border-radius:50%;background:#04101C}
 .tgl.on2::after{right:2.5px}.tgl.off2::after{left:2.5px;background:var(--t3)}
-.alerta{border-left:3px solid var(--gold);padding:10px 14px;background:var(--p2);border-radius:8px;color:var(--t2);font-size:.85rem;margin-bottom:8px}
-.centro{max-width:400px;margin:8vh auto;display:flex;flex-direction:column;gap:12px}
+.alerta{border-left:3px solid var(--gold);padding:10px 14px;background:var(--p2);border-radius:8px;color:var(--t2);font-size:.85rem;margin:8px 0}
+.centro{max-width:400px;margin:8vh auto;display:flex;flex-direction:column;gap:12px;padding:0 18px}
 input{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:12px 14px;color:var(--t);font-family:var(--sans);font-size:.95rem}
 input:focus{outline:2px solid #38E1FF55}
 .btn{background:var(--acc);color:#1A0F00;font-weight:800;border-radius:10px;padding:12px;border:0;font-size:.95rem;cursor:pointer;font-family:var(--sans)}
 .link{color:var(--t3);font-size:.82rem;text-align:center;cursor:pointer;background:none;border:0;font-family:var(--sans)}
 .erro{color:#FF7B7B;font-size:.83rem;text-align:center;min-height:1.2em}
 .vazio{color:var(--t3);font-size:.85rem;padding:8px 0}
+.kpi .lbl{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);font-weight:700}
+.kpi .val{font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px}
+.kpi .sub{font-size:.73rem;color:var(--t2);margin-top:2px}
+.mini{background:var(--nd);border:1px solid #38E1FF44;color:var(--n);border-radius:8px;padding:4px 12px;font-size:.7rem;cursor:pointer;font-family:var(--sans);font-weight:700}
+.mini:disabled{opacity:.5}
+.tabela{width:100%;border-collapse:collapse;font-size:.83rem}
+.tabela th{text-align:left;color:var(--t3);font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;padding:8px 10px;border-bottom:1px solid var(--l);font-weight:700}
+.tabela td{padding:10px;border-bottom:1px dashed var(--l);vertical-align:top}
+.tabela tr:last-child td{border-bottom:0}
+.badge{font-size:.62rem;font-weight:800;border-radius:6px;padding:2px 7px;color:#04101C;font-family:var(--disp);white-space:nowrap}
+.pill{font-size:.66rem;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
+.pill.ok{color:var(--n);background:var(--nd)}
+.pill.ruim{color:#FF9B9B;background:#FF6B6B22}
+.acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
+.acao:hover{border-color:#38E1FF66}
+.acao b{font-size:.86rem;display:block}
+.acao small{color:var(--t3);font-size:.73rem}
+.acao.rodando{opacity:.6;pointer-events:none}
 .chat{display:flex;flex-direction:column;gap:8px}
 .bub{max-width:92%;padding:9px 13px;border-radius:12px;font-size:.84rem;line-height:1.45}
 .u{align-self:flex-end;background:#16324A;border-bottom-right-radius:4px}
 .ai{align-self:flex-start;background:var(--p2);border:1px solid var(--l);border-bottom-left-radius:4px;color:var(--t2)}
 .ai b{color:var(--n)}
 .inpt{display:flex;gap:8px;background:var(--p2);border:1px solid var(--l);border-radius:11px;padding:9px 12px;align-items:center;margin-top:4px}
-.inpt span{color:var(--t3);font-size:.84rem;flex:1}
-.acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
-.acao:hover{border-color:#38E1FF66}
-.acao b{font-size:.86rem;display:block}
-.acao small{color:var(--t3);font-size:.73rem}
-.acao.rodando{opacity:.6;pointer-events:none}
-.kpi .lbl{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);font-weight:700}
-.kpi .val{font-family:var(--mono);font-size:1.4rem;font-weight:600;margin-top:5px}
-.kpi .sub{font-size:.73rem;color:var(--t2);margin-top:2px}
-.mini{background:var(--nd);border:1px solid #38E1FF44;color:var(--n);border-radius:8px;padding:3px 10px;font-size:.68rem;cursor:pointer;font-family:var(--sans);font-weight:700;vertical-align:middle;margin-left:8px}
-.mini:disabled{opacity:.5}
-.ped{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--l);font-size:.83rem}
-.ped:last-child{border-bottom:0}
-.badge{font-size:.62rem;font-weight:800;border-radius:6px;padding:2px 7px;color:#04101C;flex:none;font-family:var(--disp)}
-</style></head><body><div class="wrap" id="app"></div>
+</style></head><body>
+<div class="topo" id="topo" style="display:none"><div class="topo-in">
+  <div class="logo">Smart<em>Place</em> AI</div>
+  <div class="nav" id="nav"></div>
+  <div class="dir"><span class="live"><span class="dot"></span> IA operando</span><span id="lojaNome" style="color:var(--t2);font-size:.82rem"></span><button class="sair" id="sair">sair</button></div>
+</div></div>
+<div class="wrap" id="app"></div>
 <script type="module">
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const sb = createClient("https://ssgeggkaweixaqxxtbqm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE");
+const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE";
+const sb = createClient("https://ssgeggkaweixaqxxtbqm.supabase.co", ANON);
 const OAUTH = "https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-oauth";
 const app = document.getElementById("app");
 const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML"],shopee:["Shopee","#FF6B35","S"],tiktok:["TikTok Shop","#4DE8F4","TT"]};
 const AUTOS = {nunca_sem_desconto:["Nunca sem desconto","reaplica antes de vencer"],relampago_no_ar:["Relâmpago sempre no ar","renova sozinha"],
 avaliacoes:["Avaliações respondidas","notas baixas viram alerta"],frete_gratis:["Frete grátis garantido","patrulha os anúncios"],
 sentinela_ads:["Sentinela de verba de ads","avisa antes de acabar"],relatorio_email:["Relatório seg·qua·sex","resumo no seu e-mail"]};
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["anuncios","Anúncios"],["precos","Precificação"],["ia","Fale com a IA"],["canais","Integrações"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+let VIEW = (location.hash||"#dashboard").slice(1);
+let CACHE = { painel:null, dados:null, ads:null, regras:null };
 
-// ── chamadas às ações (JWT da sessão) ──
 async function acaoApi(acao, params){
   const { data:{ session } } = await sb.auth.getSession();
   const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
     method:"POST",
-    headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE" },
+    headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
     body: JSON.stringify({ acao, params: params||{} })
   });
   return r.json();
 }
-const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-
-// ── vendas, pedidos, ads e precificação (dados reais) ──
-async function carregarDados(){
-  const k = document.getElementById("kpis"); if(!k) return;
-  const d = await acaoApi("dados_pedidos");
-  if(!document.getElementById("kpis")) return;
-  if(d.success){
-    const r = d.resultado;
-    k.innerHTML = `
-      <div class="card kpi"><div class="lbl">Vendas 7 dias</div><div class="val">${brl(r.dias7.total)}</div><div class="sub">${r.dias7.pedidos} pedido(s) · ticket ${brl(r.dias7.ticket)}</div></div>
-      <div class="card kpi"><div class="lbl">Vendas 30 dias</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">${r.dias30.pedidos} pedido(s) · ticket ${brl(r.dias30.ticket)}</div></div>
-      ${Object.entries(r.por_canal||{}).map(([c,v])=>`<div class="card kpi"><div class="lbl">${(NOMES[c]||[c])[0]}</div><div class="val" style="color:var(--n)">${brl(v.total)}</div><div class="sub">${v.pedidos} pedido(s) em 30 dias</div></div>`).join("")}`;
-    const pc = document.getElementById("pedcard");
-    pc.innerHTML = (r.ultimos||[]).length ? r.ultimos.map(p=>{
-      const [_, cor, sigla] = NOMES[p.canal]||[p.canal,"#888",p.canal];
-      const item = (p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
-      return `<div class="ped"><span class="badge" style="background:${cor}">${sigla}</span>
-        <span style="flex:1">${esc(item).slice(0,60)}<br><small style="color:var(--t3)">${esc(p.comprador||"")} · ${(p.criado_canal_em||"").slice(0,10)}</small></span>
-        <span style="color:var(--t3);font-size:.7rem">${esc(p.status||"")}</span>
-        <b style="font-family:var(--mono)">${brl(p.total)}</b></div>`;
-    }).join("") : "<p class='vazio'>Sem pedidos sincronizados — clica em ↻ sincronizar agora.</p>";
-  } else {
-    k.innerHTML = `<p class='vazio'>KPIs indisponíveis agora: ${esc(d.error||"")}</p>`;
-  }
-  acaoApi("ads_resumo").then(a=>{
-    const el=document.getElementById("adscard"); if(!el) return;
-    if(!a.success){ el.innerHTML="<b style='font-size:.85rem'>📣 Ads</b><br><small class='vazio'>indisponível agora</small>"; return; }
-    const s=a.resultado.shopee, m=a.resultado.mercado_livre;
-    const partes=[];
-    if(s) partes.push("Saldo Shopee Ads: <b>"+brl(s.saldo)+"</b>");
-    if(m) partes.push(m.advertiser_id?("Mercado Ads ativo — "+esc(m.nome||"")):esc(m.info||""));
-    el.innerHTML = `<b style="font-size:.85rem">📣 Ads</b><br><small style="color:var(--t2)">${partes.join("<br>")||"Conecte um canal pra ver a verba de anúncios"}</small>`;
-  });
-  acaoApi("regras_preco_listar").then(a=>{
-    const el=document.getElementById("precocard"); if(!el) return;
-    const regras=a.success?(a.resultado.regras||[]):[];
-    el.innerHTML = `<b style="font-size:.85rem">🏷️ Precificação</b><br>
-      <small style="color:var(--t2)">${regras.length} regra(s) de piso/teto ativa(s). Gerencie pelo chat: <i>"define piso de R$ 89,90 pro anúncio X"</i> · <i>"tô caro na cinta Y?"</i></small>`;
-  });
-}
-
-// ── chat com a IA (histórico vive na sessão da página) ──
-let HIST = [];
-const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
-function bolhas(extra){
-  const msgs = HIST.map(m=>`<div class="bub ${m.role==="user"?"u":"ai"}">${m.role==="user"?esc(m.content):fmt(m.content)}</div>`).join("");
-  return (msgs || `<div class="bub ai">Oi! 👋 Sou a IA da sua loja. Me pede coisas como: <b>"checa a saúde da loja"</b>, <b>"aplica 15% no que está sem promoção"</b> ou <b>"como estão minhas vendas?"</b></div>`) + (extra||"");
-}
-async function enviarChat(){
-  const inp = document.getElementById("chatIn"), box = document.getElementById("chatMsgs");
-  const txt = (inp.value||"").trim(); if(!txt) return;
-  inp.value = ""; HIST.push({role:"user",content:txt});
-  box.innerHTML = bolhas(`<div class="bub ai" style="opacity:.7">⚙️ trabalhando na sua loja…</div>`);
-  box.scrollTop = box.scrollHeight;
-  const { data:{ session } } = await sb.auth.getSession();
-  let resp;
-  try{
-    const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-chat",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE" },
-      body: JSON.stringify({ mensagens: HIST })
-    });
-    const d = await r.json();
-    resp = d.success ? d.resposta : "Ops: " + d.error;
-  }catch(_){ resp = "Ops, falha de conexão — tenta de novo?"; }
-  HIST.push({role:"assistant",content:resp});
-  box.innerHTML = bolhas(); box.scrollTop = box.scrollHeight;
-}
 
 async function render(){
   const { data:{ session } } = await sb.auth.getSession();
-  if(!session) return telaLogin();
+  if(!session){ document.getElementById("topo").style.display="none"; return telaLogin(); }
   const { data, error } = await sb.rpc("sp_painel");
   if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
-  if(data?.sem_loja) return telaOnboarding();
-  telaPainel(data);
+  if(data?.sem_loja){ document.getElementById("topo").style.display="none"; return telaOnboarding(); }
+  CACHE.painel = data;
+  shell();
 }
 
 function telaLogin(){
@@ -195,86 +150,127 @@ function telaOnboarding(){
   };
 }
 
-function telaPainel(d){
-  const cx = Object.fromEntries((d.conexoes||[]).map(c=>[c.plataforma,c]));
-  const canais = Object.entries(NOMES).map(([k,[nome,cor,sigla]])=>{
-    const c = cx[k];
-    const on = c?.status === "conectada";
-    return `<div class="card conn"><div class="mark" style="background:${cor}">${sigla}</div>
-      <div><b style="font-size:.9rem">${nome}</b><br><small style="color:var(--t3);font-size:.75rem">${on?("conectada "+(c.conectada_em||"").slice(0,10)):"não conectado"}</small></div>
-      ${on?'<span class="state on">● Conectado</span>'
-          :`<a class="state off" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}">Conectar</a>`}</div>`;
-  }).join("");
+// ── casca do ERP: topo fixo + menu + conteúdo por tela ──
+function shell(){
+  const d = CACHE.painel;
+  document.getElementById("topo").style.display="";
+  document.getElementById("lojaNome").textContent = d.loja.nome;
+  document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}</button>`).join("");
+  document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
+  document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
-  const acoes = (d.acoes||[]).length ? (d.acoes||[]).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
-    : "<p class='vazio'>Conecte um canal — as ações da IA vão aparecer aqui.</p>";
-  const autos = (d.automacoes||[]).map(a=>{
-    const [nome,sub] = AUTOS[a.tipo]||[a.tipo,""];
-    return `<div class="card auto"><div><b style="font-size:.85rem">${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
-      <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`;
-  }).join("");
-  app.innerHTML = `
-  <div class="top"><div class="logo">Smart<em>Place</em> AI</div>
-    <div class="live"><span class="dot"></span> IA operando</div>
-    <span style="color:var(--t2);font-size:.85rem">${esc(d.loja.nome)}</span>
-    <button class="sair" id="sair">sair</button></div>
-  ${alertas?'<h2>Alertas</h2>'+alertas:""}
-  <h2>Canais conectados</h2><div class="grid">${canais}</div>
-  <h2>Vendas reais</h2>
-  <div class="grid" id="kpis"><p class="vazio">carregando…</p></div>
-  <h2>Pedidos<button class="mini" id="syncPed">↻ sincronizar agora</button></h2>
-  <div class="card" id="pedcard"><p class="vazio">carregando…</p></div>
-  <h2>Ads e Precificação</h2>
-  <div class="grid">
-    <div class="card" id="adscard"><p class="vazio">carregando…</p></div>
-    <div class="card" id="precocard"><p class="vazio">carregando…</p></div>
-  </div>
-  <h2>A IA trabalhou por você</h2><div class="card feed">${acoes}</div>
-  <h2>Ações rápidas — um clique e a IA faz</h2>
-  <div class="grid">
-    <button class="acao" data-acao="promocao_geral"><b>🏷️ Colocar tudo em promoção</b><small>aplica % nos anúncios sem desconto (ML)</small></button>
-    <button class="acao" data-acao="renovar_relampago"><b>⚡ Renovar relâmpago agora</b><small>3 dias, mesmos preços (TikTok)</small></button>
-    <button class="acao" data-acao="responder_avaliacoes"><b>⭐ Responder avaliações agora</b><small>tom da marca; nota baixa fica pra você (Shopee)</small></button>
-    <button class="acao" data-acao="saude_loja"><b>🩺 Checar saúde da loja</b><small>promoções, frete, saldo de ads, avaliações</small></button>
-  </div>
-  <h2>Fale com a IA</h2>
-  <div class="card chat">
-    <div class="chat" id="chatMsgs" style="max-height:340px;overflow-y:auto">${bolhas()}</div>
-    <div class="inpt"><input id="chatIn" placeholder="Peça qualquer coisa… ex.: aplica 15% no que está sem promoção" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
-      <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
-  </div>
-  <h2>Automações</h2><div class="grid">${autos}</div>`;
-  document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST = []; render(); };
-  document.getElementById("chatSend").onclick = enviarChat;
-  document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, anuncios:viewAnuncios, precos:viewPrecos, ia:viewIA, canais:viewCanais };
+  app.innerHTML = alertas + `<div id="conteudo"></div>`;
+  (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
+}
+
+async function dados(force){
+  if(!CACHE.dados || force){ const r = await acaoApi("dados_pedidos"); CACHE.dados = r.success ? r.resultado : { erro: r.error }; }
+  return CACHE.dados;
+}
+
+// ── Dashboard ──
+function grafBarras(dias){
+  const max = Math.max(...dias.map(d=>d.total), 1);
+  const W=940,H=170,bw=W/dias.length;
+  return `<svg viewBox="0 0 ${W} ${H+26}" style="width:100%;display:block">
+    ${dias.map((d,i)=>{ const h=Math.max(Math.round(d.total/max*H), d.total?4:2);
+      return `<rect x="${(i*bw+2).toFixed(1)}" y="${H-h}" width="${(bw-4).toFixed(1)}" height="${h}" rx="3" fill="${d.total?"#38E1FF":"#16324A"}"><title>${d.dia.slice(8,10)}/${d.dia.slice(5,7)} — ${brl(d.total)}</title></rect>`;}).join("")}
+    ${dias.map((d,i)=> i%5===0?`<text x="${(i*bw+2).toFixed(1)}" y="${H+18}" fill="#6A87A3" font-size="11" font-family="JetBrains Mono,monospace">${d.dia.slice(8,10)}/${d.dia.slice(5,7)}</text>`:"").join("")}
+  </svg>`;
+}
+function viewDashboard(c){
+  const d = CACHE.painel;
+  const feed = (d.acoes||[]).slice(0,6).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
+    || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
+  c.innerHTML = `
+    <h1>Dashboard</h1><div class="sub-h1">Visão geral da operação — dados reais dos seus canais</div>
+    <div class="grid4" id="kpis"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
+    <h2>Vendas por dia — últimos 30 dias</h2>
+    <div class="card" id="grafico"><p class="vazio">carregando…</p></div>
+    <div class="grid" style="margin-top:12px">
+      <div class="card" id="adscard"><b style="font-size:.85rem">📣 Ads</b><br><small class="vazio">carregando…</small></div>
+      <div class="card"><b style="font-size:.85rem">🕒 A IA trabalhou por você</b><div class="feed" style="margin-top:6px">${feed}</div></div>
+    </div>`;
+  dados().then(r=>{
+    const k = document.getElementById("kpis"); if(!k) return;
+    if(r.erro){ k.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
+    k.innerHTML = `
+      <div class="card kpi"><div class="lbl">Vendas 7 dias</div><div class="val">${brl(r.dias7.total)}</div><div class="sub">${r.dias7.pedidos} pedido(s)</div></div>
+      <div class="card kpi"><div class="lbl">Vendas 30 dias</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">${r.dias30.pedidos} pedido(s)</div></div>
+      <div class="card kpi"><div class="lbl">Ticket médio 30d</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>
+      ${Object.entries(r.por_canal||{}).map(([cn,v])=>`<div class="card kpi"><div class="lbl">${(NOMES[cn]||[cn])[0]}</div><div class="val">${brl(v.total)}</div><div class="sub">${v.pedidos} pedido(s) em 30d</div></div>`).join("")}`;
+    const g = document.getElementById("grafico");
+    if(g) g.innerHTML = (r.por_dia||[]).some(x=>x.total) ? grafBarras(r.por_dia) : "<p class='vazio'>Sem vendas no período — sincronize na aba Pedidos.</p>";
+  });
+  acaoApi("ads_resumo").then(a=>{
+    const el=document.getElementById("adscard"); if(!el) return;
+    if(!a.success){ el.innerHTML="<b style='font-size:.85rem'>📣 Ads</b><br><small class='vazio'>indisponível agora</small>"; return; }
+    const s=a.resultado.shopee, m=a.resultado.mercado_livre, partes=[];
+    if(s) partes.push("Saldo Shopee Ads: <b style='color:var(--n)'>"+brl(s.saldo)+"</b>");
+    if(m) partes.push(m.advertiser_id?("Mercado Ads ativo — "+esc(m.nome||"")):esc(m.info||""));
+    el.innerHTML = `<b style="font-size:.85rem">📣 Ads</b><br><small style="color:var(--t2)">${partes.join("<br>")||"Conecte um canal pra acompanhar a verba de anúncios"}</small>`;
+  });
+}
+
+// ── Pedidos ──
+function viewPedidos(c){
+  c.innerHTML = `
+    <h1>Pedidos</h1><div class="sub-h1">Últimos 30 dias, todos os canais</div>
+    <div style="margin:10px 0"><button class="mini" id="syncPed">↻ sincronizar agora</button></div>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>`;
+  const fill = r=>{
+    const pc = document.getElementById("pedcard"); if(!pc) return;
+    if(r.erro){ pc.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
+    pc.innerHTML = (r.ultimos||[]).length ? `<table class="tabela">
+      <tr><th>Canal</th><th>Produto</th><th>Comprador</th><th>Data</th><th>Status</th><th style="text-align:right">Total</th></tr>
+      ${r.ultimos.map(p=>{ const [_,cor,sigla]=NOMES[p.canal]||[p.canal,"#888",p.canal];
+        const item=(p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
+        const ruim=String(p.status).toLowerCase().includes("cancel");
+        return `<tr><td><span class="badge" style="background:${cor}">${sigla}</span></td>
+          <td>${esc(item).slice(0,60)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
+          <td style="color:var(--t2)">${esc(p.comprador||"—")}</td>
+          <td style="color:var(--t3);font-family:var(--mono);font-size:.75rem">${(p.criado_canal_em||"").slice(8,10)}/${(p.criado_canal_em||"").slice(5,7)}</td>
+          <td><span class="pill ${ruim?"ruim":"ok"}">${esc(p.status||"")}</span></td>
+          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.total)}</b></td></tr>`; }).join("")}
+    </table>` : "<p class='vazio'>Sem pedidos sincronizados — clica em ↻ sincronizar agora.</p>";
+  };
+  dados().then(fill);
   document.getElementById("syncPed").onclick = async()=>{
     const b=document.getElementById("syncPed"); b.disabled=true; b.textContent="sincronizando…";
     const r=await acaoApi("sincronizar_pedidos");
     b.disabled=false; b.textContent="↻ sincronizar agora";
-    r.success ? carregarDados() : alert("Ops: "+r.error);
+    if(!r.success) return alert("Ops: "+r.error);
+    fill(await dados(true));
   };
-  carregarDados();
+}
+
+// ── Anúncios (ações rápidas + automações) ──
+function viewAnuncios(c){
+  const d = CACHE.painel;
+  const autos = (d.automacoes||[]).map(a=>{ const [nome,sub] = AUTOS[a.tipo]||[a.tipo,""];
+    return `<div class="card auto"><div><b style="font-size:.85rem">${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
+      <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`; }).join("");
+  c.innerHTML = `
+    <h1>Anúncios</h1><div class="sub-h1">Ações de um clique e automações que rodam sozinhas</div>
+    <h2>Ações rápidas — um clique e a IA faz</h2>
+    <div class="grid">
+      <button class="acao" data-acao="promocao_geral"><b>🏷️ Colocar tudo em promoção</b><small>aplica % nos anúncios sem desconto (ML)</small></button>
+      <button class="acao" data-acao="renovar_relampago"><b>⚡ Renovar relâmpago agora</b><small>3 dias, mesmos preços (TikTok)</small></button>
+      <button class="acao" data-acao="responder_avaliacoes"><b>⭐ Responder avaliações agora</b><small>tom da marca; nota baixa fica pra você (Shopee)</small></button>
+      <button class="acao" data-acao="saude_loja"><b>🩺 Checar saúde da loja</b><small>promoções, frete, saldo de ads, avaliações</small></button>
+    </div>
+    <h2>Automações</h2><div class="grid">${autos}</div>`;
   document.querySelectorAll(".acao").forEach(b=>b.onclick = async()=>{
     const acao = b.dataset.acao;
-    const { data:{ session } } = await sb.auth.getSession();
-    const chama = async (params)=>{
-      b.classList.add("rodando");
-      try{
-        const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
-          method:"POST",
-          headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE" },
-          body: JSON.stringify({ acao, params })
-        });
-        return await r.json();
-      } finally { b.classList.remove("rodando"); }
-    };
+    const chama = async (params)=>{ b.classList.add("rodando"); try{ return await acaoApi(acao, params); } finally { b.classList.remove("rodando"); } };
     if(acao === "promocao_geral"){
       const pct = prompt("Qual desconto aplicar nos anúncios sem promoção? (5 a 60%)","15");
       if(!pct) return;
       const previa = await chama({ percentual:+pct, confirmar:false });
       if(!previa.success) return alert("Ops: " + previa.error);
       const q = previa.resultado.quantidade;
-      if(!q) return alert("Todos os anúncios já estão com promoção — nada a fazer ✅");
+      if(!q) return alert("Todos os anúncios ativos já estão com promoção — nada a fazer ✅");
       if(!confirm("Vou aplicar " + pct + "% de desconto em " + q + " anúncio(s) que estão sem promoção. Confirmar?")) return;
       const r = await chama({ percentual:+pct, confirmar:true });
       alert(r.success ? "Feito! Desconto aplicado em " + r.resultado.aplicados + " anúncio(s) ✅" : "Ops: " + r.error);
@@ -282,12 +278,88 @@ function telaPainel(d){
       const r = await chama({});
       alert(r.success ? "Feito ✅\n\n" + JSON.stringify(r.resultado, null, 1).replace(/[{}"]/g,"") : "Ops: " + r.error);
     }
-    render();
   });
   document.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
     await sb.rpc("sp_alternar_automacao",{ p_tipo: b.dataset.tipo, p_ligada: b.dataset.ligada!=="true" });
-    render();
+    const { data } = await sb.rpc("sp_painel"); CACHE.painel = data; shell();
   });
 }
+
+// ── Precificação ──
+function viewPrecos(c){
+  c.innerHTML = `
+    <h1>Precificação</h1><div class="sub-h1">Regras de piso e teto por produto — a IA nunca fura a faixa</div>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="regrascard"><p class="vazio">carregando…</p></div>
+    <div class="card" style="margin-top:12px"><b style="font-size:.85rem">💬 Como gerenciar</b><br>
+      <small style="color:var(--t2)">Tudo pelo <b>Fale com a IA</b>: <i>"define piso de R$ 89,90 e teto de R$ 149,90 pro anúncio MLB123…"</i> · <i>"tô caro na cinta modeladora?"</i> (compara com os concorrentes do catálogo) · <i>"muda o preço do MLB123 pra R$ 119,90"</i> (só aplica dentro da faixa).</small></div>`;
+  acaoApi("regras_preco_listar").then(a=>{
+    const el=document.getElementById("regrascard"); if(!el) return;
+    const regras=a.success?(a.resultado.regras||[]):[];
+    CACHE.regras = regras;
+    el.innerHTML = regras.length ? `<table class="tabela">
+      <tr><th>Produto</th><th>Anúncio</th><th style="text-align:right">Piso</th><th style="text-align:right">Teto</th></tr>
+      ${regras.map(r=>`<tr><td>${esc(r.titulo||"—")}</td><td style="font-family:var(--mono);font-size:.75rem;color:var(--t3)">${esc(r.produto_id)}</td>
+        <td style="text-align:right;font-family:var(--mono)">${r.piso!=null?brl(r.piso):"—"}</td>
+        <td style="text-align:right;font-family:var(--mono)">${r.teto!=null?brl(r.teto):"—"}</td></tr>`).join("")}
+    </table>` : "<p class='vazio'>Nenhuma regra ainda — crie pelo chat: \"define piso de R$ 89,90 pro anúncio X\".</p>";
+  });
+}
+
+// ── Fale com a IA ──
+let HIST = [];
+const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
+function bolhas(extra){
+  const msgs = HIST.map(m=>`<div class="bub ${m.role==="user"?"u":"ai"}">${m.role==="user"?esc(m.content):fmt(m.content)}</div>`).join("");
+  return (msgs || `<div class="bub ai">Oi! 👋 Sou a IA da sua loja. Me pede coisas como: <b>"quanto vendi esse mês?"</b>, <b>"aplica 15% no que está sem promoção"</b>, <b>"define piso de R$ 89,90 pro anúncio X"</b> ou <b>"checa a saúde da loja"</b>.</div>`) + (extra||"");
+}
+async function enviarChat(){
+  const inp = document.getElementById("chatIn"), box = document.getElementById("chatMsgs");
+  const txt = (inp.value||"").trim(); if(!txt) return;
+  inp.value = ""; HIST.push({role:"user",content:txt});
+  box.innerHTML = bolhas(`<div class="bub ai" style="opacity:.7">⚙️ trabalhando na sua loja…</div>`);
+  box.scrollTop = box.scrollHeight;
+  const { data:{ session } } = await sb.auth.getSession();
+  let resp;
+  try{
+    const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-chat",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
+      body: JSON.stringify({ mensagens: HIST })
+    });
+    const d = await r.json();
+    resp = d.success ? d.resposta : "Ops: " + d.error;
+  }catch(_){ resp = "Ops, falha de conexão — tenta de novo?"; }
+  HIST.push({role:"assistant",content:resp});
+  const box2 = document.getElementById("chatMsgs");
+  if(box2){ box2.innerHTML = bolhas(); box2.scrollTop = box2.scrollHeight; }
+}
+function viewIA(c){
+  c.innerHTML = `
+    <h1>Fale com a IA</h1><div class="sub-h1">Peça em português — ela executa na sua loja (e confirma antes de mexer em preço)</div>
+    <div class="card chat" style="margin-top:10px">
+      <div class="chat" id="chatMsgs" style="max-height:52vh;overflow-y:auto">${bolhas()}</div>
+      <div class="inpt"><input id="chatIn" placeholder="Peça qualquer coisa… ex.: quanto vendi essa semana?" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
+        <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
+    </div>`;
+  document.getElementById("chatSend").onclick = enviarChat;
+  document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
+}
+
+// ── Canais ──
+function viewCanais(c){
+  const d = CACHE.painel;
+  const cx = Object.fromEntries((d.conexoes||[]).map(x=>[x.plataforma,x]));
+  const canais = Object.entries(NOMES).map(([k,[nome,cor,sigla]])=>{
+    const conn = cx[k]; const on = conn?.status === "conectada";
+    return `<div class="card conn"><div class="mark" style="background:${cor}">${sigla}</div>
+      <div><b style="font-size:.9rem">${nome}</b><br><small style="color:var(--t3);font-size:.75rem">${on?("conectada "+(conn.conectada_em||"").slice(0,10)):"não conectado"}</small></div>
+      ${on?'<span class="state on">● Conectado</span>':`<a class="state off" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}">Conectar</a>`}</div>`;
+  }).join("");
+  c.innerHTML = `
+    <h1>Integrações</h1><div class="sub-h1">Conecte suas contas — a autorização é feita no site oficial de cada plataforma</div>
+    <div class="grid" style="margin-top:10px">${canais}</div>`;
+}
+
+window.addEventListener("hashchange",()=>{ const v=(location.hash||"#dashboard").slice(1); if(v!==VIEW){ VIEW=v; if(CACHE.painel) shell(); } });
 render();
 </script></body></html>
