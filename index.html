@@ -97,7 +97,7 @@ const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML"],shopee:["Shopee","
 const AUTOS = {nunca_sem_desconto:["Nunca sem desconto","reaplica antes de vencer"],relampago_no_ar:["Relâmpago sempre no ar","renova sozinha"],
 avaliacoes:["Avaliações respondidas","notas baixas viram alerta"],frete_gratis:["Frete grátis garantido","patrulha os anúncios"],
 sentinela_ads:["Sentinela de verba de ads","avisa antes de acabar"],relatorio_email:["Relatório seg·qua·sex","resumo no seu e-mail"]};
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["anuncios","Anúncios"],["precos","Precificação"],["ia","Fale com a IA"],["canais","Integrações"]];
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -170,7 +170,7 @@ function shell(){
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, anuncios:viewAnuncios, precos:viewPrecos, ia:viewIA, canais:viewCanais };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais };
   app.innerHTML = alertas + `<div id="conteudo"></div>`;
   (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
 }
@@ -190,32 +190,77 @@ function grafBarras(dias){
     ${dias.map((d,i)=> i%5===0?`<text x="${(i*bw+2).toFixed(1)}" y="${H+18}" fill="#6A87A3" font-size="11" font-family="JetBrains Mono,monospace">${d.dia.slice(8,10)}/${d.dia.slice(5,7)}</text>`:"").join("")}
   </svg>`;
 }
+const hoje = off => new Date(Date.now()+off*86400000).toISOString().slice(0,10);
+let FDASH = { de: hoje(-29), ate: hoje(0), canal: "todos" };
+function grafCanais(porCanal){
+  const ents = Object.keys(NOMES).map(k=>[k, porCanal[k]?porCanal[k].total:0]);
+  const max = Math.max(...ents.map(e=>e[1]), 1);
+  const W=460,H=150,bw=W/ents.length;
+  return `<svg viewBox="0 0 ${W} ${H+30}" style="width:100%;display:block">
+    ${ents.map(([k,v],i)=>{ const h=Math.max(Math.round(v/max*H), v?4:2); const [nome,cor]=NOMES[k];
+      return `<rect x="${i*bw+bw*0.22}" y="${H-h}" width="${bw*0.56}" height="${h}" rx="4" fill="${v?"#38E1FF":"#16324A"}"><title>${nome}: ${brl(v)}</title></rect>
+      <text x="${i*bw+bw/2}" y="${H+18}" fill="#6A87A3" font-size="11" text-anchor="middle">${nome}</text>`;}).join("")}
+  </svg>`;
+}
 function viewDashboard(c){
   const d = CACHE.painel;
-  const feed = (d.acoes||[]).slice(0,6).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
-    || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
   c.innerHTML = `
-    <h1>Dashboard</h1><div class="sub-h1">Últimos 30 dias — dados reais dos seus canais</div>
-    <div class="grid4" id="kpis" style="margin-top:10px"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
-    <h2>Valor de pedidos por dia</h2>
-    <div class="card"><div id="grafico"><p class="vazio">carregando…</p></div><div id="situacao" style="margin-top:12px"></div></div>
+    <h1>Dashboard</h1><div class="sub-h1">Vendas dos seus canais — dados reais</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0">
+      <input type="date" class="busca" id="fDe" value="${FDASH.de}" style="min-width:0">
+      <span style="color:var(--t3);font-size:.8rem">até</span>
+      <input type="date" class="busca" id="fAte" value="${FDASH.ate}" style="min-width:0">
+      <span class="chips" id="fCanais" style="margin:0"></span>
+      <button class="mini" id="csv" style="margin-left:auto">⬇ Exportar CSV</button>
+    </div>
+    <div class="grid4" id="kpis"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
+    <div class="card" style="margin-top:12px;padding:10px 18px" id="finstrip"></div>
+    <div class="grid" style="margin-top:12px">
+      <div class="card"><b class="tit">Valor total de pedidos por dia</b><div id="grafico" style="margin-top:8px"><p class="vazio">carregando…</p></div><div id="situacao" style="margin-top:12px"></div></div>
+      <div class="card"><b class="tit">Valor total por canal no período</b><div id="grafcanal" style="margin-top:8px"><p class="vazio">carregando…</p></div></div>
+    </div>
     <h2>Vendas por canal</h2>
     <div class="card" style="padding:6px 14px;overflow-x:auto" id="porcanal"><p class="vazio">carregando…</p></div>
-    <div class="grid" style="margin-top:18px">
-      <div class="card"><b class="tit">🏆 Top 10 produtos mais vendidos</b><div id="topskus" style="margin-top:6px"><p class="vazio">carregando…</p></div></div>
-      <div>
-        <div class="card" id="adscard"><b class="tit">📣 Ads</b><br><small class="vazio">carregando…</small></div>
-        <div class="card" style="margin-top:12px"><b class="tit">🕒 A IA trabalhou por você</b><div class="feed" style="margin-top:6px">${feed}</div></div>
-      </div>
-    </div>`;
-  dados().then(r=>{
+    <h2>🏆 Top 10 produtos mais vendidos</h2>
+    <div class="card" id="topskus"><p class="vazio">carregando…</p></div>`;
+  const chipsCanal = ()=>{
+    document.getElementById("fCanais").innerHTML = [["todos","Todos"],...Object.keys(NOMES).map(k=>[k,NOMES[k][0]])]
+      .map(([v,n])=>`<button class="chip ${FDASH.canal===v?"atv":""}" data-c="${v}">${n}</button>`).join("");
+    document.querySelectorAll("#fCanais .chip").forEach(b=>b.onclick=()=>{ FDASH.canal=b.dataset.c; chipsCanal(); carregarDash(); });
+  };
+  chipsCanal();
+  document.getElementById("fDe").onchange = e=>{ FDASH.de=e.target.value; carregarDash(); };
+  document.getElementById("fAte").onchange = e=>{ FDASH.ate=e.target.value; carregarDash(); };
+  carregarDash();
+}
+async function carregarDash(){
+  const res = await acaoApi("dados_pedidos", FDASH);
+  const r = res.success ? res.resultado : { erro: res.error };
+  {
     const k = document.getElementById("kpis"); if(!k) return;
     if(r.erro){ k.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
     k.innerHTML = `
-      <div class="card kpi"><div class="lbl">Valor total (30d)</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">7 dias: ${brl(r.dias7.total)}</div></div>
-      <div class="card kpi"><div class="lbl">Quantidade de pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">${r.dias7.pedidos} nos últimos 7 dias</div></div>
+      <div class="card kpi"><div class="lbl">Valor total</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">no período filtrado</div></div>
+      <div class="card kpi"><div class="lbl">Quantidade de pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">pagos no período</div></div>
       <div class="card kpi"><div class="lbl">Produtos vendidos</div><div class="val">${r.produtos_vendidos??"—"}</div><div class="sub">peças no período</div></div>
       <div class="card kpi"><div class="lbl">Ticket médio</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>`;
+    const taxas = Object.values(r.por_canal||{}).reduce((s,v)=>s+(v.taxa||0),0);
+    const fs = document.getElementById("finstrip");
+    if(fs) fs.innerHTML = `<div style="display:flex;gap:0;flex-wrap:wrap">
+      <div style="flex:1;min-width:160px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono)">${brl(r.dias30.total)}</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">FATURAMENTO</small></div>
+      <div style="flex:1;min-width:160px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono)">${brl(taxas)}</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">TAXAS DE VENDA (${r.dias30.total?Math.round(taxas/r.dias30.total*100):0}%)</small></div>
+      <div style="flex:1;min-width:160px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono);color:var(--n)">${brl(r.dias30.total-taxas)}</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">LÍQUIDO DE TAXAS</small></div>
+      <div style="flex:1;min-width:160px;padding:6px 14px"><b style="color:var(--t3)">em breve</b><br><small style="color:var(--t3);font-size:.66rem;letter-spacing:.08em">CUSTO · MARGEM · LUCRO</small></div>
+    </div>`;
+    const gc = document.getElementById("grafcanal");
+    if(gc) gc.innerHTML = grafCanais(r.por_canal||{});
+    const csvB = document.getElementById("csv");
+    if(csvB) csvB.onclick = ()=>{
+      const linhas = [["Loja","Pedidos","Ticket Medio","Quantidade","Taxas","Valor"].join(";")];
+      for(const [cn,v] of Object.entries(r.por_canal||{})) linhas.push([(NOMES[cn]||[cn])[0],v.pedidos,(v.pedidos?v.total/v.pedidos:0).toFixed(2),v.quantidade,(v.taxa||0).toFixed(2),v.total.toFixed(2)].join(";"));
+      linhas.push(["TOTAL",r.dias30.pedidos,r.dias30.ticket.toFixed(2),r.produtos_vendidos,taxas.toFixed(2),r.dias30.total.toFixed(2)].join(";"));
+      const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+linhas.join("\n")],{type:"text/csv"})); a.download="vendas-por-canal.csv"; a.click();
+    };
     const g = document.getElementById("grafico");
     if(g) g.innerHTML = (r.por_dia||[]).some(x=>x.total) ? grafBarras(r.por_dia) : "<p class='vazio'>Sem vendas no período — sincronize na aba Pedidos.</p>";
     const st = document.getElementById("situacao");
@@ -248,15 +293,7 @@ function viewDashboard(c){
     if(ts) ts.innerHTML = (r.top_skus||[]).length ? r.top_skus.map((s,i)=>`<div class="sku"><span class="rank">${i+1}º</span>
       <span style="flex:1">${esc(s.titulo)}</span><small style="color:var(--t3)">${s.qtd} un</small><b style="font-family:var(--mono)">${brl(s.total)}</b></div>`).join("")
       : "<p class='vazio'>Sem vendas no período.</p>";
-  });
-  acaoApi("ads_resumo").then(a=>{
-    const el=document.getElementById("adscard"); if(!el) return;
-    if(!a.success){ el.innerHTML="<b class='tit'>📣 Ads</b><br><small class='vazio'>indisponível agora</small>"; return; }
-    const s=a.resultado.shopee, m=a.resultado.mercado_livre, partes=[];
-    if(s) partes.push("Saldo Shopee Ads: <b style='color:var(--n)'>"+brl(s.saldo)+"</b>");
-    if(m) partes.push(m.advertiser_id?("Mercado Ads ativo — "+esc(m.nome||"")):esc(m.info||""));
-    el.innerHTML = `<b class="tit">📣 Ads</b><br><small style="color:var(--t2)">${partes.join("<br>")||"Conecte um canal pra acompanhar a verba de anúncios"}</small>`;
-  });
+  }
 }
 
 // ── Pedidos (fila estilo ERP: etapas, filtros, busca, etiquetas ZPL) ──
@@ -284,6 +321,7 @@ function viewPedidos(c){
       <span class="chips" id="canalChips" style="margin:0"></span>
       <span style="margin-left:auto;display:flex;gap:8px">
         <button class="mini" id="syncPed">↻ Sincronizar</button>
+        <button class="mini" id="btnNfe">🧾 Faturar (EmiNota)</button>
         <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🏷️ Gerar etiquetas (ZPL)</button>
       </span>
     </div>
@@ -308,7 +346,7 @@ function viewPedidos(c){
       .map(([v,n])=>`<button class="chip ${FILTRO.canal===v?"atv":""}" data-cn="${v}">${n} (${porCanalQ[v]||0})</button>`).join("");
     const lista = pedidosFiltrados(r);
     document.getElementById("pedcard").innerHTML = lista.length ? `<table class="tabela">
-      <tr><th><input type="checkbox" id="selTodos"></th><th>Nº</th><th>Data</th><th>Canal</th><th>Cliente</th><th>Produto</th><th style="text-align:right">Total</th><th>Status</th><th>Etiqueta</th></tr>
+      <tr><th><input type="checkbox" id="selTodos"></th><th>Nº</th><th>Data</th><th>Canal</th><th>Cliente</th><th>Produto</th><th style="text-align:right">Total</th><th>Status</th><th>NF-e</th><th>Etiqueta</th></tr>
       ${lista.map(p=>{ const [nome,cor,sigla]=NOMES[p.canal]||[p.canal,"#888",p.canal];
         const cancel=String(p.status).toLowerCase().includes("cancel");
         const item=(p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
@@ -321,6 +359,7 @@ function viewPedidos(c){
           <td>${esc(item).slice(0,46)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
           <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.total)}</b>${p.taxa?`<br><small style="color:var(--t3)">taxa ${brl(p.taxa)}</small>`:""}</td>
           <td><span class="pill ${cancel?"ruim":"ok"}">${esc(p.status||"")}</span></td>
+          <td style="color:var(--t3);font-size:.72rem">—</td>
           <td style="color:var(--t3);font-size:.72rem">${p.envio_id?"🏷️ disponível":"—"}</td></tr>`; }).join("")}
     </table>` : "<p class='vazio'>Nenhum pedido nesse filtro.</p>";
     document.querySelectorAll("#statusTabs .chip").forEach(b=>b.onclick=()=>{ FILTRO.status=b.dataset.st; fill(r); });
@@ -339,6 +378,7 @@ function viewPedidos(c){
     fill(await dados(true));
   };
   document.getElementById("btnEtq").onclick = gerarEtiquetas;
+  document.getElementById("btnNfe").onclick = ()=>alert("🧾 Faturamento automático de NF-e via EmiNota está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
 }
 async function gerarEtiquetas(){
   if(!SEL.size) return alert("Marca os pedidos que você quer imprimir (caixinha da primeira coluna).");
@@ -377,14 +417,16 @@ async function gerarEtiquetas(){
   };
 }
 
-// ── Anúncios (ações rápidas + automações) ──
-function viewAnuncios(c){
+// ── Gestão IA (ações rápidas + chat + automações + histórico) ──
+function viewIA(c){
   const d = CACHE.painel;
   const autos = (d.automacoes||[]).map(a=>{ const [nome,sub] = AUTOS[a.tipo]||[a.tipo,""];
     return `<div class="card auto"><div><b style="font-size:.85rem">${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
       <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`; }).join("");
+  const feed = (d.acoes||[]).slice(0,10).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
+    || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
   c.innerHTML = `
-    <h1>Anúncios</h1><div class="sub-h1">Ações de um clique e automações que rodam sozinhas</div>
+    <h1>Gestão IA</h1><div class="sub-h1">A IA que opera sua loja: comandos de um clique, pedidos em português e automações 24h</div>
     <h2>Ações rápidas — um clique e a IA faz</h2>
     <div class="grid">
       <button class="acao" data-acao="promocao_geral"><b>🏷️ Colocar tudo em promoção</b><small>aplica % nos anúncios sem desconto (ML)</small></button>
@@ -392,7 +434,16 @@ function viewAnuncios(c){
       <button class="acao" data-acao="responder_avaliacoes"><b>⭐ Responder avaliações agora</b><small>tom da marca; nota baixa fica pra você (Shopee)</small></button>
       <button class="acao" data-acao="saude_loja"><b>🩺 Checar saúde da loja</b><small>promoções, frete, saldo de ads, avaliações</small></button>
     </div>
-    <h2>Automações</h2><div class="grid">${autos}</div>`;
+    <h2>Fale com a IA — peça qualquer coisa</h2>
+    <div class="card chat">
+      <div class="chat" id="chatMsgs" style="max-height:44vh;overflow-y:auto">${bolhas()}</div>
+      <div class="inpt"><input id="chatIn" placeholder="ex.: quanto vendi essa semana? · aplica 15% no que está sem promoção" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
+        <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
+    </div>
+    <h2>Automações</h2><div class="grid">${autos}</div>
+    <h2>🕒 A IA trabalhou por você</h2><div class="card feed">${feed}</div>`;
+  document.getElementById("chatSend").onclick = enviarChat;
+  document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
   document.querySelectorAll(".acao").forEach(b=>b.onclick = async()=>{
     const acao = b.dataset.acao;
     const chama = async (params)=>{ b.classList.add("rodando"); try{ return await acaoApi(acao, params); } finally { b.classList.remove("rodando"); } };
@@ -465,16 +516,25 @@ async function enviarChat(){
   const box2 = document.getElementById("chatMsgs");
   if(box2){ box2.innerHTML = bolhas(); box2.scrollTop = box2.scrollHeight; }
 }
-function viewIA(c){
+// ── Ads ──
+function viewAds(c){
   c.innerHTML = `
-    <h1>Fale com a IA</h1><div class="sub-h1">Peça em português — ela executa na sua loja (e confirma antes de mexer em preço)</div>
-    <div class="card chat" style="margin-top:10px">
-      <div class="chat" id="chatMsgs" style="max-height:52vh;overflow-y:auto">${bolhas()}</div>
-      <div class="inpt"><input id="chatIn" placeholder="Peça qualquer coisa… ex.: quanto vendi essa semana?" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
-        <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
-    </div>`;
-  document.getElementById("chatSend").onclick = enviarChat;
-  document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
+    <h1>Ads</h1><div class="sub-h1">Verba de anúncios dos seus canais num lugar só — com a sentinela de saldo de olho</div>
+    <div class="grid" id="adsgrid" style="margin-top:12px"><div class="card"><p class="vazio">carregando…</p></div></div>
+    <div class="card" style="margin-top:12px"><b class="tit">🤖 Sentinela de verba</b><br>
+      <small style="color:var(--t2)">A automação <b>Sentinela de verba de ads</b> (aba Gestão IA) confere o saldo a cada rodada e te avisa por alerta e e-mail antes da verba acabar — pra campanha nunca parar por falta de saldo.</small></div>`;
+  acaoApi("ads_resumo").then(a=>{
+    const el=document.getElementById("adsgrid"); if(!el) return;
+    if(!a.success){ el.innerHTML=`<div class="card"><p class='vazio'>Ads indisponível agora: ${esc(a.error||"")}</p></div>`; return; }
+    const s=a.resultado.shopee, m=a.resultado.mercado_livre;
+    el.innerHTML = `
+      <div class="card kpi"><div class="lbl"><span class="badge" style="background:#FF6B35">S</span> Shopee Ads</div>
+        ${s?`<div class="val" style="color:var(--n)">${brl(s.saldo)}</div><div class="sub">saldo disponível agora</div>`:`<div class="val" style="color:var(--t3)">—</div><div class="sub">conecte a Shopee pra acompanhar</div>`}</div>
+      <div class="card kpi"><div class="lbl"><span class="badge" style="background:#FFE600">ML</span> Mercado Ads</div>
+        ${m?(m.advertiser_id?`<div class="val" style="color:var(--n)">ativo</div><div class="sub">${esc(m.nome||"")}</div>`:`<div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(m.info||"")}</div>`):`<div class="val" style="color:var(--t3)">—</div><div class="sub">conecte o Mercado Livre</div>`}</div>
+      <div class="card kpi"><div class="lbl"><span class="badge" style="background:#4DE8F4">TT</span> TikTok Ads (GMV Max)</div>
+        <div class="val" style="color:var(--t3)">em breve</div><div class="sub">integração em desenvolvimento</div></div>`;
+  });
 }
 
 // ── Canais ──
