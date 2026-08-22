@@ -57,7 +57,12 @@ input:focus{outline:2px solid #38E1FF55}
 .badge{font-size:.62rem;font-weight:800;border-radius:6px;padding:2px 7px;color:#04101C;font-family:var(--disp);white-space:nowrap}
 .pill{font-size:.66rem;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
 .pill.ok{color:var(--n);background:var(--nd)}
+.pill.ok2{color:#3ddc84;background:#3ddc8422}
 .pill.ruim{color:#FF9B9B;background:#FF6B6B22}
+.impop{display:block;width:100%;text-align:left;background:none;border:0;color:var(--t);font-family:var(--sans);font-size:.8rem;padding:8px 10px;cursor:pointer;border-radius:8px}
+.impop:hover{background:var(--p2)}
+#porcanal .tabela{font-size:.74rem}
+#porcanal .tabela td,#porcanal .tabela th{padding:8px 6px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .chip{background:var(--p2);border:1px solid var(--l);color:var(--t2);border-radius:99px;padding:5px 14px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:var(--sans)}
 .chip.atv{background:var(--nd);border-color:#38E1FF66;color:var(--n)}
@@ -348,77 +353,105 @@ async function carregarDash(){
   }
 }
 
-// ── Pedidos (fila estilo ERP: etapas, filtros, busca, etiquetas ZPL) ──
-let FILTRO = { status:"todos", canal:"todos", busca:"" };
+
+// ── Pedidos (fila estilo Vendas Online: etapas, mês, seleção, etiquetas, faturar) ──
+let FILTRO = { etapa:"todas", canal:"todos", busca:"", mes:"todos" };
 let SEL = new Set();
+const ETAPAS = { importado:["Importado","ok"], concluido:["Concluído","ok2"], faturado:["Faturado","ok"], cancelado:["Cancelado","ruim"] };
+const etapaDe = p => p.etapa || (String(p.status).toLowerCase().includes("cancel") ? "cancelado" : "importado");
 function pedidosFiltrados(r){
   return (r.ultimos||[]).filter(p=>{
-    const cancel = String(p.status).toLowerCase().includes("cancel");
-    if(FILTRO.status==="pagos" && cancel) return false;
-    if(FILTRO.status==="cancelados" && !cancel) return false;
+    if(FILTRO.etapa!=="todas" && etapaDe(p)!==FILTRO.etapa) return false;
     if(FILTRO.canal!=="todos" && p.canal!==FILTRO.canal) return false;
+    if(FILTRO.mes!=="todos" && (p.criado_canal_em||"").slice(0,7)!==FILTRO.mes) return false;
     if(FILTRO.busca){ const q=FILTRO.busca.toLowerCase();
-      const alvo=(p.pedido_id+" "+(p.comprador||"")+" "+(p.itens||[]).map(i=>i.titulo||"").join(" ")).toLowerCase();
+      const alvo=(p.pedido_id+" "+(p.comprador||"")+" "+(p.itens||[]).map(i=>(i.titulo||"")+" "+(i.sku||"")).join(" ")).toLowerCase();
       if(!alvo.includes(q)) return false; }
     return true;
   });
 }
+const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 function viewPedidos(c){
   c.innerHTML = `
-    <h1>Pedidos</h1><div class="sub-h1">Fila unificada dos últimos 30 dias — selecione pedidos pra gerar etiquetas</div>
+    <h1>Pedidos</h1><div class="sub-h1">Fila unificada dos seus canais — selecione pedidos pra faturar e imprimir etiquetas</div>
     <div class="grid4" id="pedkpis" style="margin-top:10px"></div>
-    <div class="chips" id="statusTabs"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-      <input class="busca" id="buscaPed" placeholder="🔍 Buscar pedido, cliente, produto…" value="${esc(FILTRO.busca)}">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 4px">
+      <span class="chips" id="etapaTabs" style="margin:0"></span>
+      <select id="mesSel" class="busca" style="min-width:0;margin-left:auto"></select>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+      <input class="busca" id="buscaPed" placeholder="🔍 Buscar pedido, cliente, produto, SKU…" value="${esc(FILTRO.busca)}">
       <span class="chips" id="canalChips" style="margin:0"></span>
-      <span style="margin-left:auto;display:flex;gap:8px">
+      <span style="margin-left:auto;display:flex;gap:8px;position:relative">
         <button class="mini" id="syncPed">↻ Sincronizar</button>
         <button class="mini" id="btnNfe">🧾 Faturar (EmiNota)</button>
-        <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🏷️ Gerar etiquetas (ZPL)</button>
+        <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🏷️ Gerar etiqueta</button>
+        <button class="mini" id="btnImp">🖨️ Imprimir ▾</button>
+        <div id="impMenu" class="card" style="display:none;position:absolute;right:0;top:115%;z-index:30;min-width:260px;padding:8px">
+          <button class="impop" data-imp="etq">Etiquetas de transporte</button>
+          <button class="impop" data-imp="danfe">DANFE Simplificada</button>
+          <button class="impop" data-imp="danfe_etq">DANFE Simplificada + Etiqueta de transporte</button>
+          <button class="impop" data-imp="danfe_pdf">DANFE completa (PDF)</button>
+        </div>
       </span>
     </div>
+    <div id="selBar" style="margin-bottom:8px"></div>
+    <label style="display:flex;align-items:center;gap:8px;color:var(--t3);font-size:.76rem;margin-bottom:8px"><input type="checkbox" id="selTodos"> Selecionar todos da página</label>
     <div class="card" style="padding:6px 14px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>
     <div id="etqArea"></div>`;
+  const somaSel = lista => lista.filter(p=>SEL.has(p.pedido_id)).reduce((s,p)=>s+Number(p.total||0),0);
+  const atualizaSel = lista=>{
+    const n=SEL.size;
+    document.getElementById("btnNfe").textContent = "🧾 Faturar (EmiNota)"+(n?` (${n})`:"");
+    document.getElementById("btnEtq").textContent = "🏷️ Gerar etiqueta"+(n?` (${n})`:"");
+    document.getElementById("selBar").innerHTML = n?`<span class="chip atv" style="cursor:default">${n} pedido(s) · ${brl(somaSel(lista))}</span> <button class="chip" id="limparSel">✕ Limpar seleção</button>`:"";
+    const ls=document.getElementById("limparSel");
+    if(ls) ls.onclick=()=>{ SEL.clear(); document.querySelectorAll(".selPed").forEach(cb=>cb.checked=false); const st=document.getElementById("selTodos"); if(st) st.checked=false; atualizaSel(lista); };
+  };
   const fill = r=>{
     if(!document.getElementById("pedcard")) return;
     if(r.erro){ document.getElementById("pedcard").innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
     const todos = r.ultimos||[];
-    const pagos = todos.filter(p=>!String(p.status).toLowerCase().includes("cancel"));
-    const comEtq = todos.filter(p=>p.envio_id).length;
+    const conta = e => todos.filter(p=>etapaDe(p)===e).length;
+    const nImp=conta("importado"), nConc=conta("concluido"), nCanc=conta("cancelado"), nFat=conta("faturado");
     document.getElementById("pedkpis").innerHTML = `
-      <div class="card kpi"><div class="lbl">Pedidos (30d)</div><div class="val">${todos.length}</div></div>
-      <div class="card kpi"><div class="lbl">Pagos</div><div class="val" style="color:var(--n)">${pagos.length}</div></div>
-      <div class="card kpi"><div class="lbl">Cancelados</div><div class="val" style="color:#FF9B9B">${todos.length-pagos.length}</div></div>
-      <div class="card kpi"><div class="lbl">Com etiqueta disponível</div><div class="val">${comEtq}</div></div>`;
-    document.getElementById("statusTabs").innerHTML = [["todos","Todos",todos.length],["pagos","Pagos",pagos.length],["cancelados","Cancelados",todos.length-pagos.length]]
-      .map(([v,n,q])=>`<button class="chip ${FILTRO.status===v?"atv":""}" data-st="${v}">${n} (${q})</button>`).join("");
+      <div class="card kpi"><div class="val">${nImp}</div><div class="lbl">Importado</div></div>
+      <div class="card kpi"><div class="val">${nFat}</div><div class="lbl">Faturado</div></div>
+      <div class="card kpi"><div class="val" style="color:var(--n)">${nConc}</div><div class="lbl">Concluído / Expedido</div></div>
+      <div class="card kpi"><div class="val" style="color:#FF9B9B">${nCanc}</div><div class="lbl">Cancelado</div></div>`;
+    document.getElementById("etapaTabs").innerHTML = [["importado","Pendentes",nImp],["faturado","Faturados",nFat],["concluido","Concluídos",nConc],["cancelado","Cancelados",nCanc],["todas","Todas",todos.length]]
+      .map(([v,nm,q])=>`<button class="chip ${FILTRO.etapa===v?"atv":""}" data-st="${v}">${nm} (${q})</button>`).join("");
+    const meses=[...new Set(todos.map(p=>(p.criado_canal_em||"").slice(0,7)))].filter(Boolean).sort().reverse();
+    document.getElementById("mesSel").innerHTML = `<option value="todos">Todos os meses</option>`+meses.map(m=>`<option value="${m}" ${FILTRO.mes===m?"selected":""}>${MESES[+m.slice(5,7)-1]}/${m.slice(0,4)}</option>`).join("");
     const porCanalQ = {todos:todos.length};
     todos.forEach(p=>porCanalQ[p.canal]=(porCanalQ[p.canal]||0)+1);
-    document.getElementById("canalChips").innerHTML = [["todos","Todos"],...Object.keys(NOMES).filter(k=>porCanalQ[k]).map(k=>[k,NOMES[k][0]])]
+    document.getElementById("canalChips").innerHTML = [["todos","Todos"],...Object.keys(NOMES).map(k=>[k,NOMES[k][0]])]
       .map(([v,n])=>`<button class="chip ${FILTRO.canal===v?"atv":""}" data-cn="${v}">${n} (${porCanalQ[v]||0})</button>`).join("");
     const lista = pedidosFiltrados(r);
     document.getElementById("pedcard").innerHTML = lista.length ? `<table class="tabela">
-      <tr><th><input type="checkbox" id="selTodos"></th><th>Nº</th><th>Data</th><th>Canal</th><th>Cliente</th><th>Produto</th><th style="text-align:right">Total</th><th>Status</th><th>NF-e</th><th>Etiqueta</th></tr>
+      <tr><th></th><th>Nº</th><th>Data</th><th>Canal</th><th>Cliente</th><th>Produto</th><th style="text-align:right">Total</th><th>Etapa</th><th>NF-e</th><th>Etiqueta</th></tr>
       ${lista.map(p=>{ const [nome,cor,sigla]=NOMES[p.canal]||[p.canal,"#888",p.canal];
-        const cancel=String(p.status).toLowerCase().includes("cancel");
+        const [rot,cls]=ETAPAS[etapaDe(p)]||["—","ok"];
         const item=(p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
         return `<tr>
           <td><input type="checkbox" class="selPed" data-id="${esc(p.pedido_id)}" ${SEL.has(p.pedido_id)?"checked":""}></td>
-          <td style="font-family:var(--mono);font-size:.72rem;color:var(--t3)">#${esc(String(p.pedido_id).slice(-6))}</td>
-          <td style="font-family:var(--mono);font-size:.75rem;color:var(--t3)">${(p.criado_canal_em||"").slice(8,10)}/${(p.criado_canal_em||"").slice(5,7)}</td>
-          <td><span class="badge" style="background:${cor}">${sigla}</span></td>
+          <td style="font-family:var(--mono);font-size:.72rem;color:var(--n)">#${esc(String(p.pedido_id).slice(-6))}</td>
+          <td style="font-family:var(--mono);font-size:.75rem;color:var(--t3);white-space:nowrap">${(p.criado_canal_em||"").slice(8,10)}/${(p.criado_canal_em||"").slice(5,7)}/${(p.criado_canal_em||"").slice(0,4)}</td>
+          <td style="white-space:nowrap"><span class="badge" style="background:${cor}">${sigla}</span> ${nome}</td>
           <td style="color:var(--t2)">${esc(p.comprador||"—")}</td>
-          <td>${esc(item).slice(0,46)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
-          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.total)}</b>${p.taxa?`<br><small style="color:var(--t3)">taxa ${brl(p.taxa)}</small>`:""}</td>
-          <td><span class="pill ${cancel?"ruim":"ok"}">${esc(p.status||"")}</span></td>
+          <td>${esc(item).slice(0,42)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
+          <td style="text-align:right;font-family:var(--mono);white-space:nowrap"><b>${brl(p.total)}</b>${p.taxa?`<br><small style="color:var(--t3)">taxa ${brl(p.taxa)}</small>`:""}</td>
+          <td><span class="pill ${cls}">${rot}</span></td>
           <td style="color:var(--t3);font-size:.72rem">—</td>
           <td style="color:var(--t3);font-size:.72rem">${p.envio_id?"🏷️ disponível":"—"}</td></tr>`; }).join("")}
     </table>` : "<p class='vazio'>Nenhum pedido nesse filtro.</p>";
-    document.querySelectorAll("#statusTabs .chip").forEach(b=>b.onclick=()=>{ FILTRO.status=b.dataset.st; fill(r); });
+    document.querySelectorAll("#etapaTabs .chip").forEach(b=>b.onclick=()=>{ FILTRO.etapa=b.dataset.st; fill(r); });
     document.querySelectorAll("#canalChips .chip").forEach(b=>b.onclick=()=>{ FILTRO.canal=b.dataset.cn; fill(r); });
-    document.querySelectorAll(".selPed").forEach(cb=>cb.onchange=()=>{ cb.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); });
+    document.getElementById("mesSel").onchange = e=>{ FILTRO.mes=e.target.value; fill(r); };
+    document.querySelectorAll(".selPed").forEach(cb=>cb.onchange=()=>{ cb.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); atualizaSel(lista); });
     const st=document.getElementById("selTodos");
-    if(st) st.onchange=()=>{ document.querySelectorAll(".selPed").forEach(cb=>{ cb.checked=st.checked; st.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); }); };
+    if(st) st.onchange=()=>{ document.querySelectorAll(".selPed").forEach(cb=>{ cb.checked=st.checked; st.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); }); atualizaSel(lista); };
+    atualizaSel(lista);
   };
   dados().then(fill);
   document.getElementById("buscaPed").oninput = async e=>{ FILTRO.busca=e.target.value; fill(await dados()); };
@@ -431,6 +464,13 @@ function viewPedidos(c){
   };
   document.getElementById("btnEtq").onclick = gerarEtiquetas;
   document.getElementById("btnNfe").onclick = ()=>alert("🧾 Faturamento automático de NF-e via EmiNota está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
+  const menu=document.getElementById("impMenu");
+  document.getElementById("btnImp").onclick = ()=>{ menu.style.display = menu.style.display==="none"?"block":"none"; };
+  document.querySelectorAll(".impop").forEach(b=>b.onclick=()=>{
+    menu.style.display="none";
+    if(b.dataset.imp==="etq") return gerarEtiquetas();
+    alert("🧾 As DANFEs saem junto com a integração EmiNota (em andamento) — a nota fiscal nasce aqui e a impressão vem em lote, do jeito que você conhece.");
+  });
 }
 async function gerarEtiquetas(){
   if(!SEL.size) return alert("Marca os pedidos que você quer imprimir (caixinha da primeira coluna).");
