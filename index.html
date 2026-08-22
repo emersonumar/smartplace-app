@@ -221,7 +221,11 @@ function viewDashboard(c){
     </div>
     <h2>Vendas por canal</h2>
     <div class="card" style="padding:6px 14px;overflow-x:auto" id="porcanal"><p class="vazio">carregando…</p></div>
-    <h2>🏆 Top 10 produtos mais vendidos</h2>
+    <h2 style="display:flex;align-items:center;gap:12px">🏆 Top 10 mais vendidos
+      <span class="chips" id="topModo" style="margin:0">
+        <button class="chip atv" data-m="var">Por variação</button>
+        <button class="chip" data-m="prod">Por produto</button>
+      </span></h2>
     <div class="card" id="topskus"><p class="vazio">carregando…</p></div>`;
   const chipsCanal = ()=>{
     document.getElementById("fCanais").innerHTML = [["todos","Todos"],...Object.keys(NOMES).map(k=>[k,NOMES[k][0]])]
@@ -289,10 +293,20 @@ async function carregarDash(){
           <td style="text-align:right;font-family:var(--mono)"><b style="color:var(--n)">${brl(r.dias30.total)}</b></td></tr>
       </table>` : "<p class='vazio'>Sem vendas — sincronize na aba Pedidos.</p>";
     }
-    const ts = document.getElementById("topskus");
-    if(ts) ts.innerHTML = (r.top_skus||[]).length ? r.top_skus.map((s,i)=>`<div class="sku"><span class="rank">${i+1}º</span>
-      <span style="flex:1">${esc(s.titulo)}</span><small style="color:var(--t3)">${s.qtd} un</small><b style="font-family:var(--mono)">${brl(s.total)}</b></div>`).join("")
-      : "<p class='vazio'>Sem vendas no período.</p>";
+    const desenhaTop = modo=>{
+      const ts = document.getElementById("topskus"); if(!ts) return;
+      const lista = modo==="prod" ? (r.top_produtos||[]) : (r.top_skus||[]);
+      ts.innerHTML = lista.length ? lista.map((s,i)=>`<div class="sku"><span class="rank">${i+1}º</span>
+        <span style="flex:1">${esc(s.titulo)}${modo!=="prod"&&s.sku?`<br><small style="color:var(--t3);font-family:var(--mono);font-size:.68rem">${esc(s.sku)}</small>`:""}
+        ${modo==="prod"&&s.chave&&s.chave!==s.titulo?`<br><small style="color:var(--t3);font-family:var(--mono);font-size:.68rem">${esc(s.chave)}</small>`:""}</span>
+        <small style="color:var(--t3)">${s.qtd} un</small><b style="font-family:var(--mono)">${brl(s.total)}</b></div>`).join("")
+        : "<p class='vazio'>Sem vendas no período.</p>";
+    };
+    desenhaTop("var");
+    document.querySelectorAll("#topModo .chip").forEach(b=>b.onclick=()=>{
+      document.querySelectorAll("#topModo .chip").forEach(x=>x.classList.remove("atv"));
+      b.classList.add("atv"); desenhaTop(b.dataset.m);
+    });
   }
 }
 
