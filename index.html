@@ -58,6 +58,17 @@ input:focus{outline:2px solid #38E1FF55}
 .pill{font-size:.66rem;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
 .pill.ok{color:var(--n);background:var(--nd)}
 .pill.ruim{color:#FF9B9B;background:#FF6B6B22}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{background:var(--p2);border:1px solid var(--l);color:var(--t2);border-radius:99px;padding:5px 14px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.chip.atv{background:var(--nd);border-color:#38E1FF66;color:var(--n)}
+.busca{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:8px 13px;color:var(--t);font-size:.83rem;min-width:240px}
+.tit{font-size:.85rem}
+.barra{height:6px;background:var(--l);border-radius:99px;margin-top:5px;overflow:hidden}
+.barra i{display:block;height:100%;border-radius:99px}
+.sku{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--l);font-size:.83rem}
+.sku:last-child{border-bottom:0}
+.rank{font-family:var(--mono);color:var(--t3);width:26px;flex:none;font-size:.75rem}
+.etq{border:1px solid var(--l);border-radius:10px;max-width:230px;background:#fff}
 .acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
 .acao:hover{border-color:#38E1FF66}
 .acao b{font-size:.86rem;display:block}
@@ -184,64 +195,185 @@ function viewDashboard(c){
   const feed = (d.acoes||[]).slice(0,6).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
     || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
   c.innerHTML = `
-    <h1>Dashboard</h1><div class="sub-h1">Visão geral da operação — dados reais dos seus canais</div>
-    <div class="grid4" id="kpis"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
-    <h2>Vendas por dia — últimos 30 dias</h2>
-    <div class="card" id="grafico"><p class="vazio">carregando…</p></div>
-    <div class="grid" style="margin-top:12px">
-      <div class="card" id="adscard"><b style="font-size:.85rem">📣 Ads</b><br><small class="vazio">carregando…</small></div>
-      <div class="card"><b style="font-size:.85rem">🕒 A IA trabalhou por você</b><div class="feed" style="margin-top:6px">${feed}</div></div>
+    <h1>Dashboard</h1><div class="sub-h1">Últimos 30 dias — dados reais dos seus canais</div>
+    <div class="grid4" id="kpis" style="margin-top:10px"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
+    <h2>Valor de pedidos por dia</h2>
+    <div class="card"><div id="grafico"><p class="vazio">carregando…</p></div><div id="situacao" style="margin-top:12px"></div></div>
+    <h2>Vendas por canal</h2>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="porcanal"><p class="vazio">carregando…</p></div>
+    <div class="grid" style="margin-top:18px">
+      <div class="card"><b class="tit">🏆 Top 10 produtos mais vendidos</b><div id="topskus" style="margin-top:6px"><p class="vazio">carregando…</p></div></div>
+      <div>
+        <div class="card" id="adscard"><b class="tit">📣 Ads</b><br><small class="vazio">carregando…</small></div>
+        <div class="card" style="margin-top:12px"><b class="tit">🕒 A IA trabalhou por você</b><div class="feed" style="margin-top:6px">${feed}</div></div>
+      </div>
     </div>`;
   dados().then(r=>{
     const k = document.getElementById("kpis"); if(!k) return;
     if(r.erro){ k.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
     k.innerHTML = `
-      <div class="card kpi"><div class="lbl">Vendas 7 dias</div><div class="val">${brl(r.dias7.total)}</div><div class="sub">${r.dias7.pedidos} pedido(s)</div></div>
-      <div class="card kpi"><div class="lbl">Vendas 30 dias</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">${r.dias30.pedidos} pedido(s)</div></div>
-      <div class="card kpi"><div class="lbl">Ticket médio 30d</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>
-      ${Object.entries(r.por_canal||{}).map(([cn,v])=>`<div class="card kpi"><div class="lbl">${(NOMES[cn]||[cn])[0]}</div><div class="val">${brl(v.total)}</div><div class="sub">${v.pedidos} pedido(s) em 30d</div></div>`).join("")}`;
+      <div class="card kpi"><div class="lbl">Valor total (30d)</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">7 dias: ${brl(r.dias7.total)}</div></div>
+      <div class="card kpi"><div class="lbl">Quantidade de pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">${r.dias7.pedidos} nos últimos 7 dias</div></div>
+      <div class="card kpi"><div class="lbl">Produtos vendidos</div><div class="val">${r.produtos_vendidos??"—"}</div><div class="sub">peças no período</div></div>
+      <div class="card kpi"><div class="lbl">Ticket médio</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>`;
     const g = document.getElementById("grafico");
     if(g) g.innerHTML = (r.por_dia||[]).some(x=>x.total) ? grafBarras(r.por_dia) : "<p class='vazio'>Sem vendas no período — sincronize na aba Pedidos.</p>";
+    const st = document.getElementById("situacao");
+    if(st && r.situacao){
+      const tot = r.situacao.pagos + r.situacao.cancelados || 1;
+      st.innerHTML = `<b class="tit">Situação</b>
+        <div style="font-size:.78rem;color:var(--t2);margin-top:6px">Pagos (${r.situacao.pagos}/${tot})</div><div class="barra"><i style="width:${Math.round(r.situacao.pagos/tot*100)}%;background:var(--n)"></i></div>
+        <div style="font-size:.78rem;color:var(--t2);margin-top:6px">Cancelados (${r.situacao.cancelados}/${tot})</div><div class="barra"><i style="width:${Math.round(r.situacao.cancelados/tot*100)}%;background:#FF6B6B"></i></div>`;
+    }
+    const pcEl = document.getElementById("porcanal");
+    if(pcEl){
+      const linhas = Object.entries(r.por_canal||{});
+      pcEl.innerHTML = linhas.length ? `<table class="tabela">
+        <tr><th>Loja</th><th style="text-align:right">Pedidos</th><th style="text-align:right">Ticket médio</th><th style="text-align:right">Quantidade</th><th style="text-align:right">Taxas</th><th style="text-align:right">Valor</th></tr>
+        ${linhas.map(([cn,v])=>{ const [nome,cor,sigla]=NOMES[cn]||[cn,"#888",cn];
+          return `<tr><td><span class="badge" style="background:${cor}">${sigla}</span> ${nome}</td>
+          <td style="text-align:right;font-family:var(--mono)">${v.pedidos}</td>
+          <td style="text-align:right;font-family:var(--mono)">${brl(v.pedidos?v.total/v.pedidos:0)}</td>
+          <td style="text-align:right;font-family:var(--mono)">${v.quantidade??"—"}</td>
+          <td style="text-align:right;font-family:var(--mono);color:var(--t3)">${brl(v.taxa)}</td>
+          <td style="text-align:right;font-family:var(--mono)"><b style="color:var(--n)">${brl(v.total)}</b></td></tr>`;}).join("")}
+        <tr><td><b>TOTAL</b></td><td style="text-align:right;font-family:var(--mono)"><b>${r.dias30.pedidos}</b></td>
+          <td style="text-align:right;font-family:var(--mono)">${brl(r.dias30.ticket)}</td>
+          <td style="text-align:right;font-family:var(--mono)">${r.produtos_vendidos??"—"}</td>
+          <td style="text-align:right;font-family:var(--mono);color:var(--t3)">${brl(linhas.reduce((s,[,v])=>s+(v.taxa||0),0))}</td>
+          <td style="text-align:right;font-family:var(--mono)"><b style="color:var(--n)">${brl(r.dias30.total)}</b></td></tr>
+      </table>` : "<p class='vazio'>Sem vendas — sincronize na aba Pedidos.</p>";
+    }
+    const ts = document.getElementById("topskus");
+    if(ts) ts.innerHTML = (r.top_skus||[]).length ? r.top_skus.map((s,i)=>`<div class="sku"><span class="rank">${i+1}º</span>
+      <span style="flex:1">${esc(s.titulo)}</span><small style="color:var(--t3)">${s.qtd} un</small><b style="font-family:var(--mono)">${brl(s.total)}</b></div>`).join("")
+      : "<p class='vazio'>Sem vendas no período.</p>";
   });
   acaoApi("ads_resumo").then(a=>{
     const el=document.getElementById("adscard"); if(!el) return;
-    if(!a.success){ el.innerHTML="<b style='font-size:.85rem'>📣 Ads</b><br><small class='vazio'>indisponível agora</small>"; return; }
+    if(!a.success){ el.innerHTML="<b class='tit'>📣 Ads</b><br><small class='vazio'>indisponível agora</small>"; return; }
     const s=a.resultado.shopee, m=a.resultado.mercado_livre, partes=[];
     if(s) partes.push("Saldo Shopee Ads: <b style='color:var(--n)'>"+brl(s.saldo)+"</b>");
     if(m) partes.push(m.advertiser_id?("Mercado Ads ativo — "+esc(m.nome||"")):esc(m.info||""));
-    el.innerHTML = `<b style="font-size:.85rem">📣 Ads</b><br><small style="color:var(--t2)">${partes.join("<br>")||"Conecte um canal pra acompanhar a verba de anúncios"}</small>`;
+    el.innerHTML = `<b class="tit">📣 Ads</b><br><small style="color:var(--t2)">${partes.join("<br>")||"Conecte um canal pra acompanhar a verba de anúncios"}</small>`;
   });
 }
 
-// ── Pedidos ──
+// ── Pedidos (fila estilo ERP: etapas, filtros, busca, etiquetas ZPL) ──
+let FILTRO = { status:"todos", canal:"todos", busca:"" };
+let SEL = new Set();
+function pedidosFiltrados(r){
+  return (r.ultimos||[]).filter(p=>{
+    const cancel = String(p.status).toLowerCase().includes("cancel");
+    if(FILTRO.status==="pagos" && cancel) return false;
+    if(FILTRO.status==="cancelados" && !cancel) return false;
+    if(FILTRO.canal!=="todos" && p.canal!==FILTRO.canal) return false;
+    if(FILTRO.busca){ const q=FILTRO.busca.toLowerCase();
+      const alvo=(p.pedido_id+" "+(p.comprador||"")+" "+(p.itens||[]).map(i=>i.titulo||"").join(" ")).toLowerCase();
+      if(!alvo.includes(q)) return false; }
+    return true;
+  });
+}
 function viewPedidos(c){
   c.innerHTML = `
-    <h1>Pedidos</h1><div class="sub-h1">Últimos 30 dias, todos os canais</div>
-    <div style="margin:10px 0"><button class="mini" id="syncPed">↻ sincronizar agora</button></div>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>`;
+    <h1>Pedidos</h1><div class="sub-h1">Fila unificada dos últimos 30 dias — selecione pedidos pra gerar etiquetas</div>
+    <div class="grid4" id="pedkpis" style="margin-top:10px"></div>
+    <div class="chips" id="statusTabs"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <input class="busca" id="buscaPed" placeholder="🔍 Buscar pedido, cliente, produto…" value="${esc(FILTRO.busca)}">
+      <span class="chips" id="canalChips" style="margin:0"></span>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button class="mini" id="syncPed">↻ Sincronizar</button>
+        <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🏷️ Gerar etiquetas (ZPL)</button>
+      </span>
+    </div>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>
+    <div id="etqArea"></div>`;
   const fill = r=>{
-    const pc = document.getElementById("pedcard"); if(!pc) return;
-    if(r.erro){ pc.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
-    pc.innerHTML = (r.ultimos||[]).length ? `<table class="tabela">
-      <tr><th>Canal</th><th>Produto</th><th>Comprador</th><th>Data</th><th>Status</th><th style="text-align:right">Total</th></tr>
-      ${r.ultimos.map(p=>{ const [_,cor,sigla]=NOMES[p.canal]||[p.canal,"#888",p.canal];
+    if(!document.getElementById("pedcard")) return;
+    if(r.erro){ document.getElementById("pedcard").innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
+    const todos = r.ultimos||[];
+    const pagos = todos.filter(p=>!String(p.status).toLowerCase().includes("cancel"));
+    const comEtq = todos.filter(p=>p.envio_id).length;
+    document.getElementById("pedkpis").innerHTML = `
+      <div class="card kpi"><div class="lbl">Pedidos (30d)</div><div class="val">${todos.length}</div></div>
+      <div class="card kpi"><div class="lbl">Pagos</div><div class="val" style="color:var(--n)">${pagos.length}</div></div>
+      <div class="card kpi"><div class="lbl">Cancelados</div><div class="val" style="color:#FF9B9B">${todos.length-pagos.length}</div></div>
+      <div class="card kpi"><div class="lbl">Com etiqueta disponível</div><div class="val">${comEtq}</div></div>`;
+    document.getElementById("statusTabs").innerHTML = [["todos","Todos",todos.length],["pagos","Pagos",pagos.length],["cancelados","Cancelados",todos.length-pagos.length]]
+      .map(([v,n,q])=>`<button class="chip ${FILTRO.status===v?"atv":""}" data-st="${v}">${n} (${q})</button>`).join("");
+    const porCanalQ = {todos:todos.length};
+    todos.forEach(p=>porCanalQ[p.canal]=(porCanalQ[p.canal]||0)+1);
+    document.getElementById("canalChips").innerHTML = [["todos","Todos"],...Object.keys(NOMES).filter(k=>porCanalQ[k]).map(k=>[k,NOMES[k][0]])]
+      .map(([v,n])=>`<button class="chip ${FILTRO.canal===v?"atv":""}" data-cn="${v}">${n} (${porCanalQ[v]||0})</button>`).join("");
+    const lista = pedidosFiltrados(r);
+    document.getElementById("pedcard").innerHTML = lista.length ? `<table class="tabela">
+      <tr><th><input type="checkbox" id="selTodos"></th><th>Nº</th><th>Data</th><th>Canal</th><th>Cliente</th><th>Produto</th><th style="text-align:right">Total</th><th>Status</th><th>Etiqueta</th></tr>
+      ${lista.map(p=>{ const [nome,cor,sigla]=NOMES[p.canal]||[p.canal,"#888",p.canal];
+        const cancel=String(p.status).toLowerCase().includes("cancel");
         const item=(p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
-        const ruim=String(p.status).toLowerCase().includes("cancel");
-        return `<tr><td><span class="badge" style="background:${cor}">${sigla}</span></td>
-          <td>${esc(item).slice(0,60)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
+        return `<tr>
+          <td><input type="checkbox" class="selPed" data-id="${esc(p.pedido_id)}" ${SEL.has(p.pedido_id)?"checked":""}></td>
+          <td style="font-family:var(--mono);font-size:.72rem;color:var(--t3)">#${esc(String(p.pedido_id).slice(-6))}</td>
+          <td style="font-family:var(--mono);font-size:.75rem;color:var(--t3)">${(p.criado_canal_em||"").slice(8,10)}/${(p.criado_canal_em||"").slice(5,7)}</td>
+          <td><span class="badge" style="background:${cor}">${sigla}</span></td>
           <td style="color:var(--t2)">${esc(p.comprador||"—")}</td>
-          <td style="color:var(--t3);font-family:var(--mono);font-size:.75rem">${(p.criado_canal_em||"").slice(8,10)}/${(p.criado_canal_em||"").slice(5,7)}</td>
-          <td><span class="pill ${ruim?"ruim":"ok"}">${esc(p.status||"")}</span></td>
-          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.total)}</b></td></tr>`; }).join("")}
-    </table>` : "<p class='vazio'>Sem pedidos sincronizados — clica em ↻ sincronizar agora.</p>";
+          <td>${esc(item).slice(0,46)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
+          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.total)}</b>${p.taxa?`<br><small style="color:var(--t3)">taxa ${brl(p.taxa)}</small>`:""}</td>
+          <td><span class="pill ${cancel?"ruim":"ok"}">${esc(p.status||"")}</span></td>
+          <td style="color:var(--t3);font-size:.72rem">${p.envio_id?"🏷️ disponível":"—"}</td></tr>`; }).join("")}
+    </table>` : "<p class='vazio'>Nenhum pedido nesse filtro.</p>";
+    document.querySelectorAll("#statusTabs .chip").forEach(b=>b.onclick=()=>{ FILTRO.status=b.dataset.st; fill(r); });
+    document.querySelectorAll("#canalChips .chip").forEach(b=>b.onclick=()=>{ FILTRO.canal=b.dataset.cn; fill(r); });
+    document.querySelectorAll(".selPed").forEach(cb=>cb.onchange=()=>{ cb.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); });
+    const st=document.getElementById("selTodos");
+    if(st) st.onchange=()=>{ document.querySelectorAll(".selPed").forEach(cb=>{ cb.checked=st.checked; st.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); }); };
   };
   dados().then(fill);
+  document.getElementById("buscaPed").oninput = async e=>{ FILTRO.busca=e.target.value; fill(await dados()); };
   document.getElementById("syncPed").onclick = async()=>{
     const b=document.getElementById("syncPed"); b.disabled=true; b.textContent="sincronizando…";
     const r=await acaoApi("sincronizar_pedidos");
-    b.disabled=false; b.textContent="↻ sincronizar agora";
+    b.disabled=false; b.textContent="↻ Sincronizar";
     if(!r.success) return alert("Ops: "+r.error);
     fill(await dados(true));
+  };
+  document.getElementById("btnEtq").onclick = gerarEtiquetas;
+}
+async function gerarEtiquetas(){
+  if(!SEL.size) return alert("Marca os pedidos que você quer imprimir (caixinha da primeira coluna).");
+  const area = document.getElementById("etqArea");
+  area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">⚙️ Buscando etiquetas oficiais no Mercado Livre…</p></div>`;
+  const r = await acaoApi("gerar_etiquetas", { pedido_ids:[...SEL] });
+  if(!r.success){ area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">Ops: ${esc(r.error)}</p></div>`; return; }
+  const zpl = r.resultado.zpl;
+  const blocos = zpl.split("^XZ").map(s=>s.trim()).filter(s=>s.includes("^XA")).map(s=>s+"\n^XZ");
+  area.innerHTML = `<div class="card" style="margin-top:14px">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <b class="tit">🏷️ ${r.resultado.etiquetas} etiqueta(s) pronta(s)</b>
+      <span style="margin-left:auto;display:flex;gap:8px">
+        <button class="mini" id="baixarZpl">⬇ Baixar .zpl (impressora térmica)</button>
+        <button class="mini" id="imprimirEtq">🖨️ Imprimir</button>
+      </span>
+    </div>
+    <div id="etqImgs" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px"><p class="vazio">renderizando pré-visualização…</p></div>
+  </div>`;
+  document.getElementById("baixarZpl").onclick = ()=>{
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([zpl],{type:"text/plain"}));
+    a.download="etiquetas-smartplace.zpl"; a.click();
+  };
+  const imgs = document.getElementById("etqImgs"); imgs.innerHTML="";
+  for(const bloco of blocos){
+    try{
+      const resp = await fetch("https://api.labelary.com/v1/printers/8dpmm/labels/4x6/0/",{ method:"POST", headers:{ "Accept":"image/png" }, body: bloco });
+      if(resp.ok){ const img=document.createElement("img"); img.className="etq"; img.src=URL.createObjectURL(await resp.blob()); imgs.appendChild(img); }
+    }catch(_){ /* pré-visualização é cortesia; o .zpl é o oficial */ }
+  }
+  if(!imgs.children.length) imgs.innerHTML="<p class='vazio'>Pré-visualização indisponível — o arquivo .zpl continua válido pra impressora.</p>";
+  document.getElementById("imprimirEtq").onclick = ()=>{
+    const w=window.open("","_blank");
+    w.document.write("<html><head><title>Etiquetas</title></head><body style='margin:0'>"+[...imgs.querySelectorAll("img")].map(i=>`<img src="${i.src}" style="width:100mm;display:block;page-break-after:always">`).join("")+"</body></html>");
+    w.document.close(); setTimeout(()=>w.print(), 400);
   };
 }
 
