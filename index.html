@@ -99,9 +99,13 @@ const sb = createClient("https://ssgeggkaweixaqxxtbqm.supabase.co", ANON);
 const OAUTH = "https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-oauth";
 const app = document.getElementById("app");
 const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML"],shopee:["Shopee","#FF6B35","S"],tiktok:["TikTok Shop","#4DE8F4","TT"]};
-const AUTOS = {nunca_sem_desconto:["Nunca sem desconto","reaplica antes de vencer"],relampago_no_ar:["Relâmpago sempre no ar","renova sozinha"],
-avaliacoes:["Avaliações respondidas","notas baixas viram alerta"],frete_gratis:["Frete grátis garantido","patrulha os anúncios"],
-sentinela_ads:["Sentinela de verba de ads","avisa antes de acabar"],relatorio_email:["Relatório seg·qua·sex","resumo no seu e-mail"]};
+const AUTOS = {
+nunca_sem_desconto:["Nunca sem desconto","reaplica o desconto que venceu, com o mesmo % de antes","mercado_livre"],
+relampago_no_ar:["Relâmpago sempre no ar","quando a oferta relâmpago acaba, renova 3 dias com os mesmos preços","tiktok"],
+avaliacoes:["Avaliações respondidas","responde 4-5★ no tom da marca; nota baixa vira alerta pra você","shopee"],
+frete_gratis:["Frete grátis garantido","patrulha os anúncios e reativa o frete grátis que caiu","mercado_livre"],
+sentinela_ads:["Sentinela de verba de ads","confere o saldo de ads e avisa antes de acabar","shopee"],
+relatorio_email:["Relatório seg·qua·sex","resumo de tudo que a IA fez, no seu e-mail",null]};
 const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
@@ -512,19 +516,29 @@ async function gerarEtiquetas(){
 // ── Gestão IA (ações rápidas + chat + automações + histórico) ──
 function viewIA(c){
   const d = CACHE.painel;
-  const autos = (d.automacoes||[]).map(a=>{ const [nome,sub] = AUTOS[a.tipo]||[a.tipo,""];
-    return `<div class="card auto"><div><b style="font-size:.85rem">${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
+  const autos = (d.automacoes||[]).map(a=>{ const [nome,sub,cn] = AUTOS[a.tipo]||[a.tipo,"",null];
+    const bd = cn && NOMES[cn] ? `<span class="badge" style="background:${NOMES[cn][1]}">${NOMES[cn][2]}</span> ` : "📧 ";
+    return `<div class="card auto"><div><b style="font-size:.85rem">${bd}${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
       <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`; }).join("");
+  const on = new Set((d.conexoes||[]).filter(x=>x.status==="conectada").map(x=>x.plataforma));
+  const acx = (acao,canal)=> on.has(canal)
+    ? `<button class="chip acx" data-acao="${acao}">${NOMES[canal][0]}</button>`
+    : `<button class="chip" disabled style="opacity:.4">${NOMES[canal][0]} · conecte</button>`;
+  const breve = canal => `<button class="chip" disabled style="opacity:.4">${NOMES[canal][0]} · em breve</button>`;
   const feed = (d.acoes||[]).slice(0,10).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
     || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
   c.innerHTML = `
     <h1>Gestão IA</h1><div class="sub-h1">A IA que opera sua loja: comandos de um clique, pedidos em português e automações 24h</div>
-    <h2>Ações rápidas — um clique e a IA faz</h2>
+    <h2>Ações rápidas — escolha o canal e a IA executa agora</h2>
     <div class="grid">
-      <button class="acao" data-acao="promocao_geral"><b>🏷️ Colocar tudo em promoção</b><small>aplica % nos anúncios sem desconto (ML)</small></button>
-      <button class="acao" data-acao="renovar_relampago"><b>⚡ Renovar relâmpago agora</b><small>3 dias, mesmos preços (TikTok)</small></button>
-      <button class="acao" data-acao="responder_avaliacoes"><b>⭐ Responder avaliações agora</b><small>tom da marca; nota baixa fica pra você (Shopee)</small></button>
-      <button class="acao" data-acao="saude_loja"><b>🩺 Checar saúde da loja</b><small>promoções, frete, saldo de ads, avaliações</small></button>
+      <div class="card"><b class="tit">🏷️ Colocar em promoção</b><br><small style="color:var(--t3);font-size:.75rem">aplica % de desconto nos anúncios que estão sem promoção</small>
+        <div class="chips" style="margin:10px 0 0">${acx("promocao_geral","mercado_livre")}${breve("shopee")}</div></div>
+      <div class="card"><b class="tit">⚡ Oferta relâmpago</b><br><small style="color:var(--t3);font-size:.75rem">renova a oferta por 3 dias com os mesmos preços</small>
+        <div class="chips" style="margin:10px 0 0">${acx("renovar_relampago","tiktok")}${breve("shopee")}</div></div>
+      <div class="card"><b class="tit">⭐ Responder avaliações</b><br><small style="color:var(--t3);font-size:.75rem">responde no tom da marca; nota baixa fica pra você</small>
+        <div class="chips" style="margin:10px 0 0">${acx("responder_avaliacoes","shopee")}${breve("mercado_livre")}</div></div>
+      <div class="card"><b class="tit">🩺 Checar saúde da loja</b><br><small style="color:var(--t3);font-size:.75rem">promoções, frete grátis, saldo de ads e avaliações pendentes</small>
+        <div class="chips" style="margin:10px 0 0">${on.size?`<button class="chip acx" data-acao="saude_loja">Todos os canais conectados</button>`:`<button class="chip" disabled style="opacity:.4">conecte um canal</button>`}</div></div>
     </div>
     <h2>Fale com a IA — peça qualquer coisa</h2>
     <div class="card chat">
@@ -536,9 +550,9 @@ function viewIA(c){
     <h2>🕒 A IA trabalhou por você</h2><div class="card feed">${feed}</div>`;
   document.getElementById("chatSend").onclick = enviarChat;
   document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
-  document.querySelectorAll(".acao").forEach(b=>b.onclick = async()=>{
+  document.querySelectorAll(".acx").forEach(b=>b.onclick = async()=>{
     const acao = b.dataset.acao;
-    const chama = async (params)=>{ b.classList.add("rodando"); try{ return await acaoApi(acao, params); } finally { b.classList.remove("rodando"); } };
+    const chama = async (params)=>{ b.disabled=true; b.style.opacity=".5"; try{ return await acaoApi(acao, params); } finally { b.disabled=false; b.style.opacity=""; } };
     if(acao === "promocao_geral"){
       const pct = prompt("Qual desconto aplicar nos anúncios sem promoção? (5 a 60%)","15");
       if(!pct) return;
@@ -563,21 +577,46 @@ function viewIA(c){
 // ── Precificação ──
 function viewPrecos(c){
   c.innerHTML = `
-    <h1>Precificação</h1><div class="sub-h1">Regras de piso e teto por produto — a IA nunca fura a faixa</div>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="regrascard"><p class="vazio">carregando…</p></div>
-    <div class="card" style="margin-top:12px"><b style="font-size:.85rem">💬 Como gerenciar</b><br>
-      <small style="color:var(--t2)">Tudo pelo <b>Fale com a IA</b>: <i>"define piso de R$ 89,90 e teto de R$ 149,90 pro anúncio MLB123…"</i> · <i>"tô caro na cinta modeladora?"</i> (compara com os concorrentes do catálogo) · <i>"muda o preço do MLB123 pra R$ 119,90"</i> (só aplica dentro da faixa).</small></div>`;
-  acaoApi("regras_preco_listar").then(a=>{
+    <h1>Precificação</h1><div class="sub-h1">Regras de piso e teto por produto — a IA nunca vende fora da faixa que você definir</div>
+    <div class="card" style="margin-top:10px"><b class="tit">➕ Nova regra</b>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
+        <input class="busca" id="rgProd" placeholder="Código do anúncio (ex.: MLB5449279904)" style="flex:2;min-width:220px">
+        <input class="busca" id="rgPiso" type="number" step="0.01" placeholder="Piso R$ (nunca abaixo)" style="flex:1;min-width:140px">
+        <input class="busca" id="rgTeto" type="number" step="0.01" placeholder="Teto R$ (nunca acima)" style="flex:1;min-width:140px">
+        <button class="mini" id="rgSalvar" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">Salvar regra</button>
+      </div>
+      <small style="color:var(--t3);font-size:.73rem">O código está na URL do anúncio ou na aba Pedidos. Pelo chat também funciona: <i>"define piso de R$ 89,90 pro anúncio X"</i> · <i>"tô caro na cinta Y?"</i></small></div>
+    <h2>Regras ativas</h2>
+    <div class="card" style="padding:6px 14px;overflow-x:auto" id="regrascard"><p class="vazio">carregando…</p></div>`;
+  const carrega = ()=>acaoApi("regras_preco_listar").then(a=>{
     const el=document.getElementById("regrascard"); if(!el) return;
     const regras=a.success?(a.resultado.regras||[]):[];
     CACHE.regras = regras;
     el.innerHTML = regras.length ? `<table class="tabela">
-      <tr><th>Produto</th><th>Anúncio</th><th style="text-align:right">Piso</th><th style="text-align:right">Teto</th></tr>
+      <tr><th>Produto</th><th>Anúncio</th><th style="text-align:right">Piso</th><th style="text-align:right">Teto</th><th></th></tr>
       ${regras.map(r=>`<tr><td>${esc(r.titulo||"—")}</td><td style="font-family:var(--mono);font-size:.75rem;color:var(--t3)">${esc(r.produto_id)}</td>
         <td style="text-align:right;font-family:var(--mono)">${r.piso!=null?brl(r.piso):"—"}</td>
-        <td style="text-align:right;font-family:var(--mono)">${r.teto!=null?brl(r.teto):"—"}</td></tr>`).join("")}
-    </table>` : "<p class='vazio'>Nenhuma regra ainda — crie pelo chat: \"define piso de R$ 89,90 pro anúncio X\".</p>";
+        <td style="text-align:right;font-family:var(--mono)">${r.teto!=null?brl(r.teto):"—"}</td>
+        <td style="text-align:right"><button class="chip rgDel" data-id="${esc(r.produto_id)}" style="color:#FF9B9B">excluir</button></td></tr>`).join("")}
+    </table>` : "<p class='vazio'>Nenhuma regra ainda — crie na caixa acima.</p>";
+    document.querySelectorAll(".rgDel").forEach(b=>b.onclick=async()=>{
+      if(!confirm("Excluir a regra de "+b.dataset.id+"?")) return;
+      await acaoApi("regras_preco_excluir",{ produto_id:b.dataset.id }); carrega();
+    });
   });
+  carrega();
+  document.getElementById("rgSalvar").onclick = async()=>{
+    const prod=(document.getElementById("rgProd").value||"").trim();
+    const piso=document.getElementById("rgPiso").value, teto=document.getElementById("rgTeto").value;
+    if(!prod) return alert("Informe o código do anúncio (ex.: MLB...)");
+    if(!piso && !teto) return alert("Informe pelo menos o piso ou o teto");
+    const b=document.getElementById("rgSalvar"); b.disabled=true; b.textContent="salvando…";
+    const r=await acaoApi("regras_preco_definir",{ produto_id:prod, ...(piso?{piso:+piso}:{}), ...(teto?{teto:+teto}:{}) });
+    b.disabled=false; b.textContent="Salvar regra";
+    if(!r.success) return alert("Ops: "+r.error);
+    document.getElementById("rgProd").value=""; document.getElementById("rgPiso").value=""; document.getElementById("rgTeto").value="";
+    carrega();
+  };
 }
 
 // ── Fale com a IA ──
