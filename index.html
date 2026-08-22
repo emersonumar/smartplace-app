@@ -81,6 +81,24 @@ input:focus{outline:2px solid #38E1FF55}
 .sku:last-child{border-bottom:0}
 .rank{font-family:var(--mono);color:var(--t3);width:26px;flex:none;font-size:.75rem}
 .etq{border:1px solid var(--l);border-radius:10px;max-width:230px;background:#fff}
+@media(max-width:720px){
+  .topo-in{gap:8px;padding:0 12px}
+  .nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{padding:12px 11px;white-space:nowrap;font-size:.82rem}
+  .dir{margin-left:auto}
+  .live{display:none}
+  .wrap{padding:6px 12px 40px}
+  .busca{min-width:0;flex:1;width:100%}
+  .grid,.grid4{grid-template-columns:1fr 1fr}
+  .kpi .val{font-size:1.15rem}
+  .tabela{font-size:.8rem}
+  .tabela td,.tabela th{padding:10px 8px}
+  h1{font-size:1.1rem}
+  .bub{max-width:100%}
+  .etq{max-width:100%}
+}
+@media(max-width:460px){ .grid,.grid4{grid-template-columns:1fr} }
 .acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
 .acao:hover{border-color:#38E1FF66}
 .acao b{font-size:.86rem;display:block}
@@ -627,7 +645,7 @@ function viewPrecos(c){
     <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
       <div class="card">
         <b class="tit">🧮 Calculadora de preço</b>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
           <label class="lb">Canal<select id="cCanal" class="busca w100">
             <option value="ml">Mercado Livre</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select></label>
           <label class="lb">Custo do produto (R$)<input id="cCusto" type="number" step="0.01" class="busca w100" placeholder="0,00"></label>
@@ -635,9 +653,10 @@ function viewPrecos(c){
           <label class="lb">Taxa do canal (%)<input id="cTaxa" type="number" step="0.1" class="busca w100" value="14"></label>
           <label class="lb">Taxa fixa (R$)<input id="cFixa" type="number" step="0.01" class="busca w100" value="6"></label>
           <label class="lb">Imposto (%)<input id="cImp" type="number" step="0.01" class="busca w100" value="0"></label>
-          <label class="lb">Ads sobre o preço (%)<input id="cAds" type="number" step="0.1" class="busca w100" value="0"></label>
+          <label class="lb">Ads (%) — quanto do preço vai pra anúncio<input id="cAds" type="number" step="0.1" class="busca w100" value="0" placeholder="ex.: 10"></label>
           <label class="lb">Margem desejada (%)<input id="cMarg" type="number" step="0.1" class="busca w100" value="20"></label>
         </div>
+        <small style="color:var(--t3);font-size:.72rem;display:block;margin-top:10px">💡 <b>Ads (%)</b> = quanto do preço você reinveste em anúncio. Exemplo: se teu ROAS é <b>5</b> (cada R$ 1 de ads traz R$ 5 de venda), coloca <b>20</b>. ROAS 10 → 10. Produto sem anúncio pago → deixa <b>0</b>.</small>
         <button class="btn" id="cCalc" style="width:100%;margin-top:12px;font-size:.9rem">Calcular preço</button>
       </div>
       <div class="card" id="cRes"><b class="tit">Resultado</b><p class="vazio">Preencha o custo e clique em Calcular.</p></div>
