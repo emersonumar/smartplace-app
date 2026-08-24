@@ -620,22 +620,225 @@ function viewEtiquetas(c){
   };
   if(ZPL_ATUAL) prev();
 }
-async function renderZpl(zpl){
-  ZPL_ATUAL = zpl;
-  const box = document.getElementById("zplPrev"); if(!box) return;
-  const blocos = String(zpl).split("^XZ").map(s=>s.trim()).filter(s=>s.includes("^XA")).map(s=>s+"\n^XZ");
-  if(!blocos.length){ box.innerHTML="<p class='vazio'>Nenhuma etiqueta válida (precisa de ^XA…^XZ).</p>"; return; }
-  const tam=document.getElementById("zplTam")?.value||"4x6", dpi=document.getElementById("zplDpi")?.value||"8dpmm";
-  box.innerHTML = `<p class="vazio">renderizando ${blocos.length} etiqueta(s)…</p>`;
-  const imgs=[];
-  for(const b of blocos){
-    try{
-      const r = await fetch(`https://api.labelary.com/v1/printers/${dpi}/labels/${tam}/0/`,{method:"POST",headers:{"Accept":"image/png"},body:b});
-      if(r.ok) imgs.push(URL.createObjectURL(await r.blob()));
-    }catch(_){ /* prévia é cortesia; o .zpl é o oficial */ }
-  }
-  box.innerHTML = imgs.length? imgs.map(u=>`<img class="etq" src="${u}">`).join("") : "<p class='vazio'>Pré-visualização indisponível agora — o arquivo .zpl continua válido pra impressora.</p>";
+// ── Motor ZPL (porta fiel do visualizador do ERPCB: parser + Z64 + GFA + proxy) ──
+function cleanZPLSyntax(z){return z.replace(/\^XA\s*,\s*/gi,"^XA").replace(/,\s*\^FS/gi,"^FS").replace(/\^FS\s*,/gi,"^FS").replace(/,\s*\^XZ/gi,"^XZ").trim();}
+function getLabelDimensions(b,dpmm){
+  const pw=b.match(/\^PW(\d+)/i), ll=b.match(/\^LL(\d+)/i);
+  if(pw&&ll) return {widthIn:(+pw[1]/(dpmm*25.4)).toFixed(2), heightIn:(+ll[1]/(dpmm*25.4)).toFixed(2)};
+  const gfaTotal=(b.match(/\^GFA/gi)||[]).length, fdTotal=(b.match(/\^FD/gi)||[]).length;
+  const g=gfaTotal===1&&fdTotal===0? b.match(/\^GFA,(\d+),(\d+),(\d+),/i):null;
+  if(g){const w=+g[3]*8,h=Math.floor(+g[2]/+g[3]);return {widthIn:(w/(dpmm*25.4)).toFixed(2),heightIn:(h/(dpmm*25.4)).toFixed(2)};}
+  return {widthIn:"3.94",heightIn:"5.91"};
 }
+function extractDGRBlocks(z){
+  const re=/~DGR:([^,]+),(\d+),(\d+),:Z64:([A-Za-z0-9+\/=]+):[0-9A-Fa-f]{4}/g, out=[]; let m;
+  while((m=re.exec(z))!==null) out.push({name:m[1],totalBytes:+m[2],bytesPerRow:+m[3],z64data:m[4],start:m.index,end:re.lastIndex});
+  return out;
+}
+function classifyBlock(raw){
+  const b=raw.replace(/\^XA|\^XZ/gi,"").trim();
+  const fd=(b.match(/\^FD/gi)||[]).length, gfa=(b.match(/\^GFA/gi)||[]).length, ft=(b.match(/\^FT/gi)||[]).length, fo=(b.match(/\^FO/gi)||[]).length;
+  const pq=/\^PQ/i.test(b), mcy=/\^MCY/i.test(b), idr=/\^IDR/i.test(b), xgr=/\^XGR/i.test(b);
+  if(/\^FXDANFEMETA=/i.test(b)) return "danfe";
+  if(mcy&&fd===0&&gfa===0) return "skip";
+  if(idr&&fd===0) return "skip";
+  if(xgr&&fd===0) return "skip";
+  if(b.trim().length<20) return "skip";
+  if(fd>=20&&gfa>=5) return "danfe";
+  if(fd===0&&gfa===1&&raw.length>5000) return "shipping-gfa";
+  if(ft>=3&&pq&&raw.length>500) return "shipping-zpl";
+  if(fd>=5&&pq&&raw.length>500) return "shipping-zpl";
+  if(fo>=5&&fd>=5&&raw.length>500) return "shipping-zpl";
+  return "skip";
+}
+function extractDanfeItems(raw){
+  const meta=raw.match(/\^FXDANFEMETA=(\{[\s\S]*?\})\^FS/i);
+  if(meta){try{const p=JSON.parse(meta[1]);const its=Array.isArray(p&&p.items)?p.items:[];
+    return its.map(i=>({codigo:String(i.codigo||""),nome:String(i.nome||""),tamanho:String(i.tamanho||""),cor:String(i.cor||""),qty:String(i.qty||"1")})).filter(i=>i.nome);
+  }catch(_){/* cai no parse de ^FD */}}
+  const fields=[]; const re=/\^FD([\s\S]*?)\^FS/gi; let m;
+  while((m=re.exec(raw))!==null){const t=m[1].replace(/\^FH\\\s*/gi,"").replace(/\\c6/gi,"ã").replace(/\\e3/gi,"â").replace(/\\e1/gi,"á").replace(/\\cd/gi,"Í").replace(/\\a1/gi,"í").replace(/\\a7/gi,"º").replace(/\\87/gi,"ç").replace(/\\80/gi,"Ç").replace(/\\e5/gi,"õ").replace(/\\f5/gi,"õ").replace(/\\e0/gi,"à").replace(/\\&/gi," ").trim(); if(t) fields.push(t);}
+  const items=[];
+  for(const f of fields){
+    const q=f.match(/\b(\d+(?:[\.,]\d+)?)\s*UN(?:\s*X\s*\d+(?:[\.,]\d+)?)?\b/i);
+    if(!q||q.index==null) continue;
+    const prefix=f.slice(0,q.index).replace(/\s*-\s*$/,"").trim(); if(!prefix) continue;
+    const parts=prefix.split(/\s*-\s*/).map(p=>p.trim()).filter(Boolean);
+    let codigo="", resto=prefix;
+    if(parts.length>1&&/^[A-Za-z0-9\-_.]+$/.test(parts[0])&&parts[0].length<=20){codigo=parts[0];resto=parts.slice(1).join(" - ").trim();}
+    const tm=resto.match(/\b[Tt]amanho[:\s]*([A-Za-zÀ-ú0-9]{1,10})/), cm=resto.match(/\b[Cc]or\b[:\s]*([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+){0,2})/);
+    const nome=resto.replace(/\s*\b[Tt]amanho[:\s]*[A-Za-zÀ-ú0-9]{1,10}/g,"").replace(/\s*\b[Cc]or\b[:\s]*[A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+){0,2}/g,"").replace(/;+/g,"").replace(/\s{2,}/g," ").trim();
+    if(!nome) continue;
+    items.push({codigo,nome,tamanho:tm?tm[1].trim():"",cor:cm?cm[1].trim():"",qty:(q[1]||"1").trim().replace(/[\.,]00?$/,"")||"1"});
+  }
+  return items;
+}
+function parseZPLBlocos(zpl){
+  const xa=[]; const xaRe=/\^XA([\s\S]*?)\^XZ/gi; let m;
+  while((m=xaRe.exec(zpl))!==null) xa.push({raw:m[0],start:m.index,source:"xa"});
+  const all=[...xa,...extractDGRBlocks(zpl).map(b=>({...b,source:"dgr"}))].sort((a,b)=>a.start-b.start);
+  const labels=[]; let lastDanfe=null;
+  for(const bl of all){
+    if(bl.source==="xa"){
+      const t=classifyBlock(bl.raw);
+      if(t==="danfe"){labels.push({raw:bl.raw,type:"shipping-zpl",isDanfe:true,danfeItems:extractDanfeItems(bl.raw)});lastDanfe=bl.raw;}
+      else if(t==="shipping-gfa"){labels.push({raw:bl.raw,type:"shipping-gfa",danfeItems:lastDanfe?extractDanfeItems(lastDanfe):[]});lastDanfe=null;}
+      else if(t==="shipping-zpl"){labels.push({raw:bl.raw,type:"shipping-zpl",danfeItems:lastDanfe?extractDanfeItems(lastDanfe):[]});lastDanfe=null;}
+    } else {
+      labels.push({type:"shipping-z64",bytesPerRow:bl.bytesPerRow,z64data:bl.z64data,danfeItems:lastDanfe?extractDanfeItems(lastDanfe):[]});
+      lastDanfe=null;
+    }
+  }
+  return {labels,totalBlocks:all.length,skipped:all.length-labels.length};
+}
+function extractAllGraphicDefinitions(zpl){
+  const defs=new Map();
+  for(const m of zpl.matchAll(/~DG([^,]+),[\s\S]*?(?=(?:~DG|~DY|\^XA|\^XZ|$))/gi)){
+    if(m[1]&&m[0]) defs.set(m[1].trim().toUpperCase(),m[0].trim());
+  }
+  return defs;
+}
+function extractGraphicReferences(z){
+  const refs=new Set();
+  for(const m of z.matchAll(/\^XG([^,\^\s]+),/gi)) if(m[1]) refs.add(m[1].trim().toUpperCase());
+  return [...refs];
+}
+function grfToImageData(rawBytes,bpr){
+  const w=bpr*8, rows=Math.floor(rawBytes.length/bpr), img=new ImageData(w,rows);
+  for(let r=0;r<rows;r++) for(let bc=0;bc<bpr;bc++){const by=rawBytes[r*bpr+bc];
+    for(let bit=0;bit<8;bit++){const px=bc*8+bit; if(px>=w) continue;
+      const black=(by>>(7-bit))&1, idx=(r*w+px)*4, c=black?0:255;
+      img.data[idx]=c; img.data[idx+1]=c; img.data[idx+2]=c; img.data[idx+3]=255;}}
+  return {imageData:img,widthPx:w,totalRows:rows};
+}
+async function zplDescomprimir(comp){
+  for(const f of ["deflate","deflate-raw"]){
+    try{
+      const st=new DecompressionStream(f), wr=st.writable.getWriter();
+      wr.write(comp.buffer); wr.close();
+      const chunks=[]; const rd=st.readable.getReader();
+      while(true){const {done,value}=await rd.read(); if(done) break; chunks.push(value);}
+      const tot=chunks.reduce((s,c)=>s+c.length,0); if(!tot) continue;
+      const out=new Uint8Array(tot); let off=0;
+      for(const c of chunks){out.set(c,off); off+=c.length;}
+      return out;
+    }catch(_){continue;}
+  }
+  throw new Error("Z64: falha ao descomprimir");
+}
+async function decodeZ64(bpr,z64){
+  const bin=atob(z64), comp=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) comp[i]=bin.charCodeAt(i);
+  return grfToImageData(await zplDescomprimir(comp),bpr);
+}
+function decodeGFA(gfaData,bpr){
+  const rle={};
+  "GHIJKLMNOPQRSTUVWXYZ".split("").forEach((c,i)=>rle[c]=i+1);
+  "ghijklmnopqrstuvwxyz".split("").forEach((c,i)=>rle[c]=(i+1)*20);
+  const rows=[]; let lastRow=new Uint8Array(bpr), hex="";
+  const flush=()=>{const p=hex.padEnd(bpr*2,"0"), row=new Uint8Array(bpr);
+    for(let i=0;i<bpr;i++) row[i]=parseInt(p.slice(i*2,i*2+2),16)||0;
+    rows.push(row); lastRow=row.slice(); hex="";};
+  const data=gfaData.replace(/[\n\r\s]/g,"");
+  for(let i=0;i<data.length;i++){const c=data[i];
+    if(c===":"){if(hex) flush(); rows.push(lastRow.slice());}
+    else if(c===","){flush();}
+    else if(c==="!"){const rem=bpr*2-hex.length; if(rem>0) hex+="F".repeat(rem); flush();}
+    else if(rle[c]!==undefined){const n=rle[c]; i++; if(i<data.length) hex+=data[i].repeat(n);}
+    else if(/[0-9A-Fa-f]/.test(c)) hex+=c;
+    if(hex.length>=bpr*2) flush();
+  }
+  if(hex) flush();
+  const flat=new Uint8Array(rows.length*bpr);
+  rows.forEach((r,i)=>flat.set(r,i*bpr));
+  return grfToImageData(flat,bpr);
+}
+async function renderShippingLabelToBlobUrl(label){
+  let dec;
+  if(label.type==="shipping-z64"){ dec=await decodeZ64(label.bytesPerRow,label.z64data); }
+  else{
+    const g=label.raw.match(/\^GFA,(\d+),(\d+),(\d+),([\s\S]*?)(?=\^FS|\^FO|\^XZ)/i);
+    if(!g) throw new Error("^GFA não reconhecido");
+    dec=decodeGFA(g[4],+g[3]);
+  }
+  const {imageData,widthPx,totalRows}=dec;
+  if(!widthPx||!totalRows) throw new Error("bitmap vazio");
+  const bmp=document.createElement("canvas"); bmp.width=widthPx; bmp.height=totalRows;
+  bmp.getContext("2d").putImageData(imageData,0,0);
+  const CANVAS_W=800, CANVAS_H=1200, PAD=16, MAX_ITEMS=5;
+  const dItems=label.danfeItems||[], items=dItems.slice(0,MAX_ITEMS), hasMore=dItems.length>MAX_ITEMS, hasItems=items.length>0;
+  const STRIP_H=hasItems? 32+items.length*58+(hasMore?24:0)+20 : 0;
+  const LABEL_H=CANVAS_H-STRIP_H;
+  const cv=document.createElement("canvas"); cv.width=CANVAS_W; cv.height=CANVAS_H;
+  const ctx=cv.getContext("2d");
+  ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+  const scale=Math.min(CANVAS_W/widthPx, LABEL_H/totalRows);
+  const nw=Math.floor(widthPx*scale), nh=Math.floor(totalRows*scale);
+  ctx.drawImage(bmp,Math.floor((CANVAS_W-nw)/2),0,nw,nh);
+  if(hasItems){
+    const sepY=nh+2;
+    ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,sepY); ctx.lineTo(CANVAS_W,sepY); ctx.stroke();
+    ctx.strokeStyle="#bbb"; ctx.lineWidth=1; ctx.setLineDash([10,7]);
+    ctx.strokeRect(PAD,sepY+6,CANVAS_W-PAD*2,CANVAS_H-sepY-12); ctx.setLineDash([]);
+    const tx=PAD+12; let ty=sepY+12; ctx.textBaseline="top";
+    ctx.fillStyle="#999"; ctx.font="bold 17px monospace";
+    ctx.fillText(`ITENS DO PEDIDO (${dItems.length})`,tx,ty); ty+=22;
+    ctx.strokeStyle="#ddd"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;
+    items.forEach((it,i)=>{
+      const qtyTxt=it.qty?`x${it.qty}`:""; let qw=0;
+      if(qtyTxt){ctx.font="bold 22px monospace"; qw=ctx.measureText(qtyTxt).width;
+        ctx.fillStyle="#111"; ctx.fillText(qtyTxt,CANVAS_W-PAD-14-qw,ty+2);}
+      ctx.font="bold 20px monospace"; ctx.fillStyle="#111";
+      let nome=it.nome; const maxW=CANVAS_W-PAD*2-(qw?qw+30:24);
+      while(ctx.measureText(nome).width>maxW&&nome.length>8) nome=nome.slice(0,-4)+"...";
+      ctx.fillText(nome,tx,ty);
+      ctx.font="bold 19px monospace"; ctx.fillStyle="#333";
+      const parts=[]; if(it.codigo) parts.push(`Ref: ${it.codigo}`); if(it.tamanho) parts.push(`Tam: ${it.tamanho}`); if(it.cor) parts.push(`Cor: ${it.cor}`);
+      ctx.fillText(parts.join("    "),tx,ty+28); ty+=54;
+      if(i<items.length-1){ctx.strokeStyle="#eee"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;}
+    });
+    if(hasMore){const ex=dItems.length-MAX_ITEMS;
+      ctx.font="italic 16px monospace"; ctx.fillStyle="#aaa";
+      ctx.fillText(`e mais ${ex} item${ex>1?"s":""}...`,tx,ty+6);}
+  }
+  return new Promise((ok,err)=>cv.toBlob(b=>b?ok(URL.createObjectURL(b)):err(new Error("blob")),"image/png"));
+}
+async function renderViaProxySP(zplBlock,dpmm){
+  const clean=cleanZPLSyntax(zplBlock);
+  const {widthIn,heightIn}=getLabelDimensions(clean,dpmm);
+  const {data:{session}}=await sb.auth.getSession();
+  const r=await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-zpl",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token,"apikey":ANON},
+    body:JSON.stringify({zpl:clean,width:+widthIn,height:+heightIn,density:dpmm})
+  });
+  if(!r.ok){let e=""; try{e=(await r.json()).error||"";}catch(_){e=String(r.status);} throw new Error("renderizador: "+e);}
+  return URL.createObjectURL(await r.blob());
+}
+async function renderZpl(zpl){
+  ZPL_ATUAL=zpl;
+  const box=document.getElementById("zplPrev"); if(!box) return;
+  const dpmm=+((document.getElementById("zplDpi")||{}).value||"8dpmm").replace("dpmm","")||8;
+  const res=parseZPLBlocos(zpl);
+  if(!res.labels.length){box.innerHTML="<p class='vazio'>Nenhuma etiqueta reconhecida (precisa de blocos ^XA…^XZ ou ~DGR).</p>"; return;}
+  box.innerHTML=`<p class="vazio">renderizando ${res.labels.length} etiqueta(s)…</p>`;
+  const defs=extractAllGraphicDefinitions(zpl);
+  const urls=[], erros=[];
+  for(const lab of res.labels){
+    try{
+      if(lab.type==="shipping-z64"||lab.type==="shipping-gfa") urls.push(await renderShippingLabelToBlobUrl(lab));
+      else{
+        const refs=extractGraphicReferences(lab.raw);
+        const pre=refs.map(r=>defs.get(r)).filter(Boolean).join("\n");
+        urls.push(await renderViaProxySP((pre?pre+"\n":"")+lab.raw,dpmm));
+      }
+    }catch(e){erros.push(String(e&&e.message||e).slice(0,140));}
+  }
+  let html=urls.map(u=>`<img class="etq" src="${u}">`).join("");
+  if(erros.length) html+=`<p class="vazio">⚠️ ${erros.length} etiqueta(s) falharam: ${esc(erros[0])}</p>`;
+  box.innerHTML=html||"<p class='vazio'>Não consegui renderizar — me manda esse ZPL que eu ajusto o motor.</p>";
+}
+
 
 // ── Precificação (calculadora + tabela precificadora) ──
 const PRESET_CANAL = { ml:["Mercado Livre",14,6], shopee:["Shopee",20,4], tiktok:["TikTok Shop",13.6,2] };
