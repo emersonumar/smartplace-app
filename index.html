@@ -575,43 +575,58 @@ function viewIA(c){
   });
 }
 
-// ── Etiquetas (visualizador ZPL) ──
+// ── Etiquetas (Visualizador ZPL — idêntico ao do ERPCB) ──
 let ZPL_ATUAL = "";
+const LABEL_SIZES = [
+  ["40x40mm (Produto)","1.57","1.57"],["100x150mm (Envio)","4","6"],["100x75mm","4","3"],
+  ["100x100mm","4","4"],["80x40mm","3.15","1.57"],["50x30mm","2","1.18"]];
+const DPI_OPTIONS = [["6 dpmm (152 dpi)","6dpmm"],["8 dpmm (203 dpi)","8dpmm"],["12 dpmm (300 dpi)","12dpmm"],["24 dpmm (600 dpi)","24dpmm"]];
 function viewEtiquetas(c){
   c.innerHTML = `
-    <h1>Etiquetas — Visualizador ZPL</h1><div class="sub-h1">Gere pela aba Pedidos ou cole um código ZPL, visualize e mande pra impressora</div>
+    <h1>Visualizador ZPL</h1><div class="sub-h1">Gere pela aba Pedidos ou cole um código ZPL — renderiza etiqueta de envio, DANFE e etiqueta com produtos</div>
     <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
-      <div class="card">
-        <div style="display:flex;align-items:center;gap:8px"><b class="tit">Código ZPL</b>
-          <span style="margin-left:auto;display:flex;gap:8px">
-            <button class="mini" id="zplArq">⇪ Carregar arquivo</button>
-            <input type="file" id="zplFile" accept=".zpl,.txt" style="display:none">
-            <button class="mini" id="zplLimpar">Limpar</button>
-          </span></div>
-        <textarea id="zplTxt" style="width:100%;height:260px;margin-top:10px;background:var(--p2);border:1px solid var(--l);border-radius:10px;color:var(--t);font-family:var(--mono);font-size:.75rem;padding:10px" placeholder="^XA&#10;^FO50,50^A0N,50,50^FDSmartPlace^FS&#10;^XZ"></textarea>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center">
-          <select id="zplTam" class="busca" style="min-width:0"><option value="4x6">100×150 mm (envio)</option><option value="4x4">100×100 mm</option><option value="2x1">50×25 mm (produto)</option></select>
-          <select id="zplDpi" class="busca" style="min-width:0"><option value="8dpmm">8 dpmm (203 dpi)</option><option value="12dpmm">12 dpmm (300 dpi)</option></select>
-          <button class="btn" id="zplVer" style="padding:9px 18px;font-size:.85rem;margin-left:auto">👁 Visualizar</button>
+      <div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:8px"><b class="tit">Código ZPL</b>
+            <span style="margin-left:auto;display:flex;gap:8px">
+              <button class="mini" id="zplArq">⇪ Carregar Arquivo</button>
+              <input type="file" id="zplFile" accept=".zpl,.txt" style="display:none">
+              <button class="mini" id="zplLimpar">↺ Limpar</button>
+            </span></div>
+          <textarea id="zplTxt" style="width:100%;height:230px;margin-top:10px;background:var(--p2);border:1px solid var(--l);border-radius:10px;color:var(--t);font-family:var(--mono);font-size:.75rem;padding:10px" placeholder="Cole o código ZPL aqui...&#10;&#10;^XA&#10;^FO50,50^A0N,50,50^FDHello World^FS&#10;^XZ"></textarea>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <b class="tit">Configurações</b>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <label class="lb">Tamanho da Etiqueta<select id="zplTam" class="busca w100">${LABEL_SIZES.map((s,i)=>`<option value="${s[1]}x${s[2]}" ${i===1?"selected":""}>${s[0]}</option>`).join("")}</select></label>
+            <label class="lb">Resolução (DPI)<select id="zplDpi" class="busca w100">${DPI_OPTIONS.map(d=>`<option value="${d[1]}" ${d[1]==="8dpmm"?"selected":""}>${d[0]}</option>`).join("")}</select></label>
+          </div>
+          <label class="lb" style="margin-top:10px;display:flex">Modo de Renderização
+            <select id="zplModo" class="busca w100">
+              <option value="etiqueta_produtos" selected>Etiqueta + Produtos</option>
+              <option value="etiqueta_pura">Etiqueta Pura (DANFE/Envio)</option>
+            </select></label>
+          <button class="btn" id="zplVer" style="width:100%;margin-top:12px;font-size:.9rem">👁 Visualizar Etiqueta(s)</button>
         </div>
       </div>
       <div class="card">
         <div style="display:flex;align-items:center;gap:8px"><b class="tit">Pré-visualização</b>
-          <span style="margin-left:auto;display:flex;gap:8px">
-            <button class="mini" id="zplBaixar">⬇ Baixar .zpl</button>
+          <span style="margin-left:auto">
             <button class="mini" id="zplImp" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🖨️ Imprimir</button>
           </span></div>
-        <div id="zplPrev" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px"><p class="vazio">Cole o ZPL e clique em Visualizar — ou gere pela aba Pedidos.</p></div>
+        <div id="zplPrev" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;justify-content:center">
+          <p class="vazio" style="text-align:center;padding:60px 10px">👁<br><br>Cole o código ZPL e clique em "Visualizar"<br><small>Suporta etiquetas ~DGR Z64 e ^GFA (RLE-ASCII)</small></p>
+        </div>
       </div>
     </div>`;
   const txt = document.getElementById("zplTxt");
   txt.value = ZPL_ATUAL || "";
   const prev = ()=>renderZpl(txt.value);
   document.getElementById("zplVer").onclick = prev;
-  document.getElementById("zplLimpar").onclick = ()=>{ txt.value=""; ZPL_ATUAL=""; document.getElementById("zplPrev").innerHTML="<p class='vazio'>vazio</p>"; };
+  document.getElementById("zplModo").onchange = ()=>{ if((txt.value||"").trim()) prev(); };
+  document.getElementById("zplLimpar").onclick = ()=>{ txt.value=""; ZPL_ATUAL=""; document.getElementById("zplPrev").innerHTML="<p class='vazio' style='text-align:center;padding:60px 10px'>👁<br><br>Cole o código ZPL e clique em \"Visualizar\"<br><small>Suporta etiquetas ~DGR Z64 e ^GFA (RLE-ASCII)</small></p>"; };
   document.getElementById("zplArq").onclick = ()=>document.getElementById("zplFile").click();
   document.getElementById("zplFile").onchange = async e=>{ const f=e.target.files[0]; if(f){ txt.value = await f.text(); prev(); } };
-  document.getElementById("zplBaixar").onclick = ()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([txt.value],{type:"text/plain"})); a.download="etiquetas-smartplace.zpl"; a.click(); };
   document.getElementById("zplImp").onclick = ()=>{
     const imgs=[...document.querySelectorAll("#zplPrev img")]; if(!imgs.length) return alert("Clique em Visualizar primeiro.");
     const w=window.open("","_blank");
@@ -815,28 +830,82 @@ async function renderViaProxySP(zplBlock,dpmm){
   if(!r.ok){let e=""; try{e=(await r.json()).error||"";}catch(_){e=String(r.status);} throw new Error("renderizador: "+e);}
   return URL.createObjectURL(await r.blob());
 }
+async function composeLabelWithStrip(blobUrl, danfeItems){
+  const CANVAS_W=800, CANVAS_H=1200, PAD=16, MAX_ITEMS=5;
+  const items=(danfeItems||[]).slice(0,MAX_ITEMS), hasMore=(danfeItems||[]).length>MAX_ITEMS, hasItems=items.length>0;
+  const STRIP_H=hasItems? 32+items.length*58+(hasMore?24:0)+20 : 0;
+  const LABEL_H=CANVAS_H-STRIP_H;
+  const cv=document.createElement("canvas"); cv.width=CANVAS_W; cv.height=CANVAS_H;
+  const ctx=cv.getContext("2d");
+  ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
+  await new Promise((ok,err)=>{
+    const img=new Image(); img.crossOrigin="anonymous";
+    img.onload=()=>{
+      const scale=Math.min(CANVAS_W/img.width, LABEL_H/img.height);
+      const nw=Math.floor(img.width*scale), nh=Math.floor(img.height*scale);
+      ctx.drawImage(img,Math.floor((CANVAS_W-nw)/2),0,nw,nh);
+      if(hasItems){
+        const sepY=nh+2;
+        ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,sepY); ctx.lineTo(CANVAS_W,sepY); ctx.stroke();
+        ctx.strokeStyle="#bbb"; ctx.lineWidth=1; ctx.setLineDash([10,7]);
+        ctx.strokeRect(PAD,sepY+6,CANVAS_W-PAD*2,CANVAS_H-sepY-12); ctx.setLineDash([]);
+        const tx=PAD+12; let ty=sepY+12; ctx.textBaseline="top";
+        ctx.fillStyle="#999"; ctx.font="bold 17px monospace";
+        ctx.fillText(`ITENS DO PEDIDO (${danfeItems.length})`,tx,ty); ty+=22;
+        ctx.strokeStyle="#ddd"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;
+        items.forEach((it,i)=>{
+          const qtyTxt=it.qty?`x${it.qty}`:""; let qw=0;
+          if(qtyTxt){ctx.font="bold 22px monospace"; qw=ctx.measureText(qtyTxt).width;
+            ctx.fillStyle="#111"; ctx.fillText(qtyTxt,CANVAS_W-PAD-14-qw,ty+2);}
+          ctx.font="bold 20px monospace"; ctx.fillStyle="#111";
+          let nome=it.nome; const maxW=CANVAS_W-PAD*2-(qw?qw+30:24);
+          while(ctx.measureText(nome).width>maxW&&nome.length>8) nome=nome.slice(0,-4)+"...";
+          ctx.fillText(nome,tx,ty);
+          ctx.font="bold 19px monospace"; ctx.fillStyle="#333";
+          const parts=[]; if(it.codigo) parts.push(`Ref: ${it.codigo}`); if(it.tamanho) parts.push(`Tam: ${it.tamanho}`); if(it.cor) parts.push(`Cor: ${it.cor}`);
+          ctx.fillText(parts.join("    "),tx,ty+28); ty+=54;
+          if(i<items.length-1){ctx.strokeStyle="#eee"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;}
+        });
+        if(hasMore){const ex=danfeItems.length-MAX_ITEMS;
+          ctx.font="italic 16px monospace"; ctx.fillStyle="#aaa";
+          ctx.fillText(`e mais ${ex} item${ex>1?"s":""}...`,tx,ty+6);}
+      }
+      ok();
+    };
+    img.onerror=err; img.src=blobUrl;
+  });
+  return new Promise((ok,err)=>cv.toBlob(b=>b?ok(URL.createObjectURL(b)):err(new Error("blob")),"image/png"));
+}
 async function renderZpl(zpl){
   ZPL_ATUAL=zpl;
   const box=document.getElementById("zplPrev"); if(!box) return;
   const dpmm=+((document.getElementById("zplDpi")||{}).value||"8dpmm").replace("dpmm","")||8;
+  const modo=(document.getElementById("zplModo")||{}).value||"etiqueta_produtos";
   const res=parseZPLBlocos(zpl);
-  if(!res.labels.length){box.innerHTML="<p class='vazio'>Nenhuma etiqueta reconhecida (precisa de blocos ^XA…^XZ ou ~DGR).</p>"; return;}
-  box.innerHTML=`<p class="vazio">renderizando ${res.labels.length} etiqueta(s)…</p>`;
+  if(!res.labels.length){box.innerHTML="<p class='vazio'>Nenhuma etiqueta renderizável foi encontrada no ZPL enviado.</p>"; return;}
+  box.innerHTML=`<p class="vazio">renderizando…</p>`;
   const defs=extractAllGraphicDefinitions(zpl);
   const urls=[], erros=[];
   for(const lab of res.labels){
+    // no modo Etiqueta + Produtos, o bloco DANFE não vira imagem (os produtos já vão na faixa)
+    if(modo==="etiqueta_produtos" && lab.isDanfe) continue;
     try{
-      if(lab.type==="shipping-z64"||lab.type==="shipping-gfa") urls.push(await renderShippingLabelToBlobUrl(lab));
-      else{
+      if(lab.type==="shipping-z64"){
+        urls.push(await renderShippingLabelToBlobUrl({...lab, danfeItems: modo==="etiqueta_pura"?[]:lab.danfeItems}));
+      } else if(lab.type==="shipping-gfa"){
+        urls.push(await renderShippingLabelToBlobUrl({...lab, danfeItems: modo==="etiqueta_pura"?[]:lab.danfeItems}));
+      } else {
         const refs=extractGraphicReferences(lab.raw);
         const pre=refs.map(r=>defs.get(r)).filter(Boolean).join("\n");
-        urls.push(await renderViaProxySP((pre?pre+"\n":"")+lab.raw,dpmm));
+        const proxyUrl=await renderViaProxySP((pre?pre+"\n":"")+lab.raw,dpmm);
+        if(modo==="etiqueta_pura" || !(lab.danfeItems||[]).length){ urls.push(proxyUrl); }
+        else { const comp=await composeLabelWithStrip(proxyUrl,lab.danfeItems); URL.revokeObjectURL(proxyUrl); urls.push(comp); }
       }
     }catch(e){erros.push(String(e&&e.message||e).slice(0,140));}
   }
   let html=urls.map(u=>`<img class="etq" src="${u}">`).join("");
   if(erros.length) html+=`<p class="vazio">⚠️ ${erros.length} etiqueta(s) falharam: ${esc(erros[0])}</p>`;
-  box.innerHTML=html||"<p class='vazio'>Não consegui renderizar — me manda esse ZPL que eu ajusto o motor.</p>";
+  box.innerHTML=html||"<p class='vazio'>Nenhuma etiqueta renderizável foi encontrada no ZPL enviado.</p>";
 }
 
 
