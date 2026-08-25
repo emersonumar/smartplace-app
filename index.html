@@ -1164,7 +1164,7 @@ function viewCanais(c){
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
             ${on?`<button class="mini" id="itgSync" style="background:var(--n);border-color:var(--n);color:#04101C">🔄 Sincronizar agora</button>`:""}
-            <a class="mini" id="itgConectar" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#1A0F00"}" href="${OAUTH}?fluxo=authorize&plataforma=${CANAL_SEL}&loja=${d.loja.id}">${on?"Reconectar":"Conectar"}</a>
+            <a class="mini" id="itgConectar" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#1A0F00"}" href="${OAUTH}?fluxo=authorize&plataforma=${CANAL_SEL}&loja=${d.loja.id}" onclick="try{localStorage.setItem('sp_loja','${d.loja.id}')}catch(e){}">${on?"Reconectar":"Conectar"}</a>
             ${on?`<button class="mini" id="itgDesc" style="color:#FF9B9B;border-color:#FF6B6B44">Desconectar</button>`:""}
           </div>
           ${on&&conn.conectada_em?`<small style="color:var(--t3);display:block;margin-top:8px">conectada em ${(conn.conectada_em||"").slice(0,10)}</small>`:""}
