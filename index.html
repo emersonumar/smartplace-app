@@ -1102,19 +1102,91 @@ function viewAds(c){
   };
 }
 
-// ── Canais ──
+// ── Integrações (formato ERPCB: sidebar, autenticação, sincronizar/reconectar/desconectar, regras) ──
+let CANAL_SEL = "mercado_livre";
+const REGRAS_CANAL = {
+  mercado_livre: [
+    ["Importação automática de pedidos (últimos 30 dias, seg·qua·sex + botão)", "ok"],
+    ["Importar taxas do marketplace por pedido", "ok"],
+    ["Importar valor do frete", "ok"],
+    ["Cliente real do pedido (nome do comprador)", "ok"],
+    ["Etapa pelo status real (importado → concluído / cancelado)", "ok"],
+    ["Etiqueta de transporte em ZPL (impressão em lote)", "ok"],
+    ["Tokens renovados automaticamente (conexão não expira)", "ok"],
+    ["Faturamento NF-e direto da fila", "breve"],
+  ],
+  shopee: [
+    ["Importação automática de pedidos", "ok"],
+    ["Avaliações respondidas no tom da marca (nota baixa vira alerta)", "ok"],
+    ["Sentinela de saldo de Ads", "ok"],
+    ["Tokens renovados automaticamente", "ok"],
+    ["Faturamento NF-e direto da fila", "breve"],
+  ],
+  tiktok: [
+    ["Importação automática de pedidos", "ok"],
+    ["Oferta relâmpago sempre no ar (renova 3 dias, mesmos preços)", "ok"],
+    ["Tokens renovados automaticamente", "ok"],
+    ["Faturamento NF-e direto da fila", "breve"],
+  ],
+};
 function viewCanais(c){
   const d = CACHE.painel;
   const cx = Object.fromEntries((d.conexoes||[]).map(x=>[x.plataforma,x]));
-  const canais = Object.entries(NOMES).map(([k,[nome,cor,sigla]])=>{
-    const conn = cx[k]; const on = conn?.status === "conectada";
-    return `<div class="card conn"><div class="mark" style="background:${cor}18;border:1px solid var(--l)">${ico(k,24)}</div>
-      <div><b style="font-size:.9rem">${nome}</b><br><small style="color:var(--t3);font-size:.75rem">${on?("conectada "+(conn.conectada_em||"").slice(0,10)):"não conectado"}</small></div>
-      ${on?'<span class="state on">● Conectado</span>':`<a class="state off" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}">Conectar</a>`}</div>`;
-  }).join("");
-  c.innerHTML = `
-    <h1>Integrações</h1><div class="sub-h1">Conecte suas contas — a autorização é feita no site oficial de cada plataforma</div>
-    <div class="grid" style="margin-top:10px">${canais}</div>`;
+  const desenha = ()=>{
+    const conn = cx[CANAL_SEL]; const on = conn?.status === "conectada";
+    const [nome] = NOMES[CANAL_SEL];
+    const lado = Object.entries(NOMES).map(([k,[n]])=>{
+      const okk = cx[k]?.status === "conectada";
+      return `<button class="itg ${k===CANAL_SEL?"atv":""}" data-k="${k}">${ico(k,18)} <span style="flex:1;text-align:left">${n}</span><span class="ponto" style="background:${okk?"#3ddc84":"var(--t3)"}"></span></button>`;
+    }).join("");
+    const regras = (REGRAS_CANAL[CANAL_SEL]||[]).map(([txt,st])=>`
+      <div class="regra"><span style="color:${st==="ok"?"#3ddc84":"var(--acc)"}">${st==="ok"?"✓":"⏳"}</span><span style="flex:1">${txt}</span>
+      <small style="color:${st==="ok"?"#3ddc84":"var(--acc)"};font-weight:700">${st==="ok"?"Ativado":"Em breve"}</small></div>`).join("");
+    c.innerHTML = `
+      <h1>Integrações</h1><div class="sub-h1">Conecte suas contas — a autorização é feita no site oficial de cada plataforma</div>
+      <div style="display:grid;grid-template-columns:230px 1fr;gap:14px;margin-top:12px" class="itg-grid">
+        <div class="card" style="padding:8px">${lado}</div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:10px">
+            <b class="tit">Autenticação — ${nome}</b>
+            <span class="pill ${on?"ok2":"ruim"}" style="margin-left:auto">${on?"Conectado":"Não conectado"}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px" class="itg-form">
+            <label class="lb">Login<input class="busca w100" id="itgLogin" value="${on?"carregando…":"—"}" readonly></label>
+            <label class="lb">Canal de venda<input class="busca w100" value="${nome}" readonly></label>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+            ${on?`<button class="mini" id="itgSync" style="background:var(--n);border-color:var(--n);color:#04101C">🔄 Sincronizar agora</button>`:""}
+            <a class="mini" id="itgConectar" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#1A0F00"}" href="${OAUTH}?fluxo=authorize&plataforma=${CANAL_SEL}&loja=${d.loja.id}">${on?"Reconectar":"Conectar"}</a>
+            ${on?`<button class="mini" id="itgDesc" style="color:#FF9B9B;border-color:#FF6B6B44">Desconectar</button>`:""}
+          </div>
+          ${on&&conn.conectada_em?`<small style="color:var(--t3);display:block;margin-top:8px">conectada em ${(conn.conectada_em||"").slice(0,10)}</small>`:""}
+          <h2 style="margin-top:20px">Regras de operação</h2>
+          <div>${regras}</div>
+        </div>
+      </div>`;
+    document.querySelectorAll(".itg").forEach(b=>b.onclick=()=>{ CANAL_SEL=b.dataset.k; desenha(); });
+    if(on){
+      acaoApi("canal_info",{ plataforma: CANAL_SEL }).then(r=>{
+        const el=document.getElementById("itgLogin"); if(!el) return;
+        el.value = (r.success && r.resultado.login) ? r.resultado.login : (conn.conectada_em?"conta conectada":"—");
+      });
+      const sy=document.getElementById("itgSync");
+      if(sy) sy.onclick = async()=>{ sy.disabled=true; sy.textContent="sincronizando…";
+        const r=await acaoApi("sincronizar_pedidos");
+        sy.disabled=false; sy.textContent="🔄 Sincronizar agora";
+        alert(r.success?`Sincronizado: ${r.resultado.sincronizados} pedido(s) ✅`:"Ops: "+r.error);
+        CACHE.dados=null; };
+      const de=document.getElementById("itgDesc");
+      if(de) de.onclick = async()=>{
+        if(!confirm(`Desconectar o ${nome}? A loja para de sincronizar esse canal (dá pra reconectar quando quiser).`)) return;
+        const r=await acaoApi("desconectar_canal",{ plataforma: CANAL_SEL });
+        if(!r.success) return alert("Ops: "+r.error);
+        const { data } = await sb.rpc("sp_painel"); CACHE.painel=data; CACHE.dados=null; shell();
+      };
+    }
+  };
+  desenha();
 }
 
 window.addEventListener("hashchange",()=>{ const v=(location.hash||"#dashboard").slice(1); if(v!==VIEW){ VIEW=v; if(CACHE.painel) shell(); } });
