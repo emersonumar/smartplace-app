@@ -146,6 +146,19 @@ const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:
 let VIEW = (location.hash||"#dashboard").slice(1);
 let CACHE = { painel:null, dados:null, ads:null, regras:null };
 
+// Traduz qualquer formato de falha numa frase que o cliente entenda.
+// Antes isso virava "Ops: undefined" quando a resposta não trazia `error`,
+// e aí ninguém — nem a IA — sabia o que tinha acontecido.
+function msgErro(d, r){
+  const e = d && (d.error || d.message || d.msg || d.error_description);
+  if (e) return String(e);
+  if (r && r.status === 401) return "Sua sessão expirou. Entre de novo, por favor.";
+  if (r && r.status === 429) return "Muitas solicitações seguidas. Aguarde alguns segundos e tente de novo.";
+  if (r && r.status >= 500) return "O serviço não respondeu agora. Tente de novo em instantes.";
+  if (r && !r.ok) return "A solicitação não foi aceita (código " + r.status + ").";
+  return "Não consegui concluir e não recebi o motivo. Tente de novo em instantes.";
+}
+
 async function acaoApi(acao, params){
   const { data:{ session } } = await sb.auth.getSession();
   const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
@@ -153,7 +166,10 @@ async function acaoApi(acao, params){
     headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
     body: JSON.stringify({ acao, params: params||{} })
   });
-  return r.json();
+  let d; try { d = await r.json(); } catch(_) { d = null; }
+  if (!d || typeof d !== "object") return { success:false, error: msgErro(null, r) };
+  if (!d.success && !d.error) d.error = msgErro(d, r);
+  return d;
 }
 
 async function render(){
@@ -1034,8 +1050,8 @@ async function enviarChat(){
       headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
       body: JSON.stringify({ mensagens: HIST })
     });
-    const d = await r.json();
-    resp = d.success ? d.resposta : "Ops: " + d.error;
+    let d; try { d = await r.json(); } catch(_) { d = null; }
+    resp = (d && d.success) ? d.resposta : "Ops: " + msgErro(d, r);
   }catch(_){ resp = "Ops, falha de conexão — tenta de novo?"; }
   HIST.push({role:"assistant",content:resp});
   const box2 = document.getElementById("chatMsgs");
