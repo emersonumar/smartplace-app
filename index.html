@@ -75,6 +75,13 @@ input:focus{outline:2px solid #38E1FF55}
 .w100{width:100%;min-width:0}
 .edt{width:92px;background:var(--p2);border:1px solid var(--l);border-radius:8px;color:var(--t);padding:5px 8px;font-family:var(--mono);font-size:.78rem}
 .edt:focus{outline:2px solid #38E1FF55}
+.itg{display:flex;align-items:center;gap:9px;width:100%;background:none;border:0;border-radius:10px;padding:11px 12px;color:var(--t2);font-family:var(--sans);font-size:.85rem;font-weight:600;cursor:pointer}
+.itg:hover{background:var(--p2)}
+.itg.atv{background:var(--p2);color:var(--t)}
+.ponto{width:8px;height:8px;border-radius:50%;flex:none}
+.regra{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #10233C;font-size:.83rem;color:var(--t2)}
+.regra:last-child{border-bottom:0}
+@media(max-width:720px){ .itg-grid{grid-template-columns:1fr!important} .itg-form{grid-template-columns:1fr!important} }
 .barra{height:6px;background:var(--l);border-radius:99px;margin-top:5px;overflow:hidden}
 .barra i{display:block;height:100%;border-radius:99px}
 .sku{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--l);font-size:.83rem}
