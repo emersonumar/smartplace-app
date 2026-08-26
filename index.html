@@ -158,8 +158,31 @@ footer .w{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 footer a{color:var(--t3)}footer a:hover{color:var(--n)}
 footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
 @media (max-width:640px){
-  .vs-row{grid-template-columns:1fr}
-  .vs-row .mid{border-left:0;border-right:0;border-top:1px solid var(--l);border-bottom:1px solid var(--l);justify-content:flex-start}
+  .vs-row{grid-template-columns:1fr;padding-bottom:6px}
+  .vs-row .mid{order:-1;background:transparent;border:0;justify-content:flex-start;
+    padding:14px 20px 2px;min-width:0;color:var(--n)}
+  .vs-row .esq,.vs-row .dir{padding-top:7px;padding-bottom:7px;align-items:flex-start}
+}
+/* No celular o menu inteiro nao cabe ao lado da marca e quebra por cima dela.
+   Os tres links de secao saem: a pagina e uma rolagem so, entao eles nao levam
+   a lugar nenhum que o dedo ja nao alcance. Ficam os dois que decidem algo —
+   entrar e comecar — lado a lado, sem quebrar linha. */
+@media (max-width:760px){
+  .topo .w{gap:10px;padding:0 16px}
+  .topo nav{gap:4px;flex-wrap:nowrap}
+  .topo nav a.lnk{display:none}
+  .topo nav .btn{font-size:.82rem;padding:9px 13px;white-space:nowrap}
+  .topo nav .btn-s{border-color:transparent;padding-left:8px;padding-right:8px}
+  section{padding:44px 0}
+  .hero{padding:34px 0 20px}
+  footer .dir{margin-left:0}
+  .marca{font-size:.98rem}
+  .marca img{width:23px;height:23px}
+}
+@media (max-width:380px){
+  .marca{font-size:.88rem;gap:7px}
+  .marca img{width:21px;height:21px}
+  .topo nav .btn{font-size:.77rem;padding:8px 11px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
