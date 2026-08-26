@@ -570,6 +570,26 @@ function viewIA(c){
       <div class="card"><b class="tit">🩺 Checar saúde da loja</b><br><small style="color:var(--t3);font-size:.75rem">promoções, frete grátis, saldo de ads e avaliações pendentes</small>
         <div class="chips" style="margin:10px 0 0">${on.size?`<button class="chip acx" data-acao="saude_loja">Todos os canais conectados</button>`:`<button class="chip" disabled style="opacity:.4">conecte um canal</button>`}</div></div>
     </div>
+      <div class="card"><b class="tit">💬 Responder perguntas</b><br><small style="color:var(--t3);font-size:.75rem">quem pergunta e não é respondido compra do concorrente</small>
+        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="perguntas_listar">Ver perguntas sem resposta</button></div></div>
+      <div class="card"><b class="tit">🔄 Igualar estoque entre canais</b><br><small style="color:var(--t3);font-size:.75rem">evita vender o que acabou e tomar cancelamento</small>
+        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="estoque_sincronizar">Conferir e igualar</button></div></div>
+    </div>
+
+    <h2>Diagnósticos — a IA analisa e te mostra</h2>
+    <div class="grid">
+      <div class="card"><b class="tit">💰 Margem real por produto</b><br><small style="color:var(--t3);font-size:.75rem">quanto sobra depois de taxa, frete e imposto</small>
+        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="margem_real">Calcular 30 dias</button></div></div>
+      <div class="card"><b class="tit">⭐ Reputação da conta</b><br><small style="color:var(--t3);font-size:.75rem">avisa antes de cair de nível, não depois</small>
+        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="reputacao">Conferir agora</button></div></div>
+      <div class="card"><b class="tit">👥 Anúncios repetidos</b><br><small style="color:var(--t3);font-size:.75rem">anúncio seu competindo com anúncio seu</small>
+        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="canibalizacao">Procurar</button></div></div>
+      <div class="card"><b class="tit">📦 Catálogo</b><br><small style="color:var(--t3);font-size:.75rem">o que está no ar, com preço e estoque</small>
+        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="produtos_listar">Listar anúncios</button></div></div>
+    </div>
+
+    <div id="acxSaida"></div>
+
     <h2>Fale com a IA — peça qualquer coisa</h2>
     <div class="card chat">
       <div class="chat" id="chatMsgs" style="max-height:44vh;overflow-y:auto">${bolhas()}</div>
@@ -583,6 +603,92 @@ function viewIA(c){
   document.querySelectorAll(".acx").forEach(b=>b.onclick = async()=>{
     const acao = b.dataset.acao;
     const chama = async (params)=>{ b.disabled=true; b.style.opacity=".5"; try{ return await acaoApi(acao, params); } finally { b.disabled=false; b.style.opacity=""; } };
+    const saida = document.getElementById("acxSaida");
+    const mostra = (titulo, html) => { if(saida) saida.innerHTML =
+      `<div class="card" style="margin:14px 0 4px"><b class="tit">${titulo}</b><div style="margin-top:10px">${html}</div></div>`; };
+    const dinheiro = v => v==null ? "—" : "R$ " + Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    if(acao === "perguntas_listar"){
+      const r = await chama({});
+      if(!r.success) return alert("Ops: " + r.error);
+      const x = r.resultado;
+      if(x.pendencias?.length) return mostra("Perguntas", `<p class='vazio'>${esc(x.pendencias[0])}</p>`);
+      if(!x.total) return mostra("Perguntas", "<p class='vazio'>Nenhuma pergunta esperando resposta ✅</p>");
+      const linha = q => `<div class="ev"><span class="t">${NOMES[q.canal]?NOMES[q.canal][0]:q.canal}</span><span>${esc(q.texto).slice(0,150)}</span></div>`;
+      mostra("Perguntas sem resposta",
+        `<p style="font-size:.85rem;color:var(--t2)"><b>${x.para_a_ia.length}</b> a IA pode responder · <b>${x.para_voce.length}</b> são para você (defeito, garantia, troca, atraso)</p>
+         <div class="feed">${x.para_a_ia.slice(0,8).map(linha).join("")}</div>
+         <p style="font-size:.8rem;color:var(--t3);margin-top:10px">Peça no chat: <i>"responda as perguntas pendentes"</i> — a IA escreve e mostra antes de publicar.</p>`);
+      return;
+    }
+
+    if(acao === "estoque_sincronizar"){
+      const p = await chama({ confirmar:false });
+      if(!p.success) return alert("Ops: " + p.error);
+      const x = p.resultado;
+      if(!x.divergentes) return mostra("Estoque", "<p class='vazio'>Estoque igual em todos os canais ✅</p>");
+      if(!confirm(`${x.divergentes} produto(s) com estoque diferente entre canais.\n\n${x.regra}\n\nIgualar agora?`)) return;
+      const r = await chama({ confirmar:true });
+      if(!r.success) return alert("Ops: " + r.error);
+      mostra("Estoque igualado", `<p style="font-size:.9rem">${r.resultado.ajustados} anúncio(s) ajustado(s) ✅</p>`);
+      return;
+    }
+
+    if(acao === "margem_real"){
+      const r = await chama({ dias:30 });
+      if(!r.success) return alert("Ops: " + r.error);
+      const x = r.resultado;
+      const linhas = (x.itens||[]).slice(0,15).map(l=>`<tr>
+        <td>${esc(String(l.titulo))}</td><td>${l.qtd}</td><td>${dinheiro(l.receita)}</td>
+        <td>${dinheiro(l.taxa)}</td><td>${l.lucro==null?"<span style='color:var(--t3)'>sem custo</span>":dinheiro(l.lucro)}</td>
+        <td style="color:${l.margem_pct==null?"var(--t3)":(l.margem_pct<0?"#FF6B6B":"var(--n)")}">${l.margem_pct==null?"—":l.margem_pct+"%"}</td></tr>`).join("");
+      mostra("Margem real — últimos 30 dias",
+        `${x.no_prejuizo?`<p style="color:#FF6B6B;font-size:.9rem"><b>${x.no_prejuizo} produto(s) no prejuízo.</b></p>`:""}
+         ${x.aviso?`<p style="font-size:.83rem;color:var(--acc)">${esc(x.aviso)}</p>`:""}
+         <div style="overflow-x:auto"><table><thead><tr><th>Produto</th><th>Qtd</th><th>Receita</th><th>Taxa</th><th>Lucro</th><th>Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
+      return;
+    }
+
+    if(acao === "reputacao"){
+      const r = await chama({});
+      if(!r.success) return alert("Ops: " + r.error);
+      const x = r.resultado, ml = x.mercado_livre;
+      const alerta = (x.alertas||[]).map(a=>`<div class="ev"><span class="t">⚠️</span><span>${esc(a)}</span></div>`).join("");
+      mostra("Reputação",
+        (ml?`<p style="font-size:.9rem">Mercado Livre — nível <b>${esc(String(ml.nivel||"—"))}</b> · cancelamentos <b>${ml.cancelamentos_pct??"—"}%</b> · reclamações <b>${ml.reclamacoes_pct??"—"}%</b> · atrasos <b>${ml.atrasos_pct??"—"}%</b></p>`:"")
+        + (alerta?`<div class="feed">${alerta}</div>`:"<p class='vazio'>Nenhum indicador perto do limite ✅</p>"));
+      return;
+    }
+
+    if(acao === "canibalizacao"){
+      const r = await chama({});
+      if(!r.success) return alert("Ops: " + r.error);
+      const x = r.resultado;
+      if(!x.encontrados) return mostra("Anúncios repetidos", "<p class='vazio'>Nenhum anúncio competindo com outro ✅</p>");
+      const g = (x.grupos||[]).slice(0,8).map(gr=>`<div class="ev"><span class="t">${gr.certeza}</span><span>
+        <b>${esc(gr.motivo)}</b>${gr.sku?` · SKU ${esc(gr.sku)}`:""} — ${gr.anuncios.length} anúncios<br>
+        <small style="color:var(--t3)">${gr.anuncios.slice(0,3).map(a=>esc(a.titulo).slice(0,52)).join(" · ")}</small>
+        ${gr.observacao?`<br><small style="color:var(--acc)">${esc(gr.observacao)}</small>`:""}</span></div>`).join("");
+      mostra("Anúncios repetidos",
+        `<p style="font-size:.9rem"><b>${x.encontrados}</b> grupo(s) encontrado(s)</p><div class="feed">${g}</div>
+         <p style="font-size:.8rem;color:var(--t3);margin-top:10px">${esc(x.o_que_fazer||"")}</p>`);
+      return;
+    }
+
+    if(acao === "produtos_listar"){
+      const canal = (CACHE.painel.conexoes||[]).filter(c=>c.status==="conectada")[0]?.plataforma;
+      if(!canal) return alert("Conecte um canal primeiro.");
+      const r = await chama({ canal, limite:100 });
+      if(!r.success) return alert("Ops: " + r.error);
+      const it = r.resultado.itens||[];
+      mostra(`Catálogo — ${NOMES[canal]?NOMES[canal][0]:canal}`,
+        `<p style="font-size:.9rem"><b>${it.length}</b> anúncio(s) · ${it.filter(i=>i.ativo).length} ativo(s)</p>
+         <div style="overflow-x:auto"><table><thead><tr><th>Anúncio</th><th>SKU</th><th>Preço</th><th>Estoque</th><th>Situação</th></tr></thead><tbody>
+         ${it.slice(0,25).map(i=>`<tr><td>${esc(String(i.titulo||"")).slice(0,58)}</td><td>${esc(String(i.sku||"—"))}</td><td>${dinheiro(i.preco)}</td><td>${i.estoque??"—"}</td><td>${i.ativo?"ativo":"pausado"}</td></tr>`).join("")}
+         </tbody></table></div>`);
+      return;
+    }
+
     if(acao === "promocao_geral"){
       const pct = prompt("Qual desconto aplicar nos anúncios sem promoção? (5 a 60%)","15");
       if(!pct) return;
