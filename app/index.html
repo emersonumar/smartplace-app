@@ -147,7 +147,7 @@ function trocarLoja(id){
 }
 const app = document.getElementById("app");
 const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#4DE8F4","TT","tiktok.svg"]};
-const ico = (c,s=18)=> NOMES[c]?`<img src="icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
+const ico = (c,s=18)=> NOMES[c]?`<img src="/icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
 const AUTOS = {
 nunca_sem_desconto:["Nunca sem desconto","reaplica o desconto que venceu, com o mesmo % de antes","mercado_livre"],
 relampago_no_ar:["Relâmpago sempre no ar","quando a oferta relâmpago acaba, renova 3 dias com os mesmos preços","tiktok"],
@@ -554,6 +554,62 @@ async function gerarEtiquetas(){
 // ── Gestão IA (ações rápidas + chat + automações + histórico) ──
 // Carteira: a lista de lojas que este login atende. Existe para quem cuida de
 // mais de uma operação — agência, consultor, ou dono com duas lojas. É a tela
+
+// Formulário de verdade: o cliente vê tudo de uma vez, corrige o que quiser e
+// salva. Perguntar campo por campo em caixinha é o tipo de coisa que faz o
+// cliente desistir no terceiro produto.
+function formulario(titulo, campos, valores, aoSalvar){
+  const v = valores || {};
+  const campo = c => {
+    const val = v[c.id] == null ? (c.padrao || "") : v[c.id];
+    const dica = c.dica ? `<small style="display:block;color:var(--t3);font-size:.72rem;margin-top:3px">${esc(c.dica)}</small>` : "";
+    const largura = c.largo ? "grid-column:1/-1" : "";
+    if(c.tipo === "select"){
+      return `<label style="display:flex;flex-direction:column;gap:5px;${largura}">
+        <span style="font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)">${esc(c.rot)}${c.req?' <span style="color:var(--acc)">*</span>':''}</span>
+        <select name="${c.id}" style="background:var(--p2);border:1px solid var(--l);color:var(--t);border-radius:9px;padding:10px 12px;font-family:var(--sans);font-size:.9rem">
+          ${c.opcoes.map(o=>`<option value="${esc(o[0])}"${String(val)===String(o[0])?" selected":""}>${esc(o[1])}</option>`).join("")}
+        </select>${dica}</label>`;
+    }
+    return `<label style="display:flex;flex-direction:column;gap:5px;${largura}">
+      <span style="font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)">${esc(c.rot)}${c.req?' <span style="color:var(--acc)">*</span>':''}</span>
+      <input name="${c.id}" type="${c.tipo||"text"}" ${c.passo?`step="${c.passo}"`:""} value="${esc(String(val))}" placeholder="${esc(c.exemplo||"")}"
+        style="background:var(--p2);border:1px solid var(--l);color:var(--t);border-radius:9px;padding:10px 12px;font-family:${c.tipo==="number"?"var(--mono)":"var(--sans)"};font-size:.9rem">
+      ${dica}</label>`;
+  };
+
+  const fundo = document.createElement("div");
+  fundo.style.cssText = "position:fixed;inset:0;background:#050B14CC;backdrop-filter:blur(3px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:36px 18px;overflow-y:auto";
+  fundo.innerHTML = `<form class="card" style="max-width:620px;width:100%;padding:26px 28px">
+    <b class="tit" style="font-size:1.05rem">${esc(titulo)}</b>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0 20px">${campos.map(campo).join("")}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button type="button" class="chip cancelar">Cancelar</button>
+      <button type="submit" class="chip" style="background:var(--acc);color:#1A0F00;border-color:var(--acc);font-weight:700">Salvar</button>
+    </div>
+    <p class="erroForm" style="color:#FF6B6B;font-size:.85rem;margin:12px 0 0;display:none"></p>
+  </form>`;
+  document.body.appendChild(fundo);
+  const form = fundo.querySelector("form");
+  const fechar = ()=>fundo.remove();
+  fundo.querySelector(".cancelar").onclick = fechar;
+  fundo.onclick = e=>{ if(e.target===fundo) fechar(); };
+  form.querySelector("input,select")?.focus();
+  form.onsubmit = async e=>{
+    e.preventDefault();
+    const dados = {};
+    campos.forEach(c=>{ dados[c.id] = form.elements[c.id].value.trim(); });
+    const falta = campos.filter(c=>c.req && !dados[c.id]).map(c=>c.rot);
+    const err = form.querySelector(".erroForm");
+    if(falta.length){ err.textContent = "Falta preencher: " + falta.join(", "); err.style.display="block"; return; }
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = "Salvando…";
+    const r = await aoSalvar(dados);
+    if(r && r.erro){ err.textContent = r.erro; err.style.display="block"; btn.disabled=false; btn.textContent="Salvar"; return; }
+    fechar();
+  };
+}
+
 // que permite entrar na loja do cliente sem pedir a senha dele.
 async function viewCarteira(c){
   c.innerHTML = `<h1>Carteira de clientes</h1><div class="sub-h1">As lojas que você atende</div><p class="vazio">Carregando…</p>`;
@@ -640,30 +696,27 @@ async function viewProdutos(c){
       </tr></thead><tbody>${ps.length?ps.map(linha).join(""):`<tr><td colspan="7"><p class="vazio" style="margin:0">Nenhum produto ainda. Comece por "Novo produto", ou cadastre um e use "Ligar anúncios pelo SKU".</p></td></tr>`}</tbody></table></div>
     </div>`;
 
-  const editar = (p)=>{
-    const g = (r,v)=>prompt(r, v==null?"":String(v));
-    const sku = p ? p.sku : g("SKU do produto (é ele que amarra aos anúncios)","");
-    if(!sku) return null;
-    const nome = g("Nome do produto", p?p.nome:"");            if(nome===null) return null;
-    const custo = g("Custo (quanto você paga por unidade)", p?p.custo:"");   if(custo===null) return null;
-    const peso = g("Peso em kg", p?p.peso:"0.3");               if(peso===null) return null;
-    const ncm = g("NCM (8 dígitos) — é do produto, cada um tem o seu", p?p.ncm:""); if(ncm===null) return null;
-    const ean = g("Código de barras (deixe vazio se não tiver)", p?p.ean:"");
-    return { sku, nome, custo, peso, ncm, ean };
-  };
+  const CAMPOS_PROD = [
+    { id:"sku",  rot:"SKU",   req:true, exemplo:"2851-PRETO-M", dica:"É ele que amarra o produto aos anúncios dos canais" },
+    { id:"nome", rot:"Nome do produto", req:true, exemplo:"Cinta Modeladora Pós-Cirúrgica" },
+    { id:"custo", rot:"Custo", tipo:"number", passo:"0.01", exemplo:"28.50", dica:"Quanto você paga por unidade — sem isso não existe margem" },
+    { id:"peso", rot:"Peso (kg)", tipo:"number", passo:"0.001", exemplo:"0.300" },
+    { id:"ncm",  rot:"NCM", exemplo:"62122000", dica:"8 dígitos. É do produto — cada um tem o seu" },
+    { id:"unidade", rot:"Unidade", padrao:"UN", exemplo:"UN" },
+    { id:"ean",  rot:"Código de barras", exemplo:"7898675430125", dica:"Deixe vazio se o produto não tiver" },
+    { id:"origem", rot:"Origem", tipo:"select", padrao:"0",
+      opcoes:[["0","0 — Nacional"],["1","1 — Importado direto"],["2","2 — Importado no mercado interno"],["3","3 — Nacional com mais de 40% importado"]] },
+    { id:"csosn", rot:"CSOSN", padrao:"102", exemplo:"102", dica:"Situação do ICMS no Simples Nacional" },
+  ];
+  const abrirProduto = p => formulario(p?`Editar ${p.sku}`:"Novo produto", CAMPOS_PROD, p, async dados=>{
+    const rr = await acaoApi("produto_salvar", dados);
+    if(!rr.success) return { erro: rr.error };
+    viewProdutos(c);
+  });
 
-  document.getElementById("novoProd").onclick = async()=>{
-    const p = editar(null); if(!p) return;
-    const rr = await acaoApi("produto_salvar", p);
-    if(!rr.success) return alert("Ops: "+rr.error);
-    viewProdutos(c);
-  };
-  c.querySelectorAll(".ed").forEach(b=>b.onclick = async()=>{
-    const p = ps.find(x=>String(x.sku)===b.dataset.sku); if(!p) return;
-    const n = editar(p); if(!n) return;
-    const rr = await acaoApi("produto_salvar", n);
-    if(!rr.success) return alert("Ops: "+rr.error);
-    viewProdutos(c);
+  document.getElementById("novoProd").onclick = ()=>abrirProduto(null);
+  c.querySelectorAll(".ed").forEach(b=>b.onclick = ()=>{
+    const p = ps.find(x=>String(x.sku)===b.dataset.sku); if(p) abrirProduto(p);
   });
   document.getElementById("casarSku").onclick = async()=>{
     const pv = await acaoApi("vincular_por_sku", { confirmar:false });
@@ -735,23 +788,33 @@ async function viewFiscal(c){
     </div>`;
 
   const be = document.getElementById("btnEmpresa");
-  if(be) be.onclick = async()=>{
-    const g = (r,v)=>prompt(r, v||"");
-    const cnpj = g("CNPJ (só números)"); if(!cnpj) return;
-    const razao = g("Razão social"); if(!razao) return;
-    const fant = g("Nome fantasia", razao);
-    const ie = g("Inscrição estadual");
-    const crt = g("Regime: 1 para Simples Nacional, 3 para regime normal","1");
-    const uf = g("UF (2 letras)"); if(!uf) return;
-    const log = g("Logradouro"); const num = g("Número"); const bai = g("Bairro");
-    const mun = g("Município"); const cep = g("CEP (só números)");
-    const ibge = g("Código IBGE do município (7 dígitos) — pelo nome não dá: existe cidade homônima em outro estado");
-    const rr = await acaoApi("fiscal_empresa", { cnpj, razao_social:razao, nome_fantasia:fant, ie, crt, uf,
-      endereco:{ logradouro:log, numero:num, bairro:bai, municipio:mun, cep, codigo_municipio:ibge } });
-    if(!rr.success) return alert("Ops: "+rr.error);
-    alert("Empresa cadastrada ✅\n\n"+(rr.resultado.proximo||""));
+  if(be) be.onclick = ()=> formulario("Dados da empresa que emite a nota", [
+    { id:"cnpj", rot:"CNPJ", req:true, exemplo:"25465284000112", dica:"Só números" },
+    { id:"razao_social", rot:"Razão social", req:true, largo:true, exemplo:"MINHA EMPRESA LTDA" },
+    { id:"nome_fantasia", rot:"Nome fantasia", exemplo:"Minha Loja" },
+    { id:"ie", rot:"Inscrição estadual", exemplo:"123456789" },
+    { id:"crt", rot:"Regime tributário", tipo:"select", padrao:"1",
+      opcoes:[["1","Simples Nacional"],["3","Regime normal"]] },
+    { id:"uf", rot:"UF", req:true, exemplo:"MS" },
+    { id:"logradouro", rot:"Logradouro", req:true, largo:true, exemplo:"Av. Conde de Boa Vista" },
+    { id:"numero", rot:"Número", req:true, exemplo:"1864" },
+    { id:"bairro", rot:"Bairro", req:true, exemplo:"Centro" },
+    { id:"municipio", rot:"Município", req:true, exemplo:"Campo Grande" },
+    { id:"cep", rot:"CEP", req:true, exemplo:"79093034", dica:"Só números" },
+    { id:"codigo_municipio", rot:"Código IBGE do município", req:true, largo:true, exemplo:"5002704",
+      dica:"7 dígitos. Pelo nome não dá: existe cidade homônima em outro estado, e isso grava município errado na nota" },
+  ], null, async d=>{
+    const rr = await acaoApi("fiscal_empresa", {
+      cnpj:d.cnpj, razao_social:d.razao_social, nome_fantasia:d.nome_fantasia||d.razao_social,
+      ie:d.ie, crt:d.crt, uf:d.uf,
+      endereco:{ logradouro:d.logradouro, numero:d.numero, bairro:d.bairro,
+                 municipio:d.municipio, cep:d.cep, codigo_municipio:d.codigo_municipio } });
+    if(!rr.success) return { erro: rr.error };
+    alert("Empresa cadastrada ✅
+
+" + (rr.resultado.proximo||""));
     viewFiscal(c);
-  };
+  });
 
   const bc = document.getElementById("btnCert");
   if(bc) bc.onclick = ()=>{
@@ -759,26 +822,33 @@ async function viewFiscal(c){
     inp.type = "file"; inp.accept = ".pfx,.p12";
     inp.onchange = async()=>{
       const arq = inp.files[0]; if(!arq) return;
-      const senha = prompt("Senha do certificado"); if(!senha) return;
-      const b64 = await new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(",")[1]); fr.readAsDataURL(arq); });
-      const rr = await acaoApi("fiscal_certificado", { pfx:b64, senha });
-      if(!rr.success) return alert("Ops: "+rr.error);
-      alert("Certificado aceito ✅\n\n"+(rr.resultado.proximo||""));
-      viewFiscal(c);
+      formulario(`Certificado: ${arq.name}`, [
+        { id:"senha", rot:"Senha do certificado", tipo:"password", req:true, largo:true,
+          dica:"Vai direto para o emissor, que guarda criptografado. O SmartPlace não grava o arquivo nem a senha." },
+      ], null, async d=>{
+        const b64 = await new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(",")[1]); fr.readAsDataURL(arq); });
+        const rr = await acaoApi("fiscal_certificado", { pfx:b64, senha:d.senha });
+        if(!rr.success) return { erro: rr.error };
+        alert("Certificado aceito ✅\n\n"+(rr.resultado.proximo||""));
+        viewFiscal(c);
+      });
     };
     inp.click();
   };
 
   const br = document.getElementById("btnRegras");
-  if(br) br.onclick = async()=>{
-    const nat = prompt("Natureza da operação", f.natureza_operacao||"VENDA DE MERCADORIA"); if(nat===null) return;
-    const cd = prompt("CFOP para comprador do MESMO estado", f.cfop_dentro||"5102"); if(cd===null) return;
-    const cf = prompt("CFOP para comprador de OUTRO estado", f.cfop_fora||"6102"); if(cf===null) return;
-    const se = prompt("Série da nota", String(f.serie||1)); if(se===null) return;
-    const rr = await acaoApi("fiscal_regras", { natureza_operacao:nat, cfop_dentro:cd, cfop_fora:cf, serie:se });
-    if(!rr.success) return alert("Ops: "+rr.error);
+  if(br) br.onclick = ()=> formulario("Regras fiscais", [
+    { id:"natureza_operacao", rot:"Natureza da operação", req:true, largo:true, padrao:f.natureza_operacao||"VENDA DE MERCADORIA" },
+    { id:"cfop_dentro", rot:"CFOP dentro do estado", req:true, padrao:f.cfop_dentro||"5102",
+      dica:"Quando o comprador é da mesma UF da empresa" },
+    { id:"cfop_fora", rot:"CFOP fora do estado", req:true, padrao:f.cfop_fora||"6102",
+      dica:"Quando o comprador é de outra UF" },
+    { id:"serie", rot:"Série da nota", tipo:"number", padrao:String(f.serie||1) },
+  ], null, async d=>{
+    const rr = await acaoApi("fiscal_regras", d);
+    if(!rr.success) return { erro: rr.error };
     viewFiscal(c);
-  };
+  });
 
   const ba = document.getElementById("btnAmb");
   if(ba) ba.onclick = async()=>{
