@@ -132,6 +132,20 @@ h2{font-family:var(--disp);font-weight:700;letter-spacing:-.028em;line-height:1.
 .plano li{display:flex;gap:9px;align-items:flex-start}
 .plano li::before{content:"✓";color:var(--n);font-weight:700;flex:none}
 .plano .btn{justify-content:center;margin-top:auto}
+.plano .nota-plano{font-size:.8rem;color:var(--t3);border-top:1px solid var(--l);padding-top:11px;margin-top:2px}
+
+/* oferta de fundador — faixa, não cartão: é concessão, não item de menu */
+.fundador{margin-top:20px;background:linear-gradient(100deg,#0B1A2C,#071120);
+  border:1px solid var(--acc);border-radius:16px;padding:26px 30px;
+  display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.fundador .sel{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--acc);background:#F5A62318;border:1px solid #F5A62344;padding:5px 12px;border-radius:100px;white-space:nowrap}
+.fundador .txt{flex:1;min-width:260px}
+.fundador h3{font-family:var(--disp);font-size:1.14rem;font-weight:700;letter-spacing:-.018em;margin-bottom:5px}
+.fundador p{color:var(--t2);font-size:.92rem;margin:0}
+.fundador .val{font-family:var(--disp);font-size:1.9rem;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+.fundador .val small{font-size:.8rem;font-weight:600;color:var(--t3);letter-spacing:0}
+@media (max-width:760px){.fundador{padding:22px}}
 
 /* fecho */
 .fecho{background:linear-gradient(160deg,#0B1A2C,#050B14);border:1px solid #38E1FF33;
@@ -279,44 +293,58 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
   <div class="planos">
     <div class="plano">
       <h3>Teste</h3>
-      <p class="val">R$ 0 <small>/ 7 dias</small></p>
+      <p class="val">R$ 0 <small>/ 14 dias</small></p>
       <ul>
         <li>Conecta os três canais</li>
         <li>Pedidos e faturamento reais</li>
         <li>Margem real por produto</li>
         <li>Diagnósticos completos</li>
       </ul>
+      <p class="nota-plano">Sem cartão de crédito. Se não continuar, não acontece nada.</p>
       <a class="btn btn-s" href="/app/">Começar grátis</a>
     </div>
 
     <div class="plano top">
       <span class="tag">mais escolhido</span>
-      <h3>Operação</h3>
-      <p class="val">R$ 247 <small>/ mês</small></p>
+      <h3>Essencial</h3>
+      <p class="val">R$ 199,90 <small>/ mês</small></p>
       <ul>
         <li>Tudo do teste, sem limite de tempo</li>
         <li>Automações trabalhando 24h</li>
         <li>Preço com trava de piso e teto</li>
         <li>Perguntas e avaliações respondidas</li>
         <li>Estoque igualado entre canais</li>
-        <li>Suporte direto com quem construiu</li>
+        <li><strong>Até 2.000 notas fiscais por mês</strong></li>
       </ul>
+      <p class="nota-plano">Cobre a grande maioria das operações. Se passar, a gente avisa antes.</p>
       <a class="btn btn-g" href="/app/">Começar teste grátis</a>
     </div>
 
     <div class="plano">
-      <h3>Operação + IA</h3>
-      <p class="val">R$ 397 <small>/ mês</small></p>
+      <h3>Ilimitado</h3>
+      <p class="val">R$ 399,90 <small>/ mês</small></p>
       <ul>
-        <li>Tudo do plano Operação</li>
-        <li>Conversa livre com a IA, sem limite de uso</li>
+        <li>Tudo do plano Essencial</li>
+        <li><strong>Notas fiscais sem limite</strong></li>
         <li>Cadastro de produto nos três canais</li>
-        <li>Prioridade no que é construído primeiro</li>
+        <li>Prioridade no que é construído</li>
+        <li>Suporte direto com quem construiu</li>
       </ul>
+      <p class="nota-plano">Para quem emite muito e não quer contar nota.</p>
       <a class="btn btn-s" href="/app/">Começar teste grátis</a>
     </div>
   </div>
-</div></section>
+
+  <div class="fundador">
+    <span class="sel">Oferta de fundador</span>
+    <div class="txt">
+      <h3>As primeiras 5 lojas entram por R$ 147 — para sempre.</h3>
+      <p>Mesmo produto do plano Essencial, com o preço travado enquanto a conta existir.
+         Em troca, você me diz o que construir primeiro. Quando as 5 vagas fecharem, a oferta acaba.</p>
+    </div>
+    <p class="val">R$ 147 <small>/ mês</small></p>
+    <a class="btn btn-p" href="mailto:emersonumar@gmail.com?subject=Quero%20uma%20vaga%20de%20fundador%20no%20SmartPlace">Falar comigo</a>
+  </div></section>
 
 <section><div class="w">
   <div class="fecho">
