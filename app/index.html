@@ -155,7 +155,7 @@ avaliacoes:["Avaliações respondidas","responde 4-5★ no tom da marca; nota ba
 frete_gratis:["Frete grátis garantido","patrulha os anúncios e reativa o frete grátis que caiu","mercado_livre"],
 sentinela_ads:["Sentinela de verba de ads","confere o saldo de ads e avisa antes de acabar","shopee"],
 relatorio_email:["Relatório seg·qua·sex","resumo de tudo que a IA fez, no seu e-mail",null]};
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"],["carteira","Carteira"]];
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["produtos","Produtos"],["canais","Integrações"],["fiscal","Fiscal"],["carteira","Carteira"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -244,7 +244,7 @@ function shell(){
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira, produtos:viewProdutos, fiscal:viewFiscal };
   app.innerHTML = alertas + `<div id="conteudo"></div>`;
   (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
 }
@@ -600,6 +600,196 @@ async function viewCarteira(c){
       Você atende uma loja só. Esta tela existe para quem cuida de várias: quando um cliente seu virar loja aqui, ele aparece nesta lista e você entra na operação dele por este botão — sem pedir senha.</p></div>`:""}`;
 
   c.querySelectorAll(".trocar").forEach(b=>{ b.onclick = ()=>trocarLoja(b.dataset.loja); });
+}
+
+// Produtos: um cadastro por SKU. É daqui que sai o custo (para a margem) e o
+// NCM (para a nota). Sem ele o cliente precisaria de um ERP só para isso.
+async function viewProdutos(c){
+  c.innerHTML = `<h1>Produtos</h1><div class="sub-h1">Um cadastro por SKU — o custo alimenta a margem, o NCM alimenta a nota</div><p class="vazio">Carregando…</p>`;
+  const r = await acaoApi("produtos_cadastro", {});
+  if(!r.success){ c.innerHTML = `<h1>Produtos</h1><p class="vazio">${esc(r.error)}</p>`; return; }
+  const d = r.resultado, ps = d.produtos||[];
+
+  const linha = p => `<tr>
+    <td><b>${esc(p.sku)}</b></td>
+    <td>${esc(String(p.nome||"").slice(0,52))}</td>
+    <td style="text-align:right;font-family:var(--mono)">${p.custo==null?`<span style="color:var(--acc)">falta</span>`:brl(p.custo)}</td>
+    <td style="text-align:right;font-family:var(--mono)">${p.ncm||`<span style="color:var(--acc)">falta</span>`}</td>
+    <td style="text-align:right;font-family:var(--mono)">${p.peso==null?"—":p.peso+" kg"}</td>
+    <td>${(p.canais||[]).length?(p.canais||[]).map(x=>`<span class="chip" style="padding:3px 9px;font-size:.68rem">${NOMES[x]?NOMES[x][0]:x}</span>`).join(" "):`<span style="color:var(--t3);font-size:.78rem">sem anúncio ligado</span>`}</td>
+    <td style="text-align:right"><button class="chip ed" data-sku="${esc(p.sku)}">Editar</button></td>
+  </tr>`;
+
+  c.innerHTML = `
+    <h1>Produtos</h1>
+    <div class="sub-h1">Um cadastro por SKU — o custo alimenta a margem, o NCM alimenta a nota</div>
+    <div class="grid" style="margin:14px 0">
+      <div class="card"><div class="lbl">Cadastrados</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${d.total}</div></div>
+      <div class="card"><div class="lbl">Sem custo</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px;color:${d.sem_custo?"var(--acc)":"var(--n)"}">${d.sem_custo}</div></div>
+      <div class="card"><div class="lbl">Sem anúncio ligado</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px;color:${d.sem_anuncio?"var(--acc)":"var(--n)"}">${d.sem_anuncio}</div></div>
+      <div class="card" style="display:flex;flex-direction:column;gap:8px;justify-content:center">
+        <button class="chip" id="novoProd" style="background:var(--acc);color:#1A0F00;border-color:var(--acc);font-weight:700">Novo produto</button>
+        <button class="chip" id="casarSku">Ligar anúncios pelo SKU</button>
+      </div>
+    </div>
+    ${d.aviso?`<div class="card" style="margin-bottom:12px;border-color:#F5A62366"><p style="margin:0;font-size:.88rem;color:var(--t2)">${esc(d.aviso)}</p></div>`:""}
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto"><table class="tabela"><thead><tr>
+        <th>SKU</th><th>Produto</th><th style="text-align:right">Custo</th><th style="text-align:right">NCM</th>
+        <th style="text-align:right">Peso</th><th>Anúncios</th><th></th>
+      </tr></thead><tbody>${ps.length?ps.map(linha).join(""):`<tr><td colspan="7"><p class="vazio" style="margin:0">Nenhum produto ainda. Comece por "Novo produto", ou cadastre um e use "Ligar anúncios pelo SKU".</p></td></tr>`}</tbody></table></div>
+    </div>`;
+
+  const editar = (p)=>{
+    const g = (r,v)=>prompt(r, v==null?"":String(v));
+    const sku = p ? p.sku : g("SKU do produto (é ele que amarra aos anúncios)","");
+    if(!sku) return null;
+    const nome = g("Nome do produto", p?p.nome:"");            if(nome===null) return null;
+    const custo = g("Custo (quanto você paga por unidade)", p?p.custo:"");   if(custo===null) return null;
+    const peso = g("Peso em kg", p?p.peso:"0.3");               if(peso===null) return null;
+    const ncm = g("NCM (8 dígitos) — é do produto, cada um tem o seu", p?p.ncm:""); if(ncm===null) return null;
+    const ean = g("Código de barras (deixe vazio se não tiver)", p?p.ean:"");
+    return { sku, nome, custo, peso, ncm, ean };
+  };
+
+  document.getElementById("novoProd").onclick = async()=>{
+    const p = editar(null); if(!p) return;
+    const rr = await acaoApi("produto_salvar", p);
+    if(!rr.success) return alert("Ops: "+rr.error);
+    viewProdutos(c);
+  };
+  c.querySelectorAll(".ed").forEach(b=>b.onclick = async()=>{
+    const p = ps.find(x=>String(x.sku)===b.dataset.sku); if(!p) return;
+    const n = editar(p); if(!n) return;
+    const rr = await acaoApi("produto_salvar", n);
+    if(!rr.success) return alert("Ops: "+rr.error);
+    viewProdutos(c);
+  });
+  document.getElementById("casarSku").onclick = async()=>{
+    const pv = await acaoApi("vincular_por_sku", { confirmar:false });
+    if(!pv.success) return alert("Ops: "+pv.error);
+    const x = pv.resultado;
+    if(!x.casados) return alert(`Nenhum anúncio casou com o cadastro.\n\n${x.sem_produto||0} anúncio(s) têm SKU que não está cadastrado aqui.\n\n${x.regra||""}`);
+    if(!confirm(`${x.casados} anúncio(s) casaram pelo SKU.\n${x.sem_produto||0} sem produto cadastrado.\n\n${x.regra||""}\n\nLigar agora?`)) return;
+    const rr = await acaoApi("vincular_por_sku", { confirmar:true });
+    if(!rr.success) return alert("Ops: "+rr.error);
+    alert(`${rr.resultado.vinculados} anúncio(s) ligados ✅`);
+    viewProdutos(c);
+  };
+}
+
+// Fiscal: três passos que travam em sequência. O cliente nunca vê o emissor —
+// ele preenche aqui e o SmartPlace resolve por baixo.
+async function viewFiscal(c){
+  c.innerHTML = `<h1>Fiscal</h1><div class="sub-h1">Configure uma vez para emitir nota pelos pedidos</div><p class="vazio">Carregando…</p>`;
+  const r = await acaoApi("fiscal_config", {});
+  if(!r.success){ c.innerHTML = `<h1>Fiscal</h1><p class="vazio">${esc(r.error)}</p>`; return; }
+  const f = r.resultado;
+  const passo = f.passo;
+  const marca = ok => ok?`<span style="color:var(--n)">✓</span>`:`<span style="color:var(--t3)">○</span>`;
+  const feitoEmpresa = !!f.eminota_empresa_id, feitoCert = !!f.cert_vencimento;
+
+  c.innerHTML = `
+    <h1>Fiscal</h1>
+    <div class="sub-h1">Configure uma vez para emitir nota direto da fila de pedidos</div>
+
+    <div class="card" style="margin:14px 0">
+      <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:.88rem">
+        <span>${marca(feitoEmpresa)} 1. Dados da empresa</span>
+        <span>${marca(feitoCert)} 2. Certificado digital</span>
+        <span>${marca(feitoEmpresa&&feitoCert)} 3. Regras fiscais</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <b class="tit">1. Dados da empresa</b>
+      ${feitoEmpresa
+        ? `<p style="font-size:.88rem;color:var(--t2);margin:8px 0 0">${esc(f.razao_social||"")} · CNPJ ${esc(f.cnpj||"")} · ${esc(f.uf||"")}</p>
+           <p style="font-size:.8rem;color:var(--t3);margin:6px 0 0">Para trocar o CNPJ fale com o suporte: nota já emitida fica amarrada à empresa antiga.</p>`
+        : `<p style="font-size:.88rem;color:var(--t2);margin:8px 0 10px">${esc(f.instrucao||"Preencha os dados da empresa que vai emitir a nota.")}</p>
+           <button class="chip" id="btnEmpresa" style="background:var(--acc);color:#1A0F00;border-color:var(--acc);font-weight:700">Preencher dados da empresa</button>`}
+    </div>
+
+    <div class="card" style="margin-bottom:12px;${feitoEmpresa?"":"opacity:.45"}">
+      <b class="tit">2. Certificado digital</b>
+      ${feitoCert
+        ? `<p style="font-size:.88rem;color:var(--t2);margin:8px 0 0">Titular: ${esc(f.cert_titular||"não informado")}<br>Vence em ${esc(String(f.cert_vencimento||"").split("-").reverse().join("/"))}${f.certificado_dias!=null?` · faltam ${f.certificado_dias} dia(s)`:""}</p>
+           ${f.aviso_certificado?`<p style="font-size:.85rem;color:#FF6B6B;margin:8px 0 0">${esc(f.aviso_certificado)}</p>`:""}
+           <div style="margin-top:10px"><button class="chip" id="btnCert">Trocar certificado</button></div>`
+        : `<p style="font-size:.88rem;color:var(--t2);margin:8px 0 10px">O arquivo .pfx e a senha. Ele vai direto para o emissor, que guarda criptografado — o SmartPlace não grava o arquivo nem a senha.</p>
+           <button class="chip" id="btnCert" ${feitoEmpresa?"":"disabled"}>Enviar certificado</button>`}
+    </div>
+
+    <div class="card" style="${feitoEmpresa&&feitoCert?"":"opacity:.45"}">
+      <b class="tit">3. Regras fiscais</b>
+      <p style="font-size:.88rem;color:var(--t2);margin:8px 0 10px">
+        Natureza da operação: <b>${esc(f.natureza_operacao||"—")}</b><br>
+        CFOP dentro do estado: <b>${esc(f.cfop_dentro||"5102")}</b> · fora do estado: <b>${esc(f.cfop_fora||"6102")}</b><br>
+        Série <b>${f.serie||1}</b> · Ambiente: <b style="color:${f.ambiente===1?"#FF6B6B":"var(--n)"}">${esc(f.ambiente_texto||"")}</b>
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="chip" id="btnRegras" ${feitoEmpresa?"":"disabled"}>Alterar regras</button>
+        <button class="chip" id="btnAmb" ${feitoEmpresa&&feitoCert?"":"disabled"}>${f.ambiente===1?"Voltar para homologação":"Virar produção"}</button>
+      </div>
+      <p style="font-size:.8rem;color:var(--t3);margin:10px 0 0">O CFOP é escolhido na hora da nota: dentro do estado usa um, fora usa outro. Por isso ele fica aqui, e não no produto.</p>
+    </div>`;
+
+  const be = document.getElementById("btnEmpresa");
+  if(be) be.onclick = async()=>{
+    const g = (r,v)=>prompt(r, v||"");
+    const cnpj = g("CNPJ (só números)"); if(!cnpj) return;
+    const razao = g("Razão social"); if(!razao) return;
+    const fant = g("Nome fantasia", razao);
+    const ie = g("Inscrição estadual");
+    const crt = g("Regime: 1 para Simples Nacional, 3 para regime normal","1");
+    const uf = g("UF (2 letras)"); if(!uf) return;
+    const log = g("Logradouro"); const num = g("Número"); const bai = g("Bairro");
+    const mun = g("Município"); const cep = g("CEP (só números)");
+    const ibge = g("Código IBGE do município (7 dígitos) — pelo nome não dá: existe cidade homônima em outro estado");
+    const rr = await acaoApi("fiscal_empresa", { cnpj, razao_social:razao, nome_fantasia:fant, ie, crt, uf,
+      endereco:{ logradouro:log, numero:num, bairro:bai, municipio:mun, cep, codigo_municipio:ibge } });
+    if(!rr.success) return alert("Ops: "+rr.error);
+    alert("Empresa cadastrada ✅\n\n"+(rr.resultado.proximo||""));
+    viewFiscal(c);
+  };
+
+  const bc = document.getElementById("btnCert");
+  if(bc) bc.onclick = ()=>{
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = ".pfx,.p12";
+    inp.onchange = async()=>{
+      const arq = inp.files[0]; if(!arq) return;
+      const senha = prompt("Senha do certificado"); if(!senha) return;
+      const b64 = await new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(",")[1]); fr.readAsDataURL(arq); });
+      const rr = await acaoApi("fiscal_certificado", { pfx:b64, senha });
+      if(!rr.success) return alert("Ops: "+rr.error);
+      alert("Certificado aceito ✅\n\n"+(rr.resultado.proximo||""));
+      viewFiscal(c);
+    };
+    inp.click();
+  };
+
+  const br = document.getElementById("btnRegras");
+  if(br) br.onclick = async()=>{
+    const nat = prompt("Natureza da operação", f.natureza_operacao||"VENDA DE MERCADORIA"); if(nat===null) return;
+    const cd = prompt("CFOP para comprador do MESMO estado", f.cfop_dentro||"5102"); if(cd===null) return;
+    const cf = prompt("CFOP para comprador de OUTRO estado", f.cfop_fora||"6102"); if(cf===null) return;
+    const se = prompt("Série da nota", String(f.serie||1)); if(se===null) return;
+    const rr = await acaoApi("fiscal_regras", { natureza_operacao:nat, cfop_dentro:cd, cfop_fora:cf, serie:se });
+    if(!rr.success) return alert("Ops: "+rr.error);
+    viewFiscal(c);
+  };
+
+  const ba = document.getElementById("btnAmb");
+  if(ba) ba.onclick = async()=>{
+    const producao = f.ambiente !== 1;
+    const pv = await acaoApi("fiscal_ambiente", { producao, confirmar:false });
+    if(!pv.success) return alert("Ops: "+pv.error);
+    if(!confirm(pv.resultado.confirme)) return;
+    const rr = await acaoApi("fiscal_ambiente", { producao, confirmar:true });
+    if(!rr.success) return alert("Ops: "+rr.error);
+    viewFiscal(c);
+  };
 }
 
 function viewIA(c){
