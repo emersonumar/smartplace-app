@@ -135,6 +135,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE";
 const sb = createClient("https://ssgeggkaweixaqxxtbqm.supabase.co", ANON);
 const OAUTH = "https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-oauth";
+// Qual loja este login está operando agora. Vazio = a primeira do usuário.
+// Quem atende várias lojas (agência) troca pela tela Carteira.
+let LOJA_ATUAL = (()=>{ try { return localStorage.getItem("sp_loja_atual") || ""; } catch(e) { return ""; } })();
+function trocarLoja(id){
+  LOJA_ATUAL = id || "";
+  try { localStorage.setItem("sp_loja_atual", LOJA_ATUAL); } catch(e) {}
+  CACHE = { painel:null, dados:null, ads:null, regras:null };
+  VIEW = "dashboard"; location.hash = "#dashboard";
+  render();
+}
 const app = document.getElementById("app");
 const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#4DE8F4","TT","tiktok.svg"]};
 const ico = (c,s=18)=> NOMES[c]?`<img src="icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
@@ -145,7 +155,7 @@ avaliacoes:["Avaliações respondidas","responde 4-5★ no tom da marca; nota ba
 frete_gratis:["Frete grátis garantido","patrulha os anúncios e reativa o frete grátis que caiu","mercado_livre"],
 sentinela_ads:["Sentinela de verba de ads","confere o saldo de ads e avisa antes de acabar","shopee"],
 relatorio_email:["Relatório seg·qua·sex","resumo de tudo que a IA fez, no seu e-mail",null]};
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"]];
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"],["carteira","Carteira"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -170,7 +180,7 @@ async function acaoApi(acao, params){
   const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
     method:"POST",
     headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
-    body: JSON.stringify({ acao, params: params||{} })
+    body: JSON.stringify({ acao, params: params||{}, loja_id: LOJA_ATUAL || undefined })
   });
   let d; try { d = await r.json(); } catch(_) { d = null; }
   if (!d || typeof d !== "object") return { success:false, error: msgErro(null, r) };
@@ -234,7 +244,7 @@ function shell(){
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira };
   app.innerHTML = alertas + `<div id="conteudo"></div>`;
   (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
 }
@@ -542,6 +552,56 @@ async function gerarEtiquetas(){
 }
 
 // ── Gestão IA (ações rápidas + chat + automações + histórico) ──
+// Carteira: a lista de lojas que este login atende. Existe para quem cuida de
+// mais de uma operação — agência, consultor, ou dono com duas lojas. É a tela
+// que permite entrar na loja do cliente sem pedir a senha dele.
+async function viewCarteira(c){
+  c.innerHTML = `<h1>Carteira de clientes</h1><div class="sub-h1">As lojas que você atende</div><p class="vazio">Carregando…</p>`;
+  const r = await acaoApi("minhas_lojas", {});
+  if(!r.success){ c.innerHTML = `<h1>Carteira de clientes</h1><p class="vazio">${esc(r.error)}</p>`; return; }
+  const d = r.resultado;
+  const lojas = d.lojas || [];
+  const uma = lojas.length <= 1;
+
+  const linha = l => {
+    const chips = (l.canais||[]).map(x=>`<span class="chip" style="padding:3px 9px;font-size:.68rem">${NOMES[x]?NOMES[x][0]:x}</span>`).join(" ")
+      || `<span class="chip" style="padding:3px 9px;font-size:.68rem;opacity:.45">sem canal</span>`;
+    const sinal = l.criticos ? `<span style="color:#FF6B6B">${l.criticos} crítico(s)</span>`
+      : (l.sem_canal ? `<span style="color:var(--acc)">falta conectar</span>` : `<span style="color:var(--n)">em dia</span>`);
+    const atual = LOJA_ATUAL ? LOJA_ATUAL === l.id : (lojas[0] && lojas[0].id === l.id);
+    return `<tr>
+      <td><b>${esc(l.nome)}</b><br><small style="color:var(--t3)">${esc(l.papel||"")}</small></td>
+      <td>${chips}</td>
+      <td style="text-align:right;font-family:var(--mono)">${l.pedidos_30d}</td>
+      <td style="text-align:right;font-family:var(--mono)">${brl(l.receita_30d)}</td>
+      <td style="text-align:right;font-family:var(--mono)">${brl(l.ticket)}</td>
+      <td style="text-align:right;font-family:var(--mono)">${l.taxa_pct==null?"—":l.taxa_pct+"%"}</td>
+      <td style="text-align:right">${sinal}</td>
+      <td style="text-align:right"><button class="chip trocar" data-loja="${l.id}"${atual?" disabled style=\"opacity:.45\"":""}>${atual?"aberta":"Entrar"}</button></td>
+    </tr>`;
+  };
+
+  c.innerHTML = `
+    <h1>Carteira de clientes</h1>
+    <div class="sub-h1">As lojas que você atende — entre em qualquer uma sem pedir a senha do cliente</div>
+    <div class="grid" style="margin:14px 0">
+      <div class="card"><div class="lbl">Lojas</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${d.total_lojas}</div></div>
+      <div class="card"><div class="lbl">Faturamento 30 dias</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${brl(d.receita_30d)}</div></div>
+      <div class="card"><div class="lbl">Pedidos 30 dias</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${d.pedidos_30d}</div></div>
+      <div class="card"><div class="lbl">Precisam de atenção</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px;color:${d.precisam_atencao?"#FF6B6B":"var(--n)"}">${d.precisam_atencao}</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto"><table class="tabela"><thead><tr>
+        <th>Loja</th><th>Canais</th><th style="text-align:right">Pedidos</th><th style="text-align:right">Faturamento</th>
+        <th style="text-align:right">Ticket</th><th style="text-align:right">Taxas</th><th style="text-align:right">Situação</th><th></th>
+      </tr></thead><tbody>${lojas.map(linha).join("")}</tbody></table></div>
+    </div>
+    ${uma?`<div class="card" style="margin-top:12px"><p style="font-size:.88rem;color:var(--t2);margin:0">
+      Você atende uma loja só. Esta tela existe para quem cuida de várias: quando um cliente seu virar loja aqui, ele aparece nesta lista e você entra na operação dele por este botão — sem pedir senha.</p></div>`:""}`;
+
+  c.querySelectorAll(".trocar").forEach(b=>{ b.onclick = ()=>trocarLoja(b.dataset.loja); });
+}
+
 function viewIA(c){
   const d = CACHE.painel;
   const autos = (d.automacoes||[]).filter(a=>a.tipo!=="relatorio_email").map(a=>{ const [nome,sub,cn] = AUTOS[a.tipo]||[a.tipo,"",null];
