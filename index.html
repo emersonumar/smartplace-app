@@ -1,1330 +1,341 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SmartPlace AI</title>
+<title>SmartPlace AI — sua loja de marketplaces no piloto automático</title>
+<meta name="description" content="Conecte Mercado Livre, Shopee e TikTok Shop e deixe a IA operar: preço dentro das suas regras, promoção sempre no ar, pergunta respondida e pedido organizado. Teste grátis.">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#050B14">
-
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<meta property="og:title" content="SmartPlace AI — sua loja de marketplaces no piloto automático">
+<meta property="og:description" content="O hub te mostra o painel e você trabalha. O SmartPlace trabalha.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://smartplaceai.app">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-:root{--g:#050B14;--p:#0A1526;--p2:#071120;--l:#16324A;--n:#38E1FF;--nd:#38E1FF1E;--acc:#F5A623;--gold:#FFD700;
---t:#E6F1FA;--t2:#A6BDD2;--t3:#6A87A3;--sans:'Manrope',system-ui,sans-serif;--disp:'Sora',var(--sans);--mono:'JetBrains Mono',monospace}
-*{margin:0;box-sizing:border-box}body{background:var(--g);color:var(--t);font-family:var(--sans);min-height:100vh}
-.topo{position:sticky;top:0;z-index:10;background:#050B14EE;backdrop-filter:blur(8px);border-bottom:1px solid var(--l)}
-.topo-in{max-width:1460px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-height:56px}
-.logo{font-family:var(--disp);font-weight:700;font-size:1.1rem;white-space:nowrap}.logo em{font-style:normal;color:var(--n)}
-.nav{display:flex;gap:2px;flex-wrap:wrap}
-.nav button{background:none;border:0;color:var(--t2);font-family:var(--sans);font-weight:600;font-size:.84rem;padding:17px 13px;cursor:pointer;border-bottom:2px solid transparent}
-.nav button:hover{color:var(--t)}
-.nav button.atv{color:var(--n);border-bottom-color:var(--n)}
-.dir{margin-left:auto;display:flex;align-items:center;gap:12px}
-.live{display:flex;align-items:center;gap:6px;background:var(--nd);border:1px solid #38E1FF55;color:var(--n);font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:99px;font-family:var(--mono);white-space:nowrap}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--n)}
-.sair{color:var(--t3);font-size:.8rem;cursor:pointer;background:none;border:0;font-family:var(--sans)}
-.wrap{max-width:1460px;margin:0 auto;padding:6px 22px 48px}
-h2{font-family:var(--disp);font-size:.74rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin:24px 0 10px}
-h1{font-family:var(--disp);font-size:1.25rem;margin:22px 0 2px}
-.sub-h1{color:var(--t3);font-size:.83rem;margin-bottom:4px}
-.card{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:16px 18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
-.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.conn{display:flex;gap:12px;align-items:center}
-.mark{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-family:var(--disp);font-size:.8rem;color:#04101C;flex:none}
-.state{margin-left:auto;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;text-decoration:none}
-.on{color:var(--n);background:var(--nd);border:1px solid #38E1FF44}
-.off{color:#1A0F00;background:var(--acc);cursor:pointer;border:0;font-family:var(--sans)}
-.feed .ev{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--l);font-size:.85rem;color:var(--t2)}
-.feed .ev:last-child{border-bottom:0}
-.t{font-family:var(--mono);font-size:.7rem;color:var(--t3);flex:none;width:84px}
-.auto{display:flex;gap:12px;align-items:center}
-.tgl{margin-left:auto;width:36px;height:20px;border-radius:99px;position:relative;flex:none;cursor:pointer;border:0}
-.tgl.on2{background:var(--n)}.tgl.off2{background:var(--l)}
-.tgl::after{content:'';position:absolute;top:2.5px;width:15px;height:15px;border-radius:50%;background:#04101C}
-.tgl.on2::after{right:2.5px}.tgl.off2::after{left:2.5px;background:var(--t3)}
-.alerta{border-left:3px solid var(--gold);padding:10px 14px;background:var(--p2);border-radius:8px;color:var(--t2);font-size:.85rem;margin:8px 0}
-.centro{max-width:400px;margin:8vh auto;display:flex;flex-direction:column;gap:12px;padding:0 18px}
-input{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:12px 14px;color:var(--t);font-family:var(--sans);font-size:.95rem}
-input:focus{outline:2px solid #38E1FF55}
-.btn{background:var(--acc);color:#1A0F00;font-weight:800;border-radius:10px;padding:12px;border:0;font-size:.95rem;cursor:pointer;font-family:var(--sans)}
-.link{color:var(--t3);font-size:.82rem;text-align:center;cursor:pointer;background:none;border:0;font-family:var(--sans)}
-.erro{color:#FF7B7B;font-size:.83rem;text-align:center;min-height:1.2em}
-.vazio{color:var(--t3);font-size:.85rem;padding:8px 0}
-.kpi .lbl{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);font-weight:700}
-.kpi .val{font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px}
-.kpi .sub{font-size:.73rem;color:var(--t2);margin-top:2px}
-.mini{background:var(--nd);border:1px solid #38E1FF44;color:var(--n);border-radius:8px;padding:4px 12px;font-size:.7rem;cursor:pointer;font-family:var(--sans);font-weight:700}
-.mini:disabled{opacity:.5}
-.tabela{width:100%;border-collapse:collapse;font-size:.86rem}
-.tabela th{text-align:left;color:var(--t3);font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;padding:12px 14px;border-bottom:1px solid var(--l);font-weight:700}
-.tabela td{padding:13px 14px;border-bottom:1px solid #10233C;vertical-align:middle}
-.tabela td, .tabela td *{font-family:var(--sans)}
-.tabela td b{font-weight:700}
-.tabela tr:hover td{background:#0C1930}
-.tabela tr:last-child td{border-bottom:0}
-.badge{font-size:.62rem;font-weight:800;border-radius:6px;padding:2px 7px;color:#04101C;font-family:var(--disp);white-space:nowrap}
-.pill{font-size:.66rem;font-weight:700;border-radius:99px;padding:2px 9px;white-space:nowrap}
-.pill.ok{color:var(--n);background:var(--nd)}
-.pill.ok2{color:#3ddc84;background:#3ddc8422}
-.pill.ruim{color:#FF9B9B;background:#FF6B6B22}
-.impop{display:block;width:100%;text-align:left;background:none;border:0;color:var(--t);font-family:var(--sans);font-size:.8rem;padding:8px 10px;cursor:pointer;border-radius:8px}
-.impop:hover{background:var(--p2)}
-#porcanal .tabela{font-size:.82rem}
-#porcanal .tabela td,#porcanal .tabela th{padding:12px 10px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-.chip{background:var(--p2);border:1px solid var(--l);color:var(--t2);border-radius:99px;padding:5px 14px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:var(--sans)}
-.chip.atv{background:var(--nd);border-color:#38E1FF66;color:var(--n)}
-.busca{background:var(--p2);border:1px solid var(--l);border-radius:10px;padding:8px 13px;color:var(--t);font-size:.83rem;min-width:240px}
-.tit{font-size:.85rem}
-.lb{font-size:.7rem;color:var(--t3);display:flex;flex-direction:column;gap:4px;font-weight:600}
-.w100{width:100%;min-width:0}
-.edt{width:92px;background:var(--p2);border:1px solid var(--l);border-radius:8px;color:var(--t);padding:5px 8px;font-family:var(--mono);font-size:.78rem}
-.edt:focus{outline:2px solid #38E1FF55}
-.itg{display:flex;align-items:center;gap:9px;width:100%;background:none;border:0;border-radius:10px;padding:11px 12px;color:var(--t2);font-family:var(--sans);font-size:.85rem;font-weight:600;cursor:pointer}
-.itg:hover{background:var(--p2)}
-.itg.atv{background:var(--p2);color:var(--t)}
-.ponto{width:8px;height:8px;border-radius:50%;flex:none}
-.regra{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #10233C;font-size:.83rem;color:var(--t2)}
-.regra:last-child{border-bottom:0}
-@media(max-width:720px){ .itg-grid{grid-template-columns:1fr!important} .itg-form{grid-template-columns:1fr!important} }
-.barra{height:6px;background:var(--l);border-radius:99px;margin-top:5px;overflow:hidden}
-.barra i{display:block;height:100%;border-radius:99px}
-.sku{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--l);font-size:.83rem}
-.sku:last-child{border-bottom:0}
-.rank{font-family:var(--mono);color:var(--t3);width:26px;flex:none;font-size:.75rem}
-.etq{border:1px solid var(--l);border-radius:10px;max-width:230px;background:#fff}
-@media(max-width:720px){
-  .topo-in{gap:8px;padding:0 12px}
-  .nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-  .nav::-webkit-scrollbar{display:none}
-  .nav button{padding:12px 11px;white-space:nowrap;font-size:.82rem}
-  .dir{margin-left:auto}
-  .live{display:none}
-  .wrap{padding:6px 12px 40px}
-  .busca{min-width:0;flex:1;width:100%}
-  .grid,.grid4{grid-template-columns:1fr 1fr}
-  .kpi .val{font-size:1.15rem}
-  .tabela{font-size:.8rem}
-  .tabela td,.tabela th{padding:10px 8px}
-  h1{font-size:1.1rem}
-  .bub{max-width:100%}
-  .etq{max-width:100%}
+:root{
+  --g:#050B14; --p:#0A1526; --p2:#071120; --l:#16324A;
+  --n:#38E1FF; --nd:#38E1FF1A; --acc:#F5A623;
+  --t:#E6F1FA; --t2:#A6BDD2; --t3:#6A87A3;
+  --ok:#3DD68C; --no:#FF6B6B;
+  --sans:'Manrope',system-ui,-apple-system,sans-serif;
+  --disp:'Sora',var(--sans); --mono:'JetBrains Mono',monospace;
 }
-@media(max-width:460px){ .grid,.grid4{grid-template-columns:1fr} }
-.acao{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font-family:var(--sans);color:var(--t);transition:border-color .15s}
-.acao:hover{border-color:#38E1FF66}
-.acao b{font-size:.86rem;display:block}
-.acao small{color:var(--t3);font-size:.73rem}
-.acao.rodando{opacity:.6;pointer-events:none}
-.chat{display:flex;flex-direction:column;gap:8px}
-.bub{max-width:92%;padding:9px 13px;border-radius:12px;font-size:.84rem;line-height:1.45}
-.u{align-self:flex-end;background:#16324A;border-bottom-right-radius:4px}
-.ai{align-self:flex-start;background:var(--p2);border:1px solid var(--l);border-bottom-left-radius:4px;color:var(--t2)}
-.ai b{color:var(--n)}
-.inpt{display:flex;gap:8px;background:var(--p2);border:1px solid var(--l);border-radius:11px;padding:9px 12px;align-items:center;margin-top:4px}
-</style></head><body>
-<div class="topo" id="topo" style="display:none"><div class="topo-in">
-  <div class="logo">Smart<em>Place</em> AI</div>
-  <div class="nav" id="nav"></div>
-  <div class="dir"><span class="live"><span class="dot"></span> IA operando</span><span id="lojaNome" style="color:var(--t2);font-size:.82rem"></span><button class="sair" id="sair">sair</button></div>
-</div></div>
-<div class="wrap" id="app"></div>
-<script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzZ2VnZ2thd2VpeGFxeHh0YnFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1MjE2NDIsImV4cCI6MjA5OTA5NzY0Mn0.54iKvZIPENqukwtU2f0GYGSV-rwDMGDVEk3XdWmIhmE";
-const sb = createClient("https://ssgeggkaweixaqxxtbqm.supabase.co", ANON);
-const OAUTH = "https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-oauth";
-const app = document.getElementById("app");
-const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#4DE8F4","TT","tiktok.svg"]};
-const ico = (c,s=18)=> NOMES[c]?`<img src="icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
-const AUTOS = {
-nunca_sem_desconto:["Nunca sem desconto","reaplica o desconto que venceu, com o mesmo % de antes","mercado_livre"],
-relampago_no_ar:["Relâmpago sempre no ar","quando a oferta relâmpago acaba, renova 3 dias com os mesmos preços","tiktok"],
-avaliacoes:["Avaliações respondidas","responde 4-5★ no tom da marca; nota baixa vira alerta pra você","shopee"],
-frete_gratis:["Frete grátis garantido","patrulha os anúncios e reativa o frete grátis que caiu","mercado_livre"],
-sentinela_ads:["Sentinela de verba de ads","confere o saldo de ads e avisa antes de acabar","shopee"],
-relatorio_email:["Relatório seg·qua·sex","resumo de tudo que a IA fez, no seu e-mail",null]};
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["canais","Integrações"]];
+*{margin:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--g);color:var(--t);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.w{max-width:1180px;margin:0 auto;padding:0 22px}
+a{color:inherit;text-decoration:none}
 
-function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-let VIEW = (location.hash||"#dashboard").slice(1);
-let CACHE = { painel:null, dados:null, ads:null, regras:null };
+/* ── topo ─────────────────────────────────────── */
+.topo{position:sticky;top:0;z-index:50;background:#050B14E8;backdrop-filter:blur(10px);border-bottom:1px solid var(--l)}
+.topo .w{display:flex;align-items:center;gap:16px;min-height:60px}
+.marca{font-family:var(--disp);font-weight:800;font-size:1.06rem;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+.marca img{width:26px;height:26px;border-radius:6px}
+.marca i{color:var(--n);font-style:normal}
+.topo nav{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.topo nav a.lnk{color:var(--t2);font-size:.87rem;padding:8px 10px;border-radius:8px}
+.topo nav a.lnk:hover{color:var(--t);background:var(--p)}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;
+  padding:11px 20px;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:.16s}
+.btn-p{background:var(--acc);color:#1A0F00}
+.btn-p:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-s{border-color:var(--l);color:var(--t)}
+.btn-s:hover{border-color:var(--n);color:var(--n)}
+.btn-g{background:var(--n);color:#05202B}
+.btn-g:hover{filter:brightness(1.08);transform:translateY(-1px)}
 
-// Traduz qualquer formato de falha numa frase que o cliente entenda.
-// Antes isso virava "Ops: undefined" quando a resposta não trazia `error`,
-// e aí ninguém — nem a IA — sabia o que tinha acontecido.
-function msgErro(d, r){
-  const e = d && (d.error || d.message || d.msg || d.error_description);
-  if (e) return String(e);
-  if (r && r.status === 401) return "Sua sessão expirou. Entre de novo, por favor.";
-  if (r && r.status === 429) return "Muitas solicitações seguidas. Aguarde alguns segundos e tente de novo.";
-  if (r && r.status >= 500) return "O serviço não respondeu agora. Tente de novo em instantes.";
-  if (r && !r.ok) return "A solicitação não foi aceita (código " + r.status + ").";
-  return "Não consegui concluir e não recebi o motivo. Tente de novo em instantes.";
-}
+/* ── hero ─────────────────────────────────────── */
+.hero{padding:76px 0 30px;position:relative}
+.hero::before{content:"";position:absolute;inset:-140px 0 auto 0;height:520px;pointer-events:none;
+  background:radial-gradient(58% 70% at 22% 0%,#38E1FF22,transparent 70%)}
+.selo{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.7rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--n);
+  background:var(--nd);border:1px solid #38E1FF33;padding:6px 13px;border-radius:100px}
+h1{font-family:var(--disp);font-weight:800;letter-spacing:-.035em;line-height:1.03;
+  font-size:clamp(2.15rem,5.6vw,4rem);margin:20px 0 0;max-width:16ch;text-wrap:balance}
+h1 em{font-style:normal;color:var(--n)}
+.sub{color:var(--t2);font-size:clamp(1rem,1.7vw,1.16rem);max-width:56ch;margin:20px 0 0}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin:30px 0 0}
+.mini{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0 0;color:var(--t3);font-size:.83rem}
+.mini span{display:flex;align-items:center;gap:7px}
+.mini b{color:var(--ok)}
 
-async function acaoApi(acao, params){
-  const { data:{ session } } = await sb.auth.getSession();
-  const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
-    body: JSON.stringify({ acao, params: params||{} })
-  });
-  let d; try { d = await r.json(); } catch(_) { d = null; }
-  if (!d || typeof d !== "object") return { success:false, error: msgErro(null, r) };
-  if (!d.success && !d.error) d.error = msgErro(d, r);
-  return d;
-}
+/* ── tela do produto ──────────────────────────── */
+.shot{margin:46px 0 0;border:1px solid var(--l);border-radius:14px;overflow:hidden;
+  background:var(--p2);box-shadow:0 40px 90px -50px #38E1FF44, 0 20px 60px -40px #000}
+.shot img{display:block;width:100%;height:auto}
+.shot-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;background:var(--p);border-bottom:1px solid var(--l)}
+.shot-bar i{width:9px;height:9px;border-radius:50%;background:var(--l);display:block}
+.shot-bar span{margin-left:8px;font-family:var(--mono);font-size:.7rem;color:var(--t3)}
 
-async function render(){
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ document.getElementById("topo").style.display="none"; return telaLogin(); }
-  const { data, error } = await sb.rpc("sp_painel");
-  if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
-  if(data?.sem_loja){ document.getElementById("topo").style.display="none"; return telaOnboarding(); }
-  CACHE.painel = data;
-  shell();
-}
+/* ── seções ───────────────────────────────────── */
+section{padding:76px 0}
+.eyebrow{font-family:var(--mono);font-size:.71rem;letter-spacing:.14em;text-transform:uppercase;color:var(--n);margin-bottom:12px}
+h2{font-family:var(--disp);font-weight:700;letter-spacing:-.028em;line-height:1.1;
+  font-size:clamp(1.6rem,3.4vw,2.4rem);text-wrap:balance;max-width:20ch}
+.lead{color:var(--t2);max-width:60ch;margin:14px 0 0;font-size:1.03rem}
 
-function telaLogin(){
-  app.innerHTML = `
-  <div class="centro">
-    <div class="logo" style="text-align:center;font-size:1.6rem">Smart<em>Place</em> AI</div>
-    <p style="color:var(--t2);text-align:center;font-size:.9rem">Sua loja de marketplaces no piloto automático</p>
-    <input id="email" type="email" placeholder="seu e-mail">
-    <input id="senha" type="password" placeholder="senha">
-    <button class="btn" id="entrar">Entrar</button>
-    <button class="link" id="criar">Não tem conta? Criar agora</button>
-    <div class="erro" id="erro"></div>
-  </div>`;
-  const erro = m => document.getElementById("erro").textContent = m;
-  document.getElementById("entrar").onclick = async()=>{
-    const { error } = await sb.auth.signInWithPassword({ email: email.value, password: senha.value });
-    error ? erro("Login falhou: "+error.message) : render();
-  };
-  document.getElementById("criar").onclick = async()=>{
-    const { error } = await sb.auth.signUp({ email: email.value, password: senha.value });
-    error ? erro(error.message) : erro("Conta criada! Já pode entrar.");
-  };
-}
+/* tese */
+.tese{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));margin-top:38px}
+.tcard{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:24px}
+.tcard .rot{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.tcard h3{font-family:var(--disp);font-size:1.06rem;font-weight:700;margin:9px 0 8px;letter-spacing:-.015em}
+.tcard p{color:var(--t2);font-size:.92rem}
+.tcard.destaque{border-color:#38E1FF55;background:linear-gradient(180deg,#0A1526,#071120)}
+.tcard.destaque h3{color:var(--n)}
 
-function telaOnboarding(){
-  app.innerHTML = `
-  <div class="centro">
-    <div class="logo" style="text-align:center;font-size:1.5rem">Smart<em>Place</em> AI</div>
-    <p style="color:var(--t2);text-align:center">Qual o nome da sua loja?</p>
-    <input id="nome" placeholder="ex.: Bella Moda Fitness">
-    <button class="btn" id="ok">Criar minha loja</button>
-    <div class="erro" id="erro"></div>
-  </div>`;
-  document.getElementById("ok").onclick = async()=>{
-    const { error } = await sb.rpc("sp_criar_minha_loja",{ p_nome: nome.value || "Minha loja" });
-    error ? document.getElementById("erro").textContent = error.message : render();
-  };
-}
+/* canais */
+.canais{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.canal{display:flex;align-items:center;gap:9px;background:var(--p);border:1px solid var(--l);
+  border-radius:100px;padding:9px 17px;font-weight:600;font-size:.9rem}
+.canal img{width:19px;height:19px}
+.canal.tt{border-color:#38E1FF55}
+.canal.tt b{color:var(--n);font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;
+  text-transform:uppercase;background:var(--nd);padding:3px 8px;border-radius:100px}
 
-// ── casca do ERP: topo fixo + menu + conteúdo por tela ──
-function shell(){
-  const d = CACHE.painel;
-  document.getElementById("topo").style.display="";
-  document.getElementById("lojaNome").textContent = d.loja.nome;
-  document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}</button>`).join("");
-  document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
-  document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
-  const alertas = (d.alertas||[]).map(a=>`<div class="alerta">${a.severidade==="urgente"?"🚨":"⚠️"} ${esc(a.mensagem)}</div>`).join("");
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais };
-  app.innerHTML = alertas + `<div id="conteudo"></div>`;
-  (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
-}
+/* funções */
+.funcs{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:38px}
+.f{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:22px;transition:.18s}
+.f:hover{border-color:#38E1FF44;transform:translateY(-2px)}
+.f .ic{font-size:1.25rem;margin-bottom:11px;display:block}
+.f h3{font-family:var(--disp);font-size:1rem;font-weight:700;letter-spacing:-.012em;margin-bottom:7px}
+.f p{color:var(--t2);font-size:.9rem}
 
-async function dados(force){
-  if(!CACHE.dados || force){ const r = await acaoApi("dados_pedidos"); CACHE.dados = r.success ? r.resultado : { erro: r.error }; }
-  return CACHE.dados;
-}
+/* comparativo */
+.vs{margin-top:34px;border:1px solid var(--l);border-radius:14px;overflow:hidden;background:var(--p)}
+.vs-row{display:grid;grid-template-columns:1fr auto 1fr;gap:0;border-bottom:1px solid var(--l)}
+.vs-row:last-child{border-bottom:0}
+.vs-row>div{padding:15px 20px;font-size:.92rem;display:flex;align-items:center;gap:10px}
+.vs-row .esq{color:var(--t3)}
+.vs-row .mid{background:var(--p2);border-left:1px solid var(--l);border-right:1px solid var(--l);
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);
+  justify-content:center;min-width:118px}
+.vs-row .dir{color:var(--t);font-weight:600}
+.vs-row .dir::before{content:"✓";color:var(--ok);font-weight:700}
+.vs-row .esq::before{content:"×";color:var(--no);font-weight:700}
 
-// ── Dashboard ──
-function grafBarras(dias){
-  const max = Math.max(...dias.map(d=>d.total), 1);
-  const W=940,H=170,bw=W/dias.length;
-  return `<svg viewBox="0 0 ${W} ${H+26}" style="width:100%;display:block">
-    ${dias.map((d,i)=>{ const h=Math.max(Math.round(d.total/max*H), d.total?4:2);
-      return `<rect x="${(i*bw+2).toFixed(1)}" y="${H-h}" width="${(bw-4).toFixed(1)}" height="${h}" rx="3" fill="${d.total?"#38E1FF":"#16324A"}"><title>${d.dia.slice(8,10)}/${d.dia.slice(5,7)} — ${brl(d.total)}</title></rect>`;}).join("")}
-    ${dias.map((d,i)=> i%5===0?`<text x="${(i*bw+2).toFixed(1)}" y="${H+18}" fill="#6A87A3" font-size="11" font-family="JetBrains Mono,monospace">${d.dia.slice(8,10)}/${d.dia.slice(5,7)}</text>`:"").join("")}
-  </svg>`;
+/* preço */
+.planos{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:38px;align-items:start}
+.plano{background:var(--p);border:1px solid var(--l);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:14px}
+.plano.top{border-color:var(--n);background:linear-gradient(180deg,#0B1A2C,#071120);position:relative}
+.plano .tag{position:absolute;top:-11px;left:26px;background:var(--n);color:#05202B;
+  font-family:var(--mono);font-size:.63rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 11px;border-radius:100px}
+.plano h3{font-family:var(--disp);font-size:1.1rem;font-weight:700}
+.plano .val{font-family:var(--disp);font-size:2.1rem;font-weight:800;letter-spacing:-.03em}
+.plano .val small{font-size:.85rem;font-weight:600;color:var(--t3);letter-spacing:0}
+.plano ul{list-style:none;padding:0;display:grid;gap:9px;font-size:.9rem;color:var(--t2)}
+.plano li{display:flex;gap:9px;align-items:flex-start}
+.plano li::before{content:"✓";color:var(--n);font-weight:700;flex:none}
+.plano .btn{justify-content:center;margin-top:auto}
+
+/* fecho */
+.fecho{background:linear-gradient(160deg,#0B1A2C,#050B14);border:1px solid #38E1FF33;
+  border-radius:20px;padding:clamp(34px,5vw,58px);text-align:center;margin:0 0 60px}
+.fecho h2{margin:0 auto;max-width:22ch}
+.fecho .cta{justify-content:center}
+
+footer{border-top:1px solid var(--l);padding:30px 0 46px;color:var(--t3);font-size:.84rem}
+footer .w{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--t3)}footer a:hover{color:var(--n)}
+footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
+@media (max-width:640px){
+  .vs-row{grid-template-columns:1fr}
+  .vs-row .mid{border-left:0;border-right:0;border-top:1px solid var(--l);border-bottom:1px solid var(--l);justify-content:flex-start}
 }
-const hoje = off => new Date(Date.now()+off*86400000).toISOString().slice(0,10);
-let FDASH = { de: hoje(-29), ate: hoje(0), canal: "todos" };
-function grafCanais(porCanal){
-  const ents = Object.keys(NOMES).map(k=>[k, porCanal[k]?porCanal[k].total:0]);
-  const max = Math.max(...ents.map(e=>e[1]), 1);
-  const W=460,H=150,bw=W/ents.length;
-  return `<svg viewBox="0 0 ${W} ${H+30}" style="width:100%;display:block">
-    ${ents.map(([k,v],i)=>{ const h=Math.max(Math.round(v/max*H), v?4:2); const [nome,cor]=NOMES[k];
-      return `<rect x="${i*bw+bw*0.22}" y="${H-h}" width="${bw*0.56}" height="${h}" rx="4" fill="${v?"#38E1FF":"#16324A"}"><title>${nome}: ${brl(v)}</title></rect>
-      <text x="${i*bw+bw/2}" y="${H+18}" fill="#6A87A3" font-size="11" text-anchor="middle">${nome}</text>`;}).join("")}
-  </svg>`;
-}
-function viewDashboard(c){
-  const d = CACHE.painel;
-  c.innerHTML = `
-    <h1>Dashboard</h1><div class="sub-h1">Vendas dos seus canais — dados reais</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0">
-      <input type="date" class="busca" id="fDe" value="${FDASH.de}" style="min-width:0">
-      <span style="color:var(--t3);font-size:.8rem">até</span>
-      <input type="date" class="busca" id="fAte" value="${FDASH.ate}" style="min-width:0">
-      <span class="chips" id="fCanais" style="margin:0"></span>
-      <button class="mini" id="csv" style="margin-left:auto">⬇ Exportar CSV</button>
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="topo"><div class="w">
+  <a href="/" class="marca"><img src="/icons/favicon-192.png" alt=""> Smart<i>Place</i> AI</a>
+  <nav>
+    <a class="lnk" href="#como">Como funciona</a>
+    <a class="lnk" href="#funcoes">O que ela faz</a>
+    <a class="lnk" href="#precos">Preços</a>
+    <a class="btn btn-s" href="/app/">Entrar</a>
+    <a class="btn btn-p" href="/app/">Teste grátis</a>
+  </nav>
+</div></header>
+
+<main>
+
+<section class="hero"><div class="w">
+  <span class="selo">● Mercado Livre · Shopee · TikTok Shop</span>
+  <h1>Sua loja no <em>piloto automático</em>.</h1>
+  <p class="sub">Os outros sistemas te mostram um painel bonito e deixam o trabalho com você.
+    O SmartPlace conecta suas contas e <strong>executa</strong>: ajusta preço dentro das suas regras,
+    renova promoção antes de vencer, responde quem pergunta e organiza os pedidos dos três canais numa tela só.</p>
+  <div class="cta">
+    <a class="btn btn-p" href="/app/">Começar teste grátis →</a>
+    <a class="btn btn-s" href="#como">Ver como funciona</a>
+  </div>
+  <div class="mini">
+    <span><b>✓</b> Sem cartão de crédito</span>
+    <span><b>✓</b> Conecta em 2 minutos</span>
+    <span><b>✓</b> Cancela quando quiser</span>
+  </div>
+
+  <div class="shot">
+    <div class="shot-bar"><i></i><i></i><i></i><span>smartplaceai.app</span></div>
+    <img src="/img/painel-dashboard.png" alt="Painel do SmartPlace AI com faturamento, pedidos e ticket médio dos canais conectados" loading="lazy">
+  </div>
+</div></section>
+
+<section id="problema"><div class="w">
+  <p class="eyebrow">O que ninguém te conta</p>
+  <h2>Faturamento alto não é lucro.</h2>
+  <p class="lead">O painel do marketplace mostra o que interessa a ele. Depois da comissão, do frete
+    que você bancou, do imposto e do que gastou em anúncio, a conta muda — e ninguém te avisa.</p>
+
+  <div class="tese">
+    <div class="tcard">
+      <span class="rot">O que você vê</span>
+      <h3>R$ 62 mil no mês</h3>
+      <p>Faturamento subindo, pedidos entrando, gráfico bonito. Parece que está tudo certo.</p>
     </div>
-    <div class="grid4" id="kpis"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
-    <div class="card" style="margin-top:12px;padding:10px 18px" id="finstrip"></div>
-    <div class="grid" style="margin-top:12px">
-      <div class="card"><b class="tit">Valor total de pedidos por dia</b><div id="grafico" style="margin-top:8px"><p class="vazio">carregando…</p></div><div id="situacao" style="margin-top:12px"></div></div>
-      <div class="card"><b class="tit">Valor total por canal no período</b><div id="grafcanal" style="margin-top:8px"><p class="vazio">carregando…</p></div></div>
+    <div class="tcard">
+      <span class="rot">O que acontece</span>
+      <h3>Produto no prejuízo</h3>
+      <p>Alguns anúncios custam mais do que rendem. Você continua vendendo eles porque não tem como saber quais são.</p>
     </div>
-    <h2>Vendas por canal</h2>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="porcanal"><p class="vazio">carregando…</p></div>
-    <h2 style="display:flex;align-items:center;gap:12px">🏆 Top 10 mais vendidos
-      <span class="chips" id="topModo" style="margin:0">
-        <button class="chip atv" data-m="var">Por variação</button>
-        <button class="chip" data-m="prod">Por produto</button>
-      </span></h2>
-    <div class="card" id="topskus"><p class="vazio">carregando…</p></div>`;
-  const chipsCanal = ()=>{
-    document.getElementById("fCanais").innerHTML = [["todos","Todos"],...Object.keys(NOMES).map(k=>[k,NOMES[k][0]])]
-      .map(([v,n])=>`<button class="chip ${FDASH.canal===v?"atv":""}" data-c="${v}">${n}</button>`).join("");
-    document.querySelectorAll("#fCanais .chip").forEach(b=>b.onclick=()=>{ FDASH.canal=b.dataset.c; chipsCanal(); carregarDash(); });
-  };
-  chipsCanal();
-  document.getElementById("fDe").onchange = e=>{ FDASH.de=e.target.value; carregarDash(); };
-  document.getElementById("fAte").onchange = e=>{ FDASH.ate=e.target.value; carregarDash(); };
-  carregarDash();
-}
-async function carregarDash(){
-  const res = await acaoApi("dados_pedidos", FDASH);
-  const r = res.success ? res.resultado : { erro: res.error };
-  {
-    const k = document.getElementById("kpis"); if(!k) return;
-    if(r.erro){ k.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
-    k.innerHTML = `
-      <div class="card kpi"><div class="lbl">Valor total</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">no período filtrado</div></div>
-      <div class="card kpi"><div class="lbl">Quantidade de pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">pagos no período</div></div>
-      <div class="card kpi"><div class="lbl">Produtos vendidos</div><div class="val">${r.produtos_vendidos??"—"}</div><div class="sub">peças no período</div></div>
-      <div class="card kpi"><div class="lbl">Ticket médio</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>
-      <div class="card kpi" id="metacard"></div>`;
-    const f = r.financeiro||{};
-    const meta = f.meta_mes ? Number(f.meta_mes) : null;
-    const mc = document.getElementById("metacard");
-    if(mc){
-      const agora = new Date(), diaMes = agora.getDate(), diasMes = new Date(agora.getFullYear(),agora.getMonth()+1,0).getDate();
-      if(meta){
-        const pctV = Math.min(100, Math.round(r.dias30.total/meta*100));
-        const pctP = Math.round(diaMes/diasMes*100);
-        const esperado = meta*diaMes/diasMes, delta = r.dias30.total-esperado;
-        mc.innerHTML = `<div class="lbl">🎯 Meta do mês (dia ${diaMes}/${diasMes})</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><small style="color:var(--t2);width:38px">Valor</small><div class="barra" style="flex:1;margin:0"><i style="width:${pctV}%;background:var(--n)"></i></div><small style="font-family:var(--mono);color:var(--n)">${pctV}%</small></div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:6px"><small style="color:var(--t2);width:38px">Prazo</small><div class="barra" style="flex:1;margin:0"><i style="width:${pctP}%;background:var(--acc)"></i></div><small style="font-family:var(--mono);color:var(--acc)">${pctP}%</small></div>
-          <div class="sub" style="margin-top:7px">${brl(r.dias30.total)} de ${brl(meta)} · esperado ${brl(esperado)}<br><b style="color:${delta>=0?"var(--n)":"#FF9B9B"}">${delta>=0?"✓ adiantado ":"⚠ atrasado "}${brl(Math.abs(delta))}</b></div>`;
-      } else {
-        mc.innerHTML = `<div class="lbl">🎯 Meta do mês</div><div class="sub" style="margin:8px 0">Defina uma meta de faturamento pro mês e acompanhe aqui.</div><button class="mini" id="defMeta">definir meta</button>`;
-        const bm = document.getElementById("defMeta");
-        if(bm) bm.onclick = async()=>{ const v = prompt("Meta de faturamento do mês (R$):","30000"); if(!v) return;
-          await acaoApi("config_loja",{ set:{ meta_mes:+String(v).replace(/[^\d.,]/g,"").replace(",",".") } }); carregarDash(); };
-      }
-    }
-    const fs = document.getElementById("finstrip");
-    if(fs){
-      const cel = (valor,rot,cor)=>`<div style="flex:1;min-width:150px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-family:var(--mono);${cor?`color:${cor}`:""}">${valor}</b><br><small style="color:var(--t3);font-size:.64rem;letter-spacing:.08em">${rot}</small></div>`;
-      fs.innerHTML = `<div style="display:flex;gap:0;flex-wrap:wrap;align-items:center">
-        ${cel(brl(f.faturamento_sem_frete),"FATURAMENTO SEM FRETE")}
-        ${cel(f.custo!=null?brl(f.custo):"—","PREÇO DE CUSTO"+(f.custo_pct!=null?` (${f.custo_pct}%)`:""))}
-        ${cel(f.margem_bruta_pct!=null?f.margem_bruta_pct.toFixed(2).replace(".",",")+"%":"—","MARGEM BRUTA")}
-        ${cel(f.impostos!=null?brl(f.impostos):"—","IMPOSTOS"+(f.imposto_pct!=null?` (${f.imposto_pct}%)`:""))}
-        ${cel(brl(f.taxa),"TAXA DE VENDA ("+(f.taxa_pct!=null?String(f.taxa_pct).replace(".",","):"0")+"%)")}
-        ${cel(f.contribuicao!=null?brl(f.contribuicao):"—","LUCRO"+(f.margem_contrib_pct!=null?` (${String(f.margem_contrib_pct).replace(".",",")}%)`:""),"#3ddc84")}
-        <button class="mini" id="cfgFin" title="configurar % de custo e imposto" style="margin:0 10px">⚙</button>
-      </div>`;
-      document.getElementById("cfgFin").onclick = async()=>{
-        const c = prompt("% de CUSTO sobre o faturamento (ex.: 27.2):", f.custo_pct??"");
-        if(c===null) return;
-        const i = prompt("% de IMPOSTO (ex.: 8.63):", f.imposto_pct??"");
-        if(i===null) return;
-        await acaoApi("config_loja",{ set:{ custo_pct:+String(c).replace(",","."), imposto_pct:+String(i).replace(",",".") } });
-        carregarDash();
-      };
-    }
-    const gc = document.getElementById("grafcanal");
-    if(gc) gc.innerHTML = grafCanais(r.por_canal||{});
-    const csvB = document.getElementById("csv");
-    if(csvB) csvB.onclick = ()=>{
-      const num = v => v!=null ? Number(v).toFixed(2) : "";
-      const linhas = [["Loja","Pedidos","Ticket Medio","Quantidade","Custo","Valor","Frete","Valor Peca","Margem Bruta %","Impostos","Taxas","Margem Contribuicao %","Contribuicao R$"].join(";")];
-      for(const [cn,v] of Object.entries(r.por_canal||{})) linhas.push([(NOMES[cn]||[cn])[0],v.pedidos,num(v.pedidos?v.total/v.pedidos:0),v.quantidade,num(v.custo),num(v.total),num(v.frete),num(v.valor_peca),num(v.margem_bruta_pct),num(v.impostos),num(v.taxa),num(v.margem_contrib_pct),num(v.contribuicao)].join(";"));
-      linhas.push(["TOTAL",r.dias30.pedidos,num(r.dias30.ticket),r.produtos_vendidos,num(f.custo),num(r.dias30.total),num(f.frete),"",num(f.margem_bruta_pct),num(f.impostos),num(f.taxa),num(f.margem_contrib_pct),num(f.contribuicao)].join(";"));
-      const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+linhas.join("\n")],{type:"text/csv"})); a.download="vendas-por-canal.csv"; a.click();
-    };
-    const g = document.getElementById("grafico");
-    if(g) g.innerHTML = (r.por_dia||[]).some(x=>x.total) ? grafBarras(r.por_dia) : "<p class='vazio'>Sem vendas no período — sincronize na aba Pedidos.</p>";
-    const st = document.getElementById("situacao");
-    if(st && r.situacao){
-      const tot = r.situacao.pagos + r.situacao.cancelados || 1;
-      st.innerHTML = `<b class="tit">Situação</b>
-        <div style="font-size:.78rem;color:var(--t2);margin-top:6px">Pagos (${r.situacao.pagos}/${tot})</div><div class="barra"><i style="width:${Math.round(r.situacao.pagos/tot*100)}%;background:var(--n)"></i></div>
-        <div style="font-size:.78rem;color:var(--t2);margin-top:6px">Cancelados (${r.situacao.cancelados}/${tot})</div><div class="barra"><i style="width:${Math.round(r.situacao.cancelados/tot*100)}%;background:#FF6B6B"></i></div>`;
-    }
-    const pcEl = document.getElementById("porcanal");
-    const pct = v => v!=null ? String(typeof v==="number"?v.toFixed(2):v).replace(".",",")+"%" : "—";
-    const din = v => v!=null ? brl(v) : "—";
-    if(pcEl){
-      const linhas = Object.entries(r.por_canal||{});
-      const th = t=>`<th style="text-align:right">${t}</th>`;
-      const td = (x,extra)=>`<td style="text-align:right;font-family:var(--mono);white-space:nowrap;${extra||""}">${x}</td>`;
-      pcEl.innerHTML = linhas.length ? `<table class="tabela">
-        <tr><th>Loja</th>${["Pedidos","Ticket Médio","Quantidade","Custo","Valor","Frete","Valor Peça","Margem Bruta %","Impostos","Taxas","Margem Contrib. %","Contribuição R$"].map(th).join("")}</tr>
-        ${linhas.map(([cn,v])=>{ const [nome,cor,sigla]=NOMES[cn]||[cn,"#888",cn];
-          return `<tr><td style="white-space:nowrap">${ico(cn,17)} ${nome}</td>
-          ${td(v.pedidos)}${td(brl(v.pedidos?v.total/v.pedidos:0))}${td(v.quantidade??"—")}
-          ${td(din(v.custo),"color:var(--t3)")}${td("<b>"+brl(v.total)+"</b>")}${td(din(v.frete),"color:var(--t3)")}
-          ${td(din(v.valor_peca))}${td(pct(v.margem_bruta_pct))}${td(din(v.impostos),"color:var(--t3)")}
-          ${td(brl(v.taxa),"color:var(--t3)")}${td(pct(v.margem_contrib_pct))}${td("<b style='color:#3ddc84'>"+din(v.contribuicao)+"</b>")}</tr>`;}).join("")}
-        <tr><td><b>TOTAL</b></td>
-          ${td("<b>"+r.dias30.pedidos+"</b>")}${td(brl(r.dias30.ticket))}${td(r.produtos_vendidos??"—")}
-          ${td(din(f.custo),"color:var(--t3)")}${td("<b>"+brl(r.dias30.total)+"</b>")}${td(din(f.frete),"color:var(--t3)")}
-          ${td("—")}${td(pct(f.margem_bruta_pct))}${td(din(f.impostos),"color:var(--t3)")}
-          ${td(brl(f.taxa),"color:var(--t3)")}${td(pct(f.margem_contrib_pct))}${td("<b style='color:#3ddc84'>"+din(f.contribuicao)+"</b>")}</tr>
-      </table>` : "<p class='vazio'>Sem vendas — sincronize na aba Pedidos.</p>";
-    }
-    const desenhaTop = modo=>{
-      const ts = document.getElementById("topskus"); if(!ts) return;
-      const lista = modo==="prod" ? (r.top_produtos||[]) : (r.top_skus||[]);
-      ts.innerHTML = lista.length ? lista.map((s,i)=>`<div class="sku"><span class="rank">${i+1}º</span>
-        <span style="flex:1">${esc(s.titulo)}${modo!=="prod"&&s.sku?`<br><small style="color:var(--t3);font-family:var(--mono);font-size:.68rem">${esc(s.sku)}</small>`:""}
-        ${modo==="prod"&&s.chave&&s.chave!==s.titulo?`<br><small style="color:var(--t3);font-family:var(--mono);font-size:.68rem">${esc(s.chave)}</small>`:""}</span>
-        <small style="color:var(--t3)">${s.qtd} un</small><b style="font-family:var(--mono)">${brl(s.total)}</b></div>`).join("")
-        : "<p class='vazio'>Sem vendas no período.</p>";
-    };
-    desenhaTop("var");
-    document.querySelectorAll("#topModo .chip").forEach(b=>b.onclick=()=>{
-      document.querySelectorAll("#topModo .chip").forEach(x=>x.classList.remove("atv"));
-      b.classList.add("atv"); desenhaTop(b.dataset.m);
-    });
-  }
-}
-
-
-// ── Pedidos (fila estilo Vendas Online: etapas, mês, seleção, etiquetas, faturar) ──
-let FILTRO = { etapa:"todas", canal:"todos", busca:"", mes:"todos" };
-let SEL = new Set();
-const ETAPAS = { importado:["Importado","ok"], concluido:["Concluído","ok2"], faturado:["Faturado","ok"], cancelado:["Cancelado","ruim"] };
-const etapaDe = p => p.etapa || (String(p.status).toLowerCase().includes("cancel") ? "cancelado" : "importado");
-function pedidosFiltrados(r){
-  return (r.ultimos||[]).filter(p=>{
-    if(FILTRO.etapa!=="todas" && etapaDe(p)!==FILTRO.etapa) return false;
-    if(FILTRO.canal!=="todos" && p.canal!==FILTRO.canal) return false;
-    if(FILTRO.mes!=="todos" && (p.criado_canal_em||"").slice(0,7)!==FILTRO.mes) return false;
-    if(FILTRO.busca){ const q=FILTRO.busca.toLowerCase();
-      const alvo=(p.pedido_id+" "+(p.comprador||"")+" "+(p.itens||[]).map(i=>(i.titulo||"")+" "+(i.sku||"")).join(" ")).toLowerCase();
-      if(!alvo.includes(q)) return false; }
-    return true;
-  });
-}
-const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-function viewPedidos(c){
-  c.innerHTML = `
-    <h1>Pedidos</h1><div class="sub-h1">Fila unificada dos seus canais — selecione pedidos pra faturar e imprimir etiquetas</div>
-    <div class="grid4" id="pedkpis" style="margin-top:10px"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 4px">
-      <span class="chips" id="etapaTabs" style="margin:0"></span>
-      <select id="mesSel" class="busca" style="min-width:0;margin-left:auto"></select>
+    <div class="tcard destaque">
+      <span class="rot">O que o SmartPlace faz</span>
+      <h3>Mostra e corrige</h3>
+      <p>Calcula quanto sobra por produto com a venda real, aponta os que dão prejuízo e ajusta o preço — sempre dentro do piso que você definiu.</p>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-      <input class="busca" id="buscaPed" placeholder="🔍 Buscar pedido, cliente, produto, SKU…" value="${esc(FILTRO.busca)}">
-      <span class="chips" id="canalChips" style="margin:0"></span>
-      <span style="margin-left:auto;display:flex;gap:8px;position:relative">
-        <button class="mini" id="syncPed">↻ Sincronizar</button>
-        <button class="mini" id="btnNfe">🧾 Faturar</button>
-        <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🏷️ Gerar etiqueta</button>
-        <button class="mini" id="btnImp">🖨️ Imprimir ▾</button>
-        <div id="impMenu" class="card" style="display:none;position:absolute;right:0;top:115%;z-index:30;min-width:260px;padding:8px">
-          <button class="impop" data-imp="etq">Etiquetas de transporte</button>
-          <button class="impop" data-imp="danfe">DANFE Simplificada</button>
-          <button class="impop" data-imp="danfe_etq">DANFE Simplificada + Etiqueta de transporte</button>
-          <button class="impop" data-imp="danfe_pdf">DANFE completa (PDF)</button>
-        </div>
-      </span>
-    </div>
-    <div id="selBar" style="margin-bottom:8px"></div>
-    <label style="display:flex;align-items:center;gap:8px;color:var(--t3);font-size:.76rem;margin-bottom:8px"><input type="checkbox" id="selTodos"> Selecionar todos da página</label>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>
-    <div id="etqArea"></div>`;
-  const somaSel = lista => lista.filter(p=>SEL.has(p.pedido_id)).reduce((s,p)=>s+Number(p.total||0),0);
-  const atualizaSel = lista=>{
-    const n=SEL.size;
-    document.getElementById("btnNfe").textContent = "🧾 Faturar"+(n?` (${n})`:"");
-    document.getElementById("btnEtq").textContent = "🏷️ Gerar etiqueta"+(n?` (${n})`:"");
-    document.getElementById("selBar").innerHTML = n?`<span class="chip atv" style="cursor:default">${n} pedido(s) · ${brl(somaSel(lista))}</span> <button class="chip" id="limparSel">✕ Limpar seleção</button>`:"";
-    const ls=document.getElementById("limparSel");
-    if(ls) ls.onclick=()=>{ SEL.clear(); document.querySelectorAll(".selPed").forEach(cb=>cb.checked=false); const st=document.getElementById("selTodos"); if(st) st.checked=false; atualizaSel(lista); };
-  };
-  const fill = r=>{
-    if(!document.getElementById("pedcard")) return;
-    if(r.erro){ document.getElementById("pedcard").innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
-    const todos = r.ultimos||[];
-    const conta = e => todos.filter(p=>etapaDe(p)===e).length;
-    const nImp=conta("importado"), nConc=conta("concluido"), nCanc=conta("cancelado"), nFat=conta("faturado");
-    document.getElementById("pedkpis").innerHTML = `
-      <div class="card kpi"><div class="val">${nImp}</div><div class="lbl">Importado</div></div>
-      <div class="card kpi"><div class="val">${nFat}</div><div class="lbl">Faturado</div></div>
-      <div class="card kpi"><div class="val" style="color:var(--n)">${nConc}</div><div class="lbl">Concluído / Expedido</div></div>
-      <div class="card kpi"><div class="val" style="color:#FF9B9B">${nCanc}</div><div class="lbl">Cancelado</div></div>`;
-    document.getElementById("etapaTabs").innerHTML = [["importado","Pendentes",nImp],["faturado","Faturados",nFat],["concluido","Concluídos",nConc],["cancelado","Cancelados",nCanc],["todas","Todas",todos.length]]
-      .map(([v,nm,q])=>`<button class="chip ${FILTRO.etapa===v?"atv":""}" data-st="${v}">${nm} (${q})</button>`).join("");
-    const meses=[...new Set(todos.map(p=>(p.criado_canal_em||"").slice(0,7)))].filter(Boolean).sort().reverse();
-    document.getElementById("mesSel").innerHTML = `<option value="todos">Todos os meses</option>`+meses.map(m=>`<option value="${m}" ${FILTRO.mes===m?"selected":""}>${MESES[+m.slice(5,7)-1]}/${m.slice(0,4)}</option>`).join("");
-    const porCanalQ = {todos:todos.length};
-    todos.forEach(p=>porCanalQ[p.canal]=(porCanalQ[p.canal]||0)+1);
-    document.getElementById("canalChips").innerHTML = [["todos","Todos"],...Object.keys(NOMES).map(k=>[k,NOMES[k][0]])]
-      .map(([v,n])=>`<button class="chip ${FILTRO.canal===v?"atv":""}" data-cn="${v}">${n} (${porCanalQ[v]||0})</button>`).join("");
-    const lista = pedidosFiltrados(r);
-    document.getElementById("pedcard").innerHTML = lista.length ? `<table class="tabela">
-      <tr><th></th><th>Nº</th><th>Data</th><th>Canal</th><th>Cliente</th><th>Produto</th><th style="text-align:right">Total</th><th>Etapa</th><th>NF-e</th><th>Etiqueta</th></tr>
-      ${lista.map(p=>{ const [nome,cor,sigla]=NOMES[p.canal]||[p.canal,"#888",p.canal];
-        const [rot,cls]=ETAPAS[etapaDe(p)]||["—","ok"];
-        const item=(p.itens&&p.itens[0]&&p.itens[0].titulo)||"—";
-        return `<tr>
-          <td><input type="checkbox" class="selPed" data-id="${esc(p.pedido_id)}" ${SEL.has(p.pedido_id)?"checked":""}></td>
-          <td style="font-family:var(--mono);font-size:.72rem;color:var(--n)">#${esc(String(p.pedido_id).slice(-6))}</td>
-          <td style="font-family:var(--mono);font-size:.75rem;color:var(--t3);white-space:nowrap">${(p.criado_canal_em||"").slice(8,10)}/${(p.criado_canal_em||"").slice(5,7)}/${(p.criado_canal_em||"").slice(0,4)}</td>
-          <td style="white-space:nowrap">${ico(p.canal,17)} ${nome}</td>
-          <td style="color:var(--t2)">${esc(p.comprador||"—")}</td>
-          <td>${esc(item).slice(0,42)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
-          <td style="text-align:right;font-family:var(--mono);white-space:nowrap"><b>${brl(p.total)}</b>${p.taxa?`<br><small style="color:var(--t3)">taxa ${brl(p.taxa)}</small>`:""}</td>
-          <td><span class="pill ${cls}">${rot}</span></td>
-          <td style="color:var(--t3);font-size:.72rem">—</td>
-          <td style="color:var(--t3);font-size:.72rem">${p.envio_id?"🏷️ disponível":"—"}</td></tr>`; }).join("")}
-    </table>` : "<p class='vazio'>Nenhum pedido nesse filtro.</p>";
-    document.querySelectorAll("#etapaTabs .chip").forEach(b=>b.onclick=()=>{ FILTRO.etapa=b.dataset.st; fill(r); });
-    document.querySelectorAll("#canalChips .chip").forEach(b=>b.onclick=()=>{ FILTRO.canal=b.dataset.cn; fill(r); });
-    document.getElementById("mesSel").onchange = e=>{ FILTRO.mes=e.target.value; fill(r); };
-    document.querySelectorAll(".selPed").forEach(cb=>cb.onchange=()=>{ cb.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); atualizaSel(lista); });
-    const st=document.getElementById("selTodos");
-    if(st) st.onchange=()=>{ document.querySelectorAll(".selPed").forEach(cb=>{ cb.checked=st.checked; st.checked?SEL.add(cb.dataset.id):SEL.delete(cb.dataset.id); }); atualizaSel(lista); };
-    atualizaSel(lista);
-  };
-  dados().then(fill);
-  document.getElementById("buscaPed").oninput = async e=>{ FILTRO.busca=e.target.value; fill(await dados()); };
-  document.getElementById("syncPed").onclick = async()=>{
-    const b=document.getElementById("syncPed"); b.disabled=true; b.textContent="sincronizando…";
-    const r=await acaoApi("sincronizar_pedidos");
-    b.disabled=false; b.textContent="↻ Sincronizar";
-    if(!r.success) return alert("Ops: "+r.error);
-    fill(await dados(true));
-  };
-  document.getElementById("btnEtq").onclick = gerarEtiquetas;
-  document.getElementById("btnNfe").onclick = ()=>alert("🧾 O faturamento automático de NF-e direto da fila está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
-  const menu=document.getElementById("impMenu");
-  document.getElementById("btnImp").onclick = ()=>{ menu.style.display = menu.style.display==="none"?"block":"none"; };
-  document.querySelectorAll(".impop").forEach(b=>b.onclick=()=>{
-    menu.style.display="none";
-    if(b.dataset.imp==="etq") return gerarEtiquetas();
-    alert("🧾 As DANFEs chegam junto com o faturamento automático (em integração) — a nota fiscal vai nascer aqui e a impressão sai em lote.");
-  });
-}
-async function gerarEtiquetas(){
-  if(!SEL.size) return alert("Marca os pedidos que você quer imprimir (caixinha da primeira coluna).");
-  const area = document.getElementById("etqArea");
-  if(area) area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">⚙️ Buscando etiquetas oficiais no Mercado Livre…</p></div>`;
-  const r = await acaoApi("gerar_etiquetas", { pedido_ids:[...SEL] });
-  if(!r.success){ if(area) area.innerHTML = `<div class="card" style="margin-top:14px"><p class="vazio">Ops: ${esc(r.error)}</p></div>`; else alert("Ops: "+r.error); return; }
-  ZPL_ATUAL = r.resultado.zpl;
-  VIEW="etiquetas"; location.hash="etiquetas"; shell();
-}
+  </div>
+</div></section>
 
-// ── Gestão IA (ações rápidas + chat + automações + histórico) ──
-function viewIA(c){
-  const d = CACHE.painel;
-  const autos = (d.automacoes||[]).filter(a=>a.tipo!=="relatorio_email").map(a=>{ const [nome,sub,cn] = AUTOS[a.tipo]||[a.tipo,"",null];
-    const bd = cn && NOMES[cn] ? ico(cn,16)+" " : "📧 ";
-    return `<div class="card auto"><div><b style="font-size:.85rem">${bd}${nome}</b><br><small style="color:var(--t3);font-size:.73rem">${sub}</small></div>
-      <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${a.tipo}" data-ligada="${a.ligada}"></button></div>`; }).join("");
-  const on = new Set((d.conexoes||[]).filter(x=>x.status==="conectada").map(x=>x.plataforma));
-  const chipCanal = (canal, rot, acao) => { const [nome,cor,sigla]=NOMES[canal];
-    const ic=ico(canal,16);
-    return acao ? `<button class="chip acx" data-acao="${acao}" style="display:inline-flex;align-items:center;gap:7px">${ic} ${nome}</button>`
-      : `<button class="chip" disabled style="display:inline-flex;align-items:center;gap:7px;opacity:.45">${ic} ${nome} · ${rot}</button>`; };
-  const acx = (acao,canal)=> on.has(canal) ? chipCanal(canal,"",acao) : chipCanal(canal,"conecte");
-  const breve = canal => chipCanal(canal,"em breve");
-  const feed = (d.acoes||[]).slice(0,10).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠️"}</span></div>`).join("")
-    || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
-  c.innerHTML = `
-    <h1>Gestão IA</h1><div class="sub-h1">A IA que opera sua loja: comandos de um clique, pedidos em português e automações 24h</div>
-    <h2>Ações rápidas — escolha o canal e a IA executa agora</h2>
-    <div class="grid">
-      <div class="card"><b class="tit">🏷️ Colocar em promoção</b><br><small style="color:var(--t3);font-size:.75rem">aplica % de desconto nos anúncios que estão sem promoção</small>
-        <div class="chips" style="margin:10px 0 0">${acx("promocao_geral","mercado_livre")}${breve("shopee")}</div></div>
-      <div class="card"><b class="tit">⚡ Oferta relâmpago</b><br><small style="color:var(--t3);font-size:.75rem">renova a oferta por 3 dias com os mesmos preços</small>
-        <div class="chips" style="margin:10px 0 0">${acx("renovar_relampago","tiktok")}${chipCanal("shopee","manual no Seller Center")}</div></div>
-      <div class="card"><b class="tit">⭐ Responder avaliações</b><br><small style="color:var(--t3);font-size:.75rem">responde no tom da marca; nota baixa fica pra você</small>
-        <div class="chips" style="margin:10px 0 0">${acx("responder_avaliacoes","shopee")}${chipCanal("mercado_livre","sem API de resposta")}</div></div>
-      <div class="card"><b class="tit">🩺 Checar saúde da loja</b><br><small style="color:var(--t3);font-size:.75rem">promoções, frete grátis, saldo de ads e avaliações pendentes</small>
-        <div class="chips" style="margin:10px 0 0">${on.size?`<button class="chip acx" data-acao="saude_loja">Todos os canais conectados</button>`:`<button class="chip" disabled style="opacity:.4">conecte um canal</button>`}</div></div>
-    </div>
-      <div class="grid">
-      <div class="card"><b class="tit">💬 Responder perguntas</b><br><small style="color:var(--t3);font-size:.75rem">quem pergunta e não é respondido compra do concorrente</small>
-        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="perguntas_listar">Ver perguntas sem resposta</button></div></div>
-      <div class="card"><b class="tit">🔄 Igualar estoque entre canais</b><br><small style="color:var(--t3);font-size:.75rem">evita vender o que acabou e tomar cancelamento</small>
-        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="estoque_sincronizar">Conferir e igualar</button></div></div>
-      </div>
+<section id="como"><div class="w">
+  <p class="eyebrow">Como funciona</p>
+  <h2>Conecte uma vez. Ela trabalha todo dia.</h2>
 
-    <h2>Diagnósticos — a IA analisa e te mostra</h2>
-    <div class="grid">
-      <div class="card"><b class="tit">💰 Margem real por produto</b><br><small style="color:var(--t3);font-size:.75rem">quanto sobra depois de taxa, frete e imposto</small>
-        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="margem_real">Calcular 30 dias</button></div></div>
-      <div class="card"><b class="tit">⭐ Reputação da conta</b><br><small style="color:var(--t3);font-size:.75rem">avisa antes de cair de nível, não depois</small>
-        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="reputacao">Conferir agora</button></div></div>
-      <div class="card"><b class="tit">👥 Anúncios repetidos</b><br><small style="color:var(--t3);font-size:.75rem">anúncio seu competindo com anúncio seu</small>
-        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="canibalizacao">Procurar</button></div></div>
-      <div class="card"><b class="tit">📦 Catálogo</b><br><small style="color:var(--t3);font-size:.75rem">o que está no ar, com preço e estoque</small>
-        <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="produtos_listar">Listar anúncios</button></div></div>
+  <div class="canais">
+    <span class="canal"><img src="/icons/ml.png" alt="">Mercado Livre</span>
+    <span class="canal"><img src="/icons/shopee.svg" alt="">Shopee</span>
+    <span class="canal tt"><img src="/icons/tiktok.svg" alt="">TikTok Shop <b>quase ninguém tem</b></span>
+  </div>
+
+  <div class="funcs">
+    <div class="f"><span class="ic">🔗</span><h3>1. Conecte suas contas</h3>
+      <p>Autorização oficial de cada plataforma, em um clique. Nenhuma senha sua fica com a gente.</p></div>
+    <div class="f"><span class="ic">📊</span><h3>2. Ela lê sua operação</h3>
+      <p>Puxa anúncios, preços, promoções, pedidos e taxas. Calcula quanto sobra em cada produto.</p></div>
+    <div class="f"><span class="ic">⚙️</span><h3>3. Você define os limites</h3>
+      <p>Preço mínimo e máximo por produto. A IA nunca fura a sua margem — a trava é do sistema, não da boa vontade.</p></div>
+    <div class="f"><span class="ic">🤖</span><h3>4. A partir daí ela opera</h3>
+      <p>Ligue as automações ou peça em português. Tudo que ela faz fica registrado com data, hora e resultado.</p></div>
+  </div>
+</div></section>
+
+<section id="funcoes"><div class="w">
+  <p class="eyebrow">O que ela faz</p>
+  <h2>Não é um painel. É alguém trabalhando.</h2>
+
+  <div class="funcs">
+    <div class="f"><span class="ic">🏷️</span><h3>Promoção sempre no ar</h3>
+      <p>Renova a oferta antes de vencer e encontra os anúncios que ficaram sem desconto.</p></div>
+    <div class="f"><span class="ic">💬</span><h3>Pergunta respondida na hora</h3>
+      <p>Quem pergunta e não é respondido compra do concorrente. A IA responde no tom da sua marca — e deixa as delicadas com você.</p></div>
+    <div class="f"><span class="ic">💰</span><h3>Margem real por produto</h3>
+      <p>Quanto sobra depois de comissão, frete e imposto. Qual anúncio está te dando prejuízo.</p></div>
+    <div class="f"><span class="ic">🔄</span><h3>Estoque igual nos três canais</h3>
+      <p>Vendeu a última no TikTok? Ela baixa no Mercado Livre antes de você tomar um cancelamento.</p></div>
+    <div class="f"><span class="ic">📦</span><h3>Pedidos dos três numa tela</h3>
+      <p>Fila unificada com etapa, valor e itens. Etiqueta de envio pronta pra imprimir.</p></div>
+    <div class="f"><span class="ic">⭐</span><h3>Reputação vigiada</h3>
+      <p>Avisa quando um indicador chega perto do limite — antes de cair de nível, não depois.</p></div>
+    <div class="f"><span class="ic">👥</span><h3>Anúncio competindo com anúncio</h3>
+      <p>Encontra produtos seus duplicados disputando entre si e derrubando o próprio preço.</p></div>
+    <div class="f"><span class="ic">🗣️</span><h3>Peça em português</h3>
+      <p>"Quanto vendi essa semana?" · "Aplica 15% no que está sem promoção". Ela mostra o que vai fazer e espera seu sim.</p></div>
+  </div>
+</div></section>
+
+<section id="diferenca"><div class="w">
+  <p class="eyebrow">A diferença</p>
+  <h2>Olhar não é operar.</h2>
+  <div class="vs">
+    <div class="vs-row"><div class="esq">Painel pra você ler</div><div class="mid">operação</div><div class="dir">Ações executadas por ela</div></div>
+    <div class="vs-row"><div class="esq">Você ajusta anúncio à noite</div><div class="mid">rotina</div><div class="dir">Ela ajusta enquanto você dorme</div></div>
+    <div class="vs-row"><div class="esq">Um canal por vez</div><div class="mid">canais</div><div class="dir">Mercado Livre, Shopee e TikTok Shop juntos</div></div>
+    <div class="vs-row"><div class="esq">Só anúncio</div><div class="mid">alcance</div><div class="dir">Anúncio, pedido, atendimento e nota fiscal</div></div>
+    <div class="vs-row"><div class="esq">Otimiza faturamento</div><div class="mid">objetivo</div><div class="dir">Otimiza o que sobra no fim do mês</div></div>
+    <div class="vs-row"><div class="esq">Alerta que vira ruído</div><div class="mid">aviso</div><div class="dir">Histórico do que foi feito e por quê</div></div>
+  </div>
+</div></section>
+
+<section id="precos"><div class="w">
+  <p class="eyebrow">Preços</p>
+  <h2>Comece grátis. Pague quando fizer sentido.</h2>
+  <p class="lead">Todos os planos incluem os três canais. Sem fidelidade, cancela quando quiser.</p>
+
+  <div class="planos">
+    <div class="plano">
+      <h3>Teste</h3>
+      <p class="val">R$ 0 <small>/ 7 dias</small></p>
+      <ul>
+        <li>Conecta os três canais</li>
+        <li>Pedidos e faturamento reais</li>
+        <li>Margem real por produto</li>
+        <li>Diagnósticos completos</li>
+      </ul>
+      <a class="btn btn-s" href="/app/">Começar grátis</a>
     </div>
 
-    <div id="acxSaida"></div>
-
-    <h2>Fale com a IA — peça qualquer coisa</h2>
-    <div class="card chat">
-      <div class="chat" id="chatMsgs" style="max-height:44vh;overflow-y:auto">${bolhas()}</div>
-      <div class="inpt"><input id="chatIn" placeholder="ex.: quanto vendi essa semana? · aplica 15% no que está sem promoção" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
-        <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
+    <div class="plano top">
+      <span class="tag">mais escolhido</span>
+      <h3>Operação</h3>
+      <p class="val">R$ 247 <small>/ mês</small></p>
+      <ul>
+        <li>Tudo do teste, sem limite de tempo</li>
+        <li>Automações trabalhando 24h</li>
+        <li>Preço com trava de piso e teto</li>
+        <li>Perguntas e avaliações respondidas</li>
+        <li>Estoque igualado entre canais</li>
+        <li>Suporte direto com quem construiu</li>
+      </ul>
+      <a class="btn btn-g" href="/app/">Começar teste grátis</a>
     </div>
-    <h2>Automações</h2><div class="grid">${autos}</div>
-    <h2>🕒 A IA trabalhou por você</h2><div class="card feed">${feed}</div>`;
-  document.getElementById("chatSend").onclick = enviarChat;
-  document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
-  document.querySelectorAll(".acx").forEach(b=>b.onclick = async()=>{
-    const acao = b.dataset.acao;
-    const chama = async (params)=>{ b.disabled=true; b.style.opacity=".5"; try{ return await acaoApi(acao, params); } finally { b.disabled=false; b.style.opacity=""; } };
-    const saida = document.getElementById("acxSaida");
-    const mostra = (titulo, html) => { if(saida) saida.innerHTML =
-      `<div class="card" style="margin:14px 0 4px"><b class="tit">${titulo}</b><div style="margin-top:10px">${html}</div></div>`; };
-    const dinheiro = v => v==null ? "—" : "R$ " + Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-    if(acao === "perguntas_listar"){
-      const r = await chama({});
-      if(!r.success) return alert("Ops: " + r.error);
-      const x = r.resultado;
-      if(x.pendencias?.length) return mostra("Perguntas", `<p class='vazio'>${esc(x.pendencias[0])}</p>`);
-      if(!x.total) return mostra("Perguntas", "<p class='vazio'>Nenhuma pergunta esperando resposta ✅</p>");
-      const linha = q => `<div class="ev"><span class="t">${NOMES[q.canal]?NOMES[q.canal][0]:q.canal}</span><span>${esc(q.texto).slice(0,150)}</span></div>`;
-      mostra("Perguntas sem resposta",
-        `<p style="font-size:.85rem;color:var(--t2)"><b>${x.para_a_ia.length}</b> a IA pode responder · <b>${x.para_voce.length}</b> são para você (defeito, garantia, troca, atraso)</p>
-         <div class="feed">${x.para_a_ia.slice(0,8).map(linha).join("")}</div>
-         <p style="font-size:.8rem;color:var(--t3);margin-top:10px">Peça no chat: <i>"responda as perguntas pendentes"</i> — a IA escreve e mostra antes de publicar.</p>`);
-      return;
-    }
-
-    if(acao === "estoque_sincronizar"){
-      const p = await chama({ confirmar:false });
-      if(!p.success) return alert("Ops: " + p.error);
-      const x = p.resultado;
-      if(!x.divergentes) return mostra("Estoque", "<p class='vazio'>Estoque igual em todos os canais ✅</p>");
-      if(!confirm(`${x.divergentes} produto(s) com estoque diferente entre canais.\n\n${x.regra}\n\nIgualar agora?`)) return;
-      const r = await chama({ confirmar:true });
-      if(!r.success) return alert("Ops: " + r.error);
-      mostra("Estoque igualado", `<p style="font-size:.9rem">${r.resultado.ajustados} anúncio(s) ajustado(s) ✅</p>`);
-      return;
-    }
-
-    if(acao === "margem_real"){
-      const r = await chama({ dias:30 });
-      if(!r.success) return alert("Ops: " + r.error);
-      const x = r.resultado;
-      const linhas = (x.itens||[]).slice(0,15).map(l=>`<tr>
-        <td>${esc(String(l.titulo))}</td><td>${l.qtd}</td><td>${dinheiro(l.receita)}</td>
-        <td>${dinheiro(l.taxa)}</td><td>${l.lucro==null?"<span style='color:var(--t3)'>sem custo</span>":dinheiro(l.lucro)}</td>
-        <td style="color:${l.margem_pct==null?"var(--t3)":(l.margem_pct<0?"#FF6B6B":"var(--n)")}">${l.margem_pct==null?"—":l.margem_pct+"%"}</td></tr>`).join("");
-      mostra("Margem real — últimos 30 dias",
-        `${x.no_prejuizo?`<p style="color:#FF6B6B;font-size:.9rem"><b>${x.no_prejuizo} produto(s) no prejuízo.</b></p>`:""}
-         ${x.aviso?`<p style="font-size:.83rem;color:var(--acc)">${esc(x.aviso)}</p>`:""}
-         <div style="overflow-x:auto"><table><thead><tr><th>Produto</th><th>Qtd</th><th>Receita</th><th>Taxa</th><th>Lucro</th><th>Margem</th></tr></thead><tbody>${linhas}</tbody></table></div>`);
-      return;
-    }
-
-    if(acao === "reputacao"){
-      const r = await chama({});
-      if(!r.success) return alert("Ops: " + r.error);
-      const x = r.resultado, ml = x.mercado_livre;
-      const alerta = (x.alertas||[]).map(a=>`<div class="ev"><span class="t">⚠️</span><span>${esc(a)}</span></div>`).join("");
-      mostra("Reputação",
-        (ml?`<p style="font-size:.9rem">Mercado Livre — nível <b>${esc(String(ml.nivel||"—"))}</b> · cancelamentos <b>${ml.cancelamentos_pct??"—"}%</b> · reclamações <b>${ml.reclamacoes_pct??"—"}%</b> · atrasos <b>${ml.atrasos_pct??"—"}%</b></p>`:"")
-        + (alerta?`<div class="feed">${alerta}</div>`:"<p class='vazio'>Nenhum indicador perto do limite ✅</p>"));
-      return;
-    }
-
-    if(acao === "canibalizacao"){
-      const r = await chama({});
-      if(!r.success) return alert("Ops: " + r.error);
-      const x = r.resultado;
-      if(!x.encontrados) return mostra("Anúncios repetidos", "<p class='vazio'>Nenhum anúncio competindo com outro ✅</p>");
-      const g = (x.grupos||[]).slice(0,8).map(gr=>`<div class="ev"><span class="t">${gr.certeza}</span><span>
-        <b>${esc(gr.motivo)}</b>${gr.sku?` · SKU ${esc(gr.sku)}`:""} — ${gr.anuncios.length} anúncios<br>
-        <small style="color:var(--t3)">${gr.anuncios.slice(0,3).map(a=>esc(a.titulo).slice(0,52)).join(" · ")}</small>
-        ${gr.observacao?`<br><small style="color:var(--acc)">${esc(gr.observacao)}</small>`:""}</span></div>`).join("");
-      mostra("Anúncios repetidos",
-        `<p style="font-size:.9rem"><b>${x.encontrados}</b> grupo(s) encontrado(s)</p><div class="feed">${g}</div>
-         <p style="font-size:.8rem;color:var(--t3);margin-top:10px">${esc(x.o_que_fazer||"")}</p>`);
-      return;
-    }
-
-    if(acao === "produtos_listar"){
-      const canal = (CACHE.painel.conexoes||[]).filter(c=>c.status==="conectada")[0]?.plataforma;
-      if(!canal) return alert("Conecte um canal primeiro.");
-      const r = await chama({ canal, limite:100 });
-      if(!r.success) return alert("Ops: " + r.error);
-      const it = r.resultado.itens||[];
-      mostra(`Catálogo — ${NOMES[canal]?NOMES[canal][0]:canal}`,
-        `<p style="font-size:.9rem"><b>${it.length}</b> anúncio(s) · ${it.filter(i=>i.ativo).length} ativo(s)</p>
-         <div style="overflow-x:auto"><table><thead><tr><th>Anúncio</th><th>SKU</th><th>Preço</th><th>Estoque</th><th>Situação</th></tr></thead><tbody>
-         ${it.slice(0,25).map(i=>`<tr><td>${esc(String(i.titulo||"")).slice(0,58)}</td><td>${esc(String(i.sku||"—"))}</td><td>${dinheiro(i.preco)}</td><td>${i.estoque??"—"}</td><td>${i.ativo?"ativo":"pausado"}</td></tr>`).join("")}
-         </tbody></table></div>`);
-      return;
-    }
-
-    if(acao === "promocao_geral"){
-      const pct = prompt("Qual desconto aplicar nos anúncios sem promoção? (5 a 60%)","15");
-      if(!pct) return;
-      const previa = await chama({ percentual:+pct, confirmar:false });
-      if(!previa.success) return alert("Ops: " + previa.error);
-      const q = previa.resultado.quantidade;
-      if(!q) return alert("Todos os anúncios ativos já estão com promoção — nada a fazer ✅");
-      if(!confirm("Vou aplicar " + pct + "% de desconto em " + q + " anúncio(s) que estão sem promoção. Confirmar?")) return;
-      const r = await chama({ percentual:+pct, confirmar:true });
-      alert(r.success ? "Feito! Desconto aplicado em " + r.resultado.aplicados + " anúncio(s) ✅" : "Ops: " + r.error);
-    } else {
-      const r = await chama({});
-      alert(r.success ? "Feito ✅\n\n" + JSON.stringify(r.resultado, null, 1).replace(/[{}"]/g,"") : "Ops: " + r.error);
-    }
-  });
-  document.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
-    await sb.rpc("sp_alternar_automacao",{ p_tipo: b.dataset.tipo, p_ligada: b.dataset.ligada!=="true" });
-    const { data } = await sb.rpc("sp_painel"); CACHE.painel = data; shell();
-  });
-}
-
-// ── Etiquetas (Visualizador ZPL — idêntico ao do ERPCB) ──
-let ZPL_ATUAL = "";
-const LABEL_SIZES = [
-  ["40x40mm (Produto)","1.57","1.57"],["100x150mm (Envio)","4","6"],["100x75mm","4","3"],
-  ["100x100mm","4","4"],["80x40mm","3.15","1.57"],["50x30mm","2","1.18"]];
-const DPI_OPTIONS = [["6 dpmm (152 dpi)","6dpmm"],["8 dpmm (203 dpi)","8dpmm"],["12 dpmm (300 dpi)","12dpmm"],["24 dpmm (600 dpi)","24dpmm"]];
-function viewEtiquetas(c){
-  c.innerHTML = `
-    <h1>Visualizador ZPL</h1><div class="sub-h1">Gere pela aba Pedidos ou cole um código ZPL — renderiza etiqueta de envio, DANFE e etiqueta com produtos</div>
-    <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
-      <div>
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:8px"><b class="tit">Código ZPL</b>
-            <span style="margin-left:auto;display:flex;gap:8px">
-              <button class="mini" id="zplArq">⇪ Carregar Arquivo</button>
-              <input type="file" id="zplFile" accept=".zpl,.txt" style="display:none">
-              <button class="mini" id="zplLimpar">↺ Limpar</button>
-            </span></div>
-          <textarea id="zplTxt" style="width:100%;height:230px;margin-top:10px;background:var(--p2);border:1px solid var(--l);border-radius:10px;color:var(--t);font-family:var(--mono);font-size:.75rem;padding:10px" placeholder="Cole o código ZPL aqui...&#10;&#10;^XA&#10;^FO50,50^A0N,50,50^FDHello World^FS&#10;^XZ"></textarea>
-        </div>
-        <div class="card" style="margin-top:12px">
-          <b class="tit">Configurações</b>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-            <label class="lb">Tamanho da Etiqueta<select id="zplTam" class="busca w100">${LABEL_SIZES.map((s,i)=>`<option value="${s[1]}x${s[2]}" ${i===1?"selected":""}>${s[0]}</option>`).join("")}</select></label>
-            <label class="lb">Resolução (DPI)<select id="zplDpi" class="busca w100">${DPI_OPTIONS.map(d=>`<option value="${d[1]}" ${d[1]==="8dpmm"?"selected":""}>${d[0]}</option>`).join("")}</select></label>
-          </div>
-          <label class="lb" style="margin-top:10px;display:flex">Modo de Renderização
-            <select id="zplModo" class="busca w100">
-              <option value="etiqueta_produtos" selected>Etiqueta + Produtos</option>
-              <option value="etiqueta_pura">Etiqueta Pura (DANFE/Envio)</option>
-            </select></label>
-          <button class="btn" id="zplVer" style="width:100%;margin-top:12px;font-size:.9rem">👁 Visualizar Etiqueta(s)</button>
-        </div>
-      </div>
-      <div class="card">
-        <div style="display:flex;align-items:center;gap:8px"><b class="tit">Pré-visualização</b>
-          <span style="margin-left:auto">
-            <button class="mini" id="zplImp" style="background:var(--acc);border-color:var(--acc);color:#1A0F00">🖨️ Imprimir</button>
-          </span></div>
-        <div id="zplPrev" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;justify-content:center">
-          <p class="vazio" style="text-align:center;padding:60px 10px">👁<br><br>Cole o código ZPL e clique em "Visualizar"<br><small>Suporta etiquetas ~DGR Z64 e ^GFA (RLE-ASCII)</small></p>
-        </div>
-      </div>
-    </div>`;
-  const txt = document.getElementById("zplTxt");
-  txt.value = ZPL_ATUAL || "";
-  const prev = ()=>renderZpl(txt.value);
-  document.getElementById("zplVer").onclick = prev;
-  document.getElementById("zplModo").onchange = ()=>{ if((txt.value||"").trim()) prev(); };
-  document.getElementById("zplLimpar").onclick = ()=>{ txt.value=""; ZPL_ATUAL=""; document.getElementById("zplPrev").innerHTML="<p class='vazio' style='text-align:center;padding:60px 10px'>👁<br><br>Cole o código ZPL e clique em \"Visualizar\"<br><small>Suporta etiquetas ~DGR Z64 e ^GFA (RLE-ASCII)</small></p>"; };
-  document.getElementById("zplArq").onclick = ()=>document.getElementById("zplFile").click();
-  document.getElementById("zplFile").onchange = async e=>{ const f=e.target.files[0]; if(f){ txt.value = await f.text(); prev(); } };
-  document.getElementById("zplImp").onclick = ()=>{
-    const imgs=[...document.querySelectorAll("#zplPrev img")]; if(!imgs.length) return alert("Clique em Visualizar primeiro.");
-    const w=window.open("","_blank");
-    w.document.write("<html><head><title>Etiquetas</title></head><body style='margin:0'>"+imgs.map(i=>`<img src="${i.src}" style="width:100mm;display:block;page-break-after:always">`).join("")+"</body></html>");
-    w.document.close(); setTimeout(()=>w.print(), 400);
-  };
-  if(ZPL_ATUAL) prev();
-}
-// ── Motor ZPL (porta fiel do visualizador do ERPCB: parser + Z64 + GFA + proxy) ──
-function cleanZPLSyntax(z){return z.replace(/\^XA\s*,\s*/gi,"^XA").replace(/,\s*\^FS/gi,"^FS").replace(/\^FS\s*,/gi,"^FS").replace(/,\s*\^XZ/gi,"^XZ").trim();}
-function getLabelDimensions(b,dpmm){
-  const pw=b.match(/\^PW(\d+)/i), ll=b.match(/\^LL(\d+)/i);
-  if(pw&&ll) return {widthIn:(+pw[1]/(dpmm*25.4)).toFixed(2), heightIn:(+ll[1]/(dpmm*25.4)).toFixed(2)};
-  const gfaTotal=(b.match(/\^GFA/gi)||[]).length, fdTotal=(b.match(/\^FD/gi)||[]).length;
-  const g=gfaTotal===1&&fdTotal===0? b.match(/\^GFA,(\d+),(\d+),(\d+),/i):null;
-  if(g){const w=+g[3]*8,h=Math.floor(+g[2]/+g[3]);return {widthIn:(w/(dpmm*25.4)).toFixed(2),heightIn:(h/(dpmm*25.4)).toFixed(2)};}
-  return {widthIn:"3.94",heightIn:"5.91"};
-}
-function extractDGRBlocks(z){
-  const re=/~DGR:([^,]+),(\d+),(\d+),:Z64:([A-Za-z0-9+\/=]+):[0-9A-Fa-f]{4}/g, out=[]; let m;
-  while((m=re.exec(z))!==null) out.push({name:m[1],totalBytes:+m[2],bytesPerRow:+m[3],z64data:m[4],start:m.index,end:re.lastIndex});
-  return out;
-}
-function classifyBlock(raw){
-  const b=raw.replace(/\^XA|\^XZ/gi,"").trim();
-  const fd=(b.match(/\^FD/gi)||[]).length, gfa=(b.match(/\^GFA/gi)||[]).length, ft=(b.match(/\^FT/gi)||[]).length, fo=(b.match(/\^FO/gi)||[]).length;
-  const pq=/\^PQ/i.test(b), mcy=/\^MCY/i.test(b), idr=/\^IDR/i.test(b), xgr=/\^XGR/i.test(b);
-  if(/\^FXDANFEMETA=/i.test(b)) return "danfe";
-  if(mcy&&fd===0&&gfa===0) return "skip";
-  if(idr&&fd===0) return "skip";
-  if(xgr&&fd===0) return "skip";
-  if(b.trim().length<20) return "skip";
-  if(fd>=20&&gfa>=5) return "danfe";
-  if(fd===0&&gfa===1&&raw.length>5000) return "shipping-gfa";
-  if(ft>=3&&pq&&raw.length>500) return "shipping-zpl";
-  if(fd>=5&&pq&&raw.length>500) return "shipping-zpl";
-  if(fo>=5&&fd>=5&&raw.length>500) return "shipping-zpl";
-  return "skip";
-}
-function extractDanfeItems(raw){
-  const meta=raw.match(/\^FXDANFEMETA=(\{[\s\S]*?\})\^FS/i);
-  if(meta){try{const p=JSON.parse(meta[1]);const its=Array.isArray(p&&p.items)?p.items:[];
-    return its.map(i=>({codigo:String(i.codigo||""),nome:String(i.nome||""),tamanho:String(i.tamanho||""),cor:String(i.cor||""),qty:String(i.qty||"1")})).filter(i=>i.nome);
-  }catch(_){/* cai no parse de ^FD */}}
-  const fields=[]; const re=/\^FD([\s\S]*?)\^FS/gi; let m;
-  while((m=re.exec(raw))!==null){const t=m[1].replace(/\^FH\\\s*/gi,"").replace(/\\c6/gi,"ã").replace(/\\e3/gi,"â").replace(/\\e1/gi,"á").replace(/\\cd/gi,"Í").replace(/\\a1/gi,"í").replace(/\\a7/gi,"º").replace(/\\87/gi,"ç").replace(/\\80/gi,"Ç").replace(/\\e5/gi,"õ").replace(/\\f5/gi,"õ").replace(/\\e0/gi,"à").replace(/\\&/gi," ").trim(); if(t) fields.push(t);}
-  const items=[];
-  for(const f of fields){
-    const q=f.match(/\b(\d+(?:[\.,]\d+)?)\s*UN(?:\s*X\s*\d+(?:[\.,]\d+)?)?\b/i);
-    if(!q||q.index==null) continue;
-    const prefix=f.slice(0,q.index).replace(/\s*-\s*$/,"").trim(); if(!prefix) continue;
-    const parts=prefix.split(/\s*-\s*/).map(p=>p.trim()).filter(Boolean);
-    let codigo="", resto=prefix;
-    if(parts.length>1&&/^[A-Za-z0-9\-_.]+$/.test(parts[0])&&parts[0].length<=20){codigo=parts[0];resto=parts.slice(1).join(" - ").trim();}
-    const tm=resto.match(/\b[Tt]amanho[:\s]*([A-Za-zÀ-ú0-9]{1,10})/), cm=resto.match(/\b[Cc]or\b[:\s]*([A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+){0,2})/);
-    const nome=resto.replace(/\s*\b[Tt]amanho[:\s]*[A-Za-zÀ-ú0-9]{1,10}/g,"").replace(/\s*\b[Cc]or\b[:\s]*[A-Za-zÀ-ú]+(?:\s+[A-Za-zÀ-ú]+){0,2}/g,"").replace(/;+/g,"").replace(/\s{2,}/g," ").trim();
-    if(!nome) continue;
-    items.push({codigo,nome,tamanho:tm?tm[1].trim():"",cor:cm?cm[1].trim():"",qty:(q[1]||"1").trim().replace(/[\.,]00?$/,"")||"1"});
-  }
-  return items;
-}
-function parseZPLBlocos(zpl){
-  const xa=[]; const xaRe=/\^XA([\s\S]*?)\^XZ/gi; let m;
-  while((m=xaRe.exec(zpl))!==null) xa.push({raw:m[0],start:m.index,source:"xa"});
-  const all=[...xa,...extractDGRBlocks(zpl).map(b=>({...b,source:"dgr"}))].sort((a,b)=>a.start-b.start);
-  const labels=[]; let lastDanfe=null;
-  for(const bl of all){
-    if(bl.source==="xa"){
-      const t=classifyBlock(bl.raw);
-      if(t==="danfe"){labels.push({raw:bl.raw,type:"shipping-zpl",isDanfe:true,danfeItems:extractDanfeItems(bl.raw)});lastDanfe=bl.raw;}
-      else if(t==="shipping-gfa"){labels.push({raw:bl.raw,type:"shipping-gfa",danfeItems:lastDanfe?extractDanfeItems(lastDanfe):[]});lastDanfe=null;}
-      else if(t==="shipping-zpl"){labels.push({raw:bl.raw,type:"shipping-zpl",danfeItems:lastDanfe?extractDanfeItems(lastDanfe):[]});lastDanfe=null;}
-    } else {
-      labels.push({type:"shipping-z64",bytesPerRow:bl.bytesPerRow,z64data:bl.z64data,danfeItems:lastDanfe?extractDanfeItems(lastDanfe):[]});
-      lastDanfe=null;
-    }
-  }
-  return {labels,totalBlocks:all.length,skipped:all.length-labels.length};
-}
-function extractAllGraphicDefinitions(zpl){
-  const defs=new Map();
-  for(const m of zpl.matchAll(/~DG([^,]+),[\s\S]*?(?=(?:~DG|~DY|\^XA|\^XZ|$))/gi)){
-    if(m[1]&&m[0]) defs.set(m[1].trim().toUpperCase(),m[0].trim());
-  }
-  return defs;
-}
-function extractGraphicReferences(z){
-  const refs=new Set();
-  for(const m of z.matchAll(/\^XG([^,\^\s]+),/gi)) if(m[1]) refs.add(m[1].trim().toUpperCase());
-  return [...refs];
-}
-function grfToImageData(rawBytes,bpr){
-  const w=bpr*8, rows=Math.floor(rawBytes.length/bpr), img=new ImageData(w,rows);
-  for(let r=0;r<rows;r++) for(let bc=0;bc<bpr;bc++){const by=rawBytes[r*bpr+bc];
-    for(let bit=0;bit<8;bit++){const px=bc*8+bit; if(px>=w) continue;
-      const black=(by>>(7-bit))&1, idx=(r*w+px)*4, c=black?0:255;
-      img.data[idx]=c; img.data[idx+1]=c; img.data[idx+2]=c; img.data[idx+3]=255;}}
-  return {imageData:img,widthPx:w,totalRows:rows};
-}
-async function zplDescomprimir(comp){
-  for(const f of ["deflate","deflate-raw"]){
-    try{
-      const st=new DecompressionStream(f), wr=st.writable.getWriter();
-      wr.write(comp.buffer); wr.close();
-      const chunks=[]; const rd=st.readable.getReader();
-      while(true){const {done,value}=await rd.read(); if(done) break; chunks.push(value);}
-      const tot=chunks.reduce((s,c)=>s+c.length,0); if(!tot) continue;
-      const out=new Uint8Array(tot); let off=0;
-      for(const c of chunks){out.set(c,off); off+=c.length;}
-      return out;
-    }catch(_){continue;}
-  }
-  throw new Error("Z64: falha ao descomprimir");
-}
-async function decodeZ64(bpr,z64){
-  const bin=atob(z64), comp=new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) comp[i]=bin.charCodeAt(i);
-  return grfToImageData(await zplDescomprimir(comp),bpr);
-}
-function decodeGFA(gfaData,bpr){
-  const rle={};
-  "GHIJKLMNOPQRSTUVWXYZ".split("").forEach((c,i)=>rle[c]=i+1);
-  "ghijklmnopqrstuvwxyz".split("").forEach((c,i)=>rle[c]=(i+1)*20);
-  const rows=[]; let lastRow=new Uint8Array(bpr), hex="";
-  const flush=()=>{const p=hex.padEnd(bpr*2,"0"), row=new Uint8Array(bpr);
-    for(let i=0;i<bpr;i++) row[i]=parseInt(p.slice(i*2,i*2+2),16)||0;
-    rows.push(row); lastRow=row.slice(); hex="";};
-  const data=gfaData.replace(/[\n\r\s]/g,"");
-  for(let i=0;i<data.length;i++){const c=data[i];
-    if(c===":"){if(hex) flush(); rows.push(lastRow.slice());}
-    else if(c===","){flush();}
-    else if(c==="!"){const rem=bpr*2-hex.length; if(rem>0) hex+="F".repeat(rem); flush();}
-    else if(rle[c]!==undefined){const n=rle[c]; i++; if(i<data.length) hex+=data[i].repeat(n);}
-    else if(/[0-9A-Fa-f]/.test(c)) hex+=c;
-    if(hex.length>=bpr*2) flush();
-  }
-  if(hex) flush();
-  const flat=new Uint8Array(rows.length*bpr);
-  rows.forEach((r,i)=>flat.set(r,i*bpr));
-  return grfToImageData(flat,bpr);
-}
-async function renderShippingLabelToBlobUrl(label){
-  let dec;
-  if(label.type==="shipping-z64"){ dec=await decodeZ64(label.bytesPerRow,label.z64data); }
-  else{
-    const g=label.raw.match(/\^GFA,(\d+),(\d+),(\d+),([\s\S]*?)(?=\^FS|\^FO|\^XZ)/i);
-    if(!g) throw new Error("^GFA não reconhecido");
-    dec=decodeGFA(g[4],+g[3]);
-  }
-  const {imageData,widthPx,totalRows}=dec;
-  if(!widthPx||!totalRows) throw new Error("bitmap vazio");
-  const bmp=document.createElement("canvas"); bmp.width=widthPx; bmp.height=totalRows;
-  bmp.getContext("2d").putImageData(imageData,0,0);
-  const CANVAS_W=800, CANVAS_H=1200, PAD=16, MAX_ITEMS=5;
-  const dItems=label.danfeItems||[], items=dItems.slice(0,MAX_ITEMS), hasMore=dItems.length>MAX_ITEMS, hasItems=items.length>0;
-  const STRIP_H=hasItems? 32+items.length*58+(hasMore?24:0)+20 : 0;
-  const LABEL_H=CANVAS_H-STRIP_H;
-  const cv=document.createElement("canvas"); cv.width=CANVAS_W; cv.height=CANVAS_H;
-  const ctx=cv.getContext("2d");
-  ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
-  const scale=Math.min(CANVAS_W/widthPx, LABEL_H/totalRows);
-  const nw=Math.floor(widthPx*scale), nh=Math.floor(totalRows*scale);
-  ctx.drawImage(bmp,Math.floor((CANVAS_W-nw)/2),0,nw,nh);
-  if(hasItems){
-    const sepY=nh+2;
-    ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,sepY); ctx.lineTo(CANVAS_W,sepY); ctx.stroke();
-    ctx.strokeStyle="#bbb"; ctx.lineWidth=1; ctx.setLineDash([10,7]);
-    ctx.strokeRect(PAD,sepY+6,CANVAS_W-PAD*2,CANVAS_H-sepY-12); ctx.setLineDash([]);
-    const tx=PAD+12; let ty=sepY+12; ctx.textBaseline="top";
-    ctx.fillStyle="#999"; ctx.font="bold 17px monospace";
-    ctx.fillText(`ITENS DO PEDIDO (${dItems.length})`,tx,ty); ty+=22;
-    ctx.strokeStyle="#ddd"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;
-    items.forEach((it,i)=>{
-      const qtyTxt=it.qty?`x${it.qty}`:""; let qw=0;
-      if(qtyTxt){ctx.font="bold 22px monospace"; qw=ctx.measureText(qtyTxt).width;
-        ctx.fillStyle="#111"; ctx.fillText(qtyTxt,CANVAS_W-PAD-14-qw,ty+2);}
-      ctx.font="bold 20px monospace"; ctx.fillStyle="#111";
-      let nome=it.nome; const maxW=CANVAS_W-PAD*2-(qw?qw+30:24);
-      while(ctx.measureText(nome).width>maxW&&nome.length>8) nome=nome.slice(0,-4)+"...";
-      ctx.fillText(nome,tx,ty);
-      ctx.font="bold 19px monospace"; ctx.fillStyle="#333";
-      const parts=[]; if(it.codigo) parts.push(`Ref: ${it.codigo}`); if(it.tamanho) parts.push(`Tam: ${it.tamanho}`); if(it.cor) parts.push(`Cor: ${it.cor}`);
-      ctx.fillText(parts.join("    "),tx,ty+28); ty+=54;
-      if(i<items.length-1){ctx.strokeStyle="#eee"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;}
-    });
-    if(hasMore){const ex=dItems.length-MAX_ITEMS;
-      ctx.font="italic 16px monospace"; ctx.fillStyle="#aaa";
-      ctx.fillText(`e mais ${ex} item${ex>1?"s":""}...`,tx,ty+6);}
-  }
-  return new Promise((ok,err)=>cv.toBlob(b=>b?ok(URL.createObjectURL(b)):err(new Error("blob")),"image/png"));
-}
-async function renderViaProxySP(zplBlock,dpmm){
-  const clean=cleanZPLSyntax(zplBlock);
-  const {widthIn,heightIn}=getLabelDimensions(clean,dpmm);
-  const {data:{session}}=await sb.auth.getSession();
-  const r=await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-zpl",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token,"apikey":ANON},
-    body:JSON.stringify({zpl:clean,width:+widthIn,height:+heightIn,density:dpmm})
-  });
-  if(!r.ok){let e=""; try{e=(await r.json()).error||"";}catch(_){e=String(r.status);} throw new Error("renderizador: "+e);}
-  return URL.createObjectURL(await r.blob());
-}
-async function composeLabelWithStrip(blobUrl, danfeItems){
-  const CANVAS_W=800, CANVAS_H=1200, PAD=16, MAX_ITEMS=5;
-  const items=(danfeItems||[]).slice(0,MAX_ITEMS), hasMore=(danfeItems||[]).length>MAX_ITEMS, hasItems=items.length>0;
-  const STRIP_H=hasItems? 32+items.length*58+(hasMore?24:0)+20 : 0;
-  const LABEL_H=CANVAS_H-STRIP_H;
-  const cv=document.createElement("canvas"); cv.width=CANVAS_W; cv.height=CANVAS_H;
-  const ctx=cv.getContext("2d");
-  ctx.fillStyle="#ffffff"; ctx.fillRect(0,0,CANVAS_W,CANVAS_H);
-  await new Promise((ok,err)=>{
-    const img=new Image(); img.crossOrigin="anonymous";
-    img.onload=()=>{
-      const scale=Math.min(CANVAS_W/img.width, LABEL_H/img.height);
-      const nw=Math.floor(img.width*scale), nh=Math.floor(img.height*scale);
-      ctx.drawImage(img,Math.floor((CANVAS_W-nw)/2),0,nw,nh);
-      if(hasItems){
-        const sepY=nh+2;
-        ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,sepY); ctx.lineTo(CANVAS_W,sepY); ctx.stroke();
-        ctx.strokeStyle="#bbb"; ctx.lineWidth=1; ctx.setLineDash([10,7]);
-        ctx.strokeRect(PAD,sepY+6,CANVAS_W-PAD*2,CANVAS_H-sepY-12); ctx.setLineDash([]);
-        const tx=PAD+12; let ty=sepY+12; ctx.textBaseline="top";
-        ctx.fillStyle="#999"; ctx.font="bold 17px monospace";
-        ctx.fillText(`ITENS DO PEDIDO (${danfeItems.length})`,tx,ty); ty+=22;
-        ctx.strokeStyle="#ddd"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;
-        items.forEach((it,i)=>{
-          const qtyTxt=it.qty?`x${it.qty}`:""; let qw=0;
-          if(qtyTxt){ctx.font="bold 22px monospace"; qw=ctx.measureText(qtyTxt).width;
-            ctx.fillStyle="#111"; ctx.fillText(qtyTxt,CANVAS_W-PAD-14-qw,ty+2);}
-          ctx.font="bold 20px monospace"; ctx.fillStyle="#111";
-          let nome=it.nome; const maxW=CANVAS_W-PAD*2-(qw?qw+30:24);
-          while(ctx.measureText(nome).width>maxW&&nome.length>8) nome=nome.slice(0,-4)+"...";
-          ctx.fillText(nome,tx,ty);
-          ctx.font="bold 19px monospace"; ctx.fillStyle="#333";
-          const parts=[]; if(it.codigo) parts.push(`Ref: ${it.codigo}`); if(it.tamanho) parts.push(`Tam: ${it.tamanho}`); if(it.cor) parts.push(`Cor: ${it.cor}`);
-          ctx.fillText(parts.join("    "),tx,ty+28); ty+=54;
-          if(i<items.length-1){ctx.strokeStyle="#eee"; ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(CANVAS_W-PAD-12,ty); ctx.stroke(); ty+=8;}
-        });
-        if(hasMore){const ex=danfeItems.length-MAX_ITEMS;
-          ctx.font="italic 16px monospace"; ctx.fillStyle="#aaa";
-          ctx.fillText(`e mais ${ex} item${ex>1?"s":""}...`,tx,ty+6);}
-      }
-      ok();
-    };
-    img.onerror=err; img.src=blobUrl;
-  });
-  return new Promise((ok,err)=>cv.toBlob(b=>b?ok(URL.createObjectURL(b)):err(new Error("blob")),"image/png"));
-}
-async function renderZpl(zpl){
-  ZPL_ATUAL=zpl;
-  const box=document.getElementById("zplPrev"); if(!box) return;
-  const dpmm=+((document.getElementById("zplDpi")||{}).value||"8dpmm").replace("dpmm","")||8;
-  const modo=(document.getElementById("zplModo")||{}).value||"etiqueta_produtos";
-  const res=parseZPLBlocos(zpl);
-  if(!res.labels.length){box.innerHTML="<p class='vazio'>Nenhuma etiqueta renderizável foi encontrada no ZPL enviado.</p>"; return;}
-  box.innerHTML=`<p class="vazio">renderizando…</p>`;
-  const defs=extractAllGraphicDefinitions(zpl);
-  const urls=[], erros=[];
-  for(const lab of res.labels){
-    // no modo Etiqueta + Produtos, o bloco DANFE não vira imagem (os produtos já vão na faixa)
-    if(modo==="etiqueta_produtos" && lab.isDanfe) continue;
-    try{
-      if(lab.type==="shipping-z64"){
-        urls.push(await renderShippingLabelToBlobUrl({...lab, danfeItems: modo==="etiqueta_pura"?[]:lab.danfeItems}));
-      } else if(lab.type==="shipping-gfa"){
-        urls.push(await renderShippingLabelToBlobUrl({...lab, danfeItems: modo==="etiqueta_pura"?[]:lab.danfeItems}));
-      } else {
-        const refs=extractGraphicReferences(lab.raw);
-        const pre=refs.map(r=>defs.get(r)).filter(Boolean).join("\n");
-        const proxyUrl=await renderViaProxySP((pre?pre+"\n":"")+lab.raw,dpmm);
-        if(modo==="etiqueta_pura" || !(lab.danfeItems||[]).length){ urls.push(proxyUrl); }
-        else { const comp=await composeLabelWithStrip(proxyUrl,lab.danfeItems); URL.revokeObjectURL(proxyUrl); urls.push(comp); }
-      }
-    }catch(e){erros.push(String(e&&e.message||e).slice(0,140));}
-  }
-  let html=urls.map(u=>`<img class="etq" src="${u}">`).join("");
-  if(erros.length) html+=`<p class="vazio">⚠️ ${erros.length} etiqueta(s) falharam: ${esc(erros[0])}</p>`;
-  box.innerHTML=html||"<p class='vazio'>Nenhuma etiqueta renderizável foi encontrada no ZPL enviado.</p>";
-}
-
-
-// ── Precificação (calculadora + tabela precificadora) ──
-const PRESET_CANAL = { ml:["Mercado Livre",14,6], shopee:["Shopee",20,4], tiktok:["TikTok Shop",13.6,2] };
-function viewPrecos(c){
-  c.innerHTML = `
-    <h1>Precificação</h1><div class="sub-h1">Calculadora de preço + tabela precificadora dos seus anúncios — a IA nunca vende fora do piso/teto</div>
-    <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
-      <div class="card">
-        <b class="tit">🧮 Calculadora de preço</b>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
-          <label class="lb">Canal<select id="cCanal" class="busca w100">
-            <option value="ml">Mercado Livre</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select></label>
-          <label class="lb">Custo do produto (R$)<input id="cCusto" type="number" step="0.01" class="busca w100" placeholder="0,00"></label>
-          <label class="lb">Embalagem/extra (R$)<input id="cExtra" type="number" step="0.01" class="busca w100" value="0"></label>
-          <label class="lb">Taxa do canal (%)<input id="cTaxa" type="number" step="0.1" class="busca w100" value="14"></label>
-          <label class="lb">Taxa fixa (R$)<input id="cFixa" type="number" step="0.01" class="busca w100" value="6"></label>
-          <label class="lb">Imposto (%)<input id="cImp" type="number" step="0.01" class="busca w100" value="0"></label>
-          <label class="lb">Ads (%) — quanto do preço vai pra anúncio<input id="cAds" type="number" step="0.1" class="busca w100" value="0" placeholder="ex.: 10"></label>
-          <label class="lb">Margem desejada (%)<input id="cMarg" type="number" step="0.1" class="busca w100" value="20"></label>
-        </div>
-        <small style="color:var(--t3);font-size:.72rem;display:block;margin-top:10px">💡 <b>Ads (%)</b> = quanto do preço você reinveste em anúncio. Exemplo: se teu ROAS é <b>5</b> (cada R$ 1 de ads traz R$ 5 de venda), coloca <b>20</b>. ROAS 10 → 10. Produto sem anúncio pago → deixa <b>0</b>.</small>
-        <button class="btn" id="cCalc" style="width:100%;margin-top:12px;font-size:.9rem">Calcular preço</button>
-      </div>
-      <div class="card" id="cRes"><b class="tit">Resultado</b><p class="vazio">Preencha o custo e clique em Calcular.</p></div>
+    <div class="plano">
+      <h3>Fundador</h3>
+      <p class="val">R$ 147 <small>/ mês</small></p>
+      <ul>
+        <li>Tudo do plano Operação</li>
+        <li><strong>Preço travado para sempre</strong></li>
+        <li>Primeiras 5 lojas apenas</li>
+        <li>Influência no que é construído primeiro</li>
+      </ul>
+      <a class="btn btn-s" href="/app/">Garantir vaga</a>
     </div>
-    <h2 style="display:flex;align-items:center;gap:10px">Tabela precificadora — seus anúncios<button class="mini" id="pRecalc">↻ recalcular com os parâmetros acima</button></h2>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="precCard"><p class="vazio">carregando anúncios…</p></div>`;
-  const V = id => Number(document.getElementById(id).value||0);
-  document.getElementById("cCanal").onchange = e=>{ const [,t,f]=PRESET_CANAL[e.target.value];
-    document.getElementById("cTaxa").value=t; document.getElementById("cFixa").value=f; };
-  dados().then(r=>{ const f=r.financeiro||{};
-    if(f.imposto_pct!=null && !V("cImp")) document.getElementById("cImp").value=f.imposto_pct;
-    if(f.taxa_pct!=null) document.getElementById("cTaxa").value=f.taxa_pct;
-  });
-  const calc = ()=>{
-    const custo=V("cCusto")+V("cExtra"), fixa=V("cFixa");
-    const pct=(V("cTaxa")+V("cImp")+V("cAds"))/100, marg=V("cMarg")/100;
-    const el=document.getElementById("cRes");
-    if(!custo) return el.innerHTML=`<b class="tit">Resultado</b><p class="vazio">Informe o custo do produto.</p>`;
-    const den=1-pct-marg;
-    if(den<=0.01) return el.innerHTML=`<b class="tit">Resultado</b><p class="vazio">Taxas + margem passam de 100% — impossível. Reduza a margem ou as taxas.</p>`;
-    const sug=(custo+fixa)/den;
-    const sug90=Math.max(Math.floor(sug)+0.90, sug);
-    const linha=(p)=>{ const luc=p*(1-pct)-fixa-custo; return { p, luc, mg: p? luc/p*100 : 0 }; };
-    const cen=[linha(sug90),linha(sug90*1.05),linha(sug90*1.10),linha(sug90*1.20)];
-    const partes=[["Custo",custo,"#6A87A3"],["Taxas",sug90*(V("cTaxa")+V("cAds"))/100+fixa,"#F5A623"],["Imposto",sug90*V("cImp")/100,"#FF6B6B"],["Lucro",cen[0].luc,"#3ddc84"]];
-    const tot=partes.reduce((s,x)=>s+Math.max(0,x[1]),0)||1;
-    el.innerHTML=`<b class="tit">Resultado</b>
-      <div style="margin-top:12px"><div class="lbl" style="font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Preço de venda sugerido</div>
-      <div style="font-family:var(--mono);font-size:1.9rem;color:var(--n)">${brl(sug90)}</div>
-      <small style="color:var(--t3)">lucro de <b style="color:#3ddc84">${brl(cen[0].luc)}</b> por venda · margem ${cen[0].mg.toFixed(1).replace(".",",")}%</small></div>
-      <div style="display:flex;height:14px;border-radius:99px;overflow:hidden;margin:14px 0 4px">${partes.map(([n,v,cor])=>`<div title="${n}: ${brl(v)}" style="width:${Math.max(0,v)/tot*100}%;background:${cor}"></div>`).join("")}</div>
-      <small style="color:var(--t3)">${partes.map(([n,v,cor])=>`<span style="color:${cor}">●</span> ${n} ${brl(v)}`).join(" · ")}</small>
-      <table class="tabela" style="margin-top:14px"><tr><th>Cenário</th><th style="text-align:right">Preço</th><th style="text-align:right">Lucro</th><th style="text-align:right">Margem</th></tr>
-      ${[["Sugerido",cen[0]],["+5%",cen[1]],["+10%",cen[2]],["+20%",cen[3]]].map(([n,x])=>`<tr><td>${n}</td><td style="text-align:right;font-family:var(--mono)">${brl(x.p)}</td><td style="text-align:right;font-family:var(--mono);color:${x.luc>=0?"#3ddc84":"#FF9B9B"}">${brl(x.luc)}</td><td style="text-align:right;font-family:var(--mono)">${x.mg.toFixed(1).replace(".",",")}%</td></tr>`).join("")}</table>`;
-  };
-  document.getElementById("cCalc").onclick = calc;
-  const carregaPrec = async()=>{
-    const a = await acaoApi("precificador_lista");
-    const el=document.getElementById("precCard"); if(!el) return;
-    if(!a.success) return el.innerHTML=`<p class="vazio">${esc(a.error||"indisponível")}</p>`;
-    const prods=(a.resultado.produtos||[]);
-    const pct=(V("cTaxa")+V("cImp")+V("cAds"))/100, marg=V("cMarg")/100, fixa=V("cFixa");
-    el.innerHTML = prods.length? `<table class="tabela">
-      <tr><th>Produto</th><th>Status</th><th style="text-align:right">Preço atual</th><th>Custo R$</th><th>Piso R$</th><th>Teto R$</th><th style="text-align:right">Margem atual</th><th style="text-align:right">Preço sugerido</th><th></th></tr>
-      ${prods.map(p=>{
-        const custo=p.custo!=null?Number(p.custo):null;
-        const mLuc = custo!=null? p.preco*(1-pct)-fixa-custo : null;
-        const mPct = mLuc!=null&&p.preco? mLuc/p.preco*100 : null;
-        const den=1-pct-marg;
-        const sug = custo!=null&&den>0.01? Math.floor((custo+fixa)/den)+0.90 : null;
-        return `<tr>
-          <td>${esc(p.titulo||"—").slice(0,48)}<br><small style="font-family:var(--mono);font-size:.68rem;color:var(--t3)">${esc(p.id)}</small></td>
-          <td><span class="pill ${p.status==="active"?"ok":"ruim"}">${p.status==="active"?"ativo":esc(p.status)}</span></td>
-          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.preco)}</b></td>
-          <td><input class="edt" data-id="${esc(p.id)}" data-campo="custo" type="number" step="0.01" value="${custo??""}" placeholder="—"></td>
-          <td><input class="edt" data-id="${esc(p.id)}" data-campo="piso" type="number" step="0.01" value="${p.piso??""}" placeholder="—"></td>
-          <td><input class="edt" data-id="${esc(p.id)}" data-campo="teto" type="number" step="0.01" value="${p.teto??""}" placeholder="—"></td>
-          <td style="text-align:right;font-family:var(--mono);color:${mPct==null?"var(--t3)":mPct>=0?"#3ddc84":"#FF9B9B"}">${mPct==null?"informe o custo":brl(mLuc)+"<br><small>"+mPct.toFixed(1).replace(".",",")+"%</small>"}</td>
-          <td style="text-align:right;font-family:var(--mono);color:var(--n)">${sug!=null?brl(sug):"—"}</td>
-          <td>${sug!=null?`<button class="mini aplicar" data-id="${esc(p.id)}" data-preco="${sug.toFixed(2)}">Aplicar</button>`:""}</td></tr>`;}).join("")}
-    </table>` : "<p class='vazio'>Nenhum anúncio encontrado — conecte o Mercado Livre.</p>";
-    document.querySelectorAll(".edt").forEach(i=>i.onchange=async()=>{
-      const r=await acaoApi("regras_preco_definir",{ produto_id:i.dataset.id, [i.dataset.campo]: i.value===""?null:+i.value });
-      if(!r.success) alert("Ops: "+r.error); else carregaPrec();
-    });
-    document.querySelectorAll(".aplicar").forEach(b=>b.onclick=async()=>{
-      if(!confirm("Mudar o preço do "+b.dataset.id+" para "+brl(+b.dataset.preco)+" no Mercado Livre?")) return;
-      b.disabled=true; b.textContent="aplicando…";
-      const r=await acaoApi("atualizar_preco",{ item_id:b.dataset.id, preco:+b.dataset.preco });
-      b.disabled=false; b.textContent="Aplicar";
-      r.success? carregaPrec() : alert("Ops: "+r.error);
-    });
-  };
-  carregaPrec();
-  document.getElementById("pRecalc").onclick = carregaPrec;
-}
+  </div>
+</div></section>
 
-// ── Fale com a IA ──
-let HIST = [];
-const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
-function bolhas(extra){
-  const msgs = HIST.map(m=>`<div class="bub ${m.role==="user"?"u":"ai"}">${m.role==="user"?esc(m.content):fmt(m.content)}</div>`).join("");
-  return (msgs || `<div class="bub ai">Oi! 👋 Sou a IA da sua loja. Me pede coisas como: <b>"quanto vendi esse mês?"</b>, <b>"aplica 15% no que está sem promoção"</b>, <b>"define piso de R$ 89,90 pro anúncio X"</b> ou <b>"checa a saúde da loja"</b>.</div>`) + (extra||"");
-}
-async function enviarChat(){
-  const inp = document.getElementById("chatIn"), box = document.getElementById("chatMsgs");
-  const txt = (inp.value||"").trim(); if(!txt) return;
-  inp.value = ""; HIST.push({role:"user",content:txt});
-  box.innerHTML = bolhas(`<div class="bub ai" style="opacity:.7">⚙️ trabalhando na sua loja…</div>`);
-  box.scrollTop = box.scrollHeight;
-  const { data:{ session } } = await sb.auth.getSession();
-  let resp;
-  try{
-    const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-chat",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
-      body: JSON.stringify({ mensagens: HIST })
-    });
-    let d; try { d = await r.json(); } catch(_) { d = null; }
-    resp = (d && d.success) ? d.resposta : "Ops: " + msgErro(d, r);
-  }catch(_){ resp = "Ops, falha de conexão — tenta de novo?"; }
-  HIST.push({role:"assistant",content:resp});
-  const box2 = document.getElementById("chatMsgs");
-  if(box2){ box2.innerHTML = bolhas(); box2.scrollTop = box2.scrollHeight; }
-}
-// ── Ads (gestão completa: gasto, ROAS, campanhas, análise da IA) ──
-function viewAds(c){
-  c.innerHTML = `
-    <h1>Ads</h1><div class="sub-h1">Gestão dos anúncios pagos: gasto, cliques, ROAS por campanha — e a IA dizendo o que pausar, escalar ou trocar</div>
-    <div class="grid4" id="adskpi" style="margin-top:10px"><div class="card"><p class="vazio">carregando…</p></div></div>
-    <div style="margin:14px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn" id="adsIA" style="font-size:.88rem;padding:10px 18px">🧠 Análise da IA — ROAS, o que pausar, o que escalar</button>
-      <small style="color:var(--t3)">ela puxa os números reais e devolve o plano</small>
-    </div>
-    <div id="adsAnalise"></div>
-    <h2>Campanhas — últimos 30 dias</h2>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="adsCamp"><p class="vazio">carregando…</p></div>
-    <div class="card" style="margin-top:12px"><b class="tit">🤖 Sentinela de verba</b><br>
-      <small style="color:var(--t2)">A automação <b>Sentinela de verba de ads</b> (aba Gestão IA) confere o saldo a cada rodada e avisa antes da verba acabar — campanha nunca para por falta de saldo.</small></div>`;
-  acaoApi("ads_dados").then(a=>{
-    const k=document.getElementById("adskpi"), t=document.getElementById("adsCamp");
-    if(!k) return;
-    if(!a.success){ k.innerHTML=`<div class="card"><p class="vazio">${esc(a.error||"indisponível")}</p></div>`; t.innerHTML="<p class='vazio'>—</p>"; return; }
-    const cn=a.resultado.canais||{};
-    const s=cn.shopee, m=cn.mercado_livre, tt=cn.tiktok;
-    const cards=[];
-    if(s){
-      cards.push(`<div class="card kpi"><div class="lbl">${ico("shopee",15)} Gasto 30 dias</div><div class="val">${brl(s.d30?.gasto)}</div><div class="sub">7 dias: ${brl(s.d7?.gasto)} · saldo ${brl(s.saldo)}</div></div>`);
-      cards.push(`<div class="card kpi"><div class="lbl">ROAS 30 dias</div><div class="val" style="color:${s.roas30==null?"var(--t3)":s.roas30>=3?"#3ddc84":s.roas30>=1?"var(--acc)":"#FF9B9B"}">${s.roas30!=null?String(s.roas30).replace(".",",")+"x":"—"}</div><div class="sub">cada R$ 1 em ads virou R$ ${s.roas30!=null?String(s.roas30).replace(".",","):"—"}</div></div>`);
-      cards.push(`<div class="card kpi"><div class="lbl">Cliques / CTR</div><div class="val">${s.d30?.cliques??"—"}</div><div class="sub">CTR ${s.ctr30!=null?String(s.ctr30).replace(".",",")+"%":"—"} · ${s.d30?.impressoes??0} impressões</div></div>`);
-      cards.push(`<div class="card kpi"><div class="lbl">GMV via ads</div><div class="val" style="color:var(--n)">${brl(s.d30?.gmv)}</div><div class="sub">${s.d30?.pedidos??0} pedido(s) em 30 dias</div></div>`);
-    }
-    if(m) cards.push(`<div class="card kpi"><div class="lbl">${ico("mercado_livre",15)} Mercado Ads</div><div class="val" style="color:var(--t3)">${m.advertiser_id?"ativo":"—"}</div><div class="sub">${esc(m.info||"")}</div></div>`);
-    if(tt) cards.push(`<div class="card kpi"><div class="lbl">${ico("tiktok",15)} TikTok Ads</div><div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(tt.info||"")}</div></div>`);
-    if(!cards.length) cards.push(`<div class="card"><p class="vazio">Conecte um canal com anúncios pagos (Shopee Ads é o mais completo) pra ver gasto e ROAS aqui.</p></div>`);
-    k.innerHTML = cards.join("");
-    const camps = s?.campanhas||[];
-    const diag = x=>{
-      if(!x.cliques) return `<span class="pill ruim">💤 sem cliques</span>`;
-      if(x.roas==null||!x.gasto) return `<span class="pill ok">—</span>`;
-      if(x.roas<1) return `<span class="pill ruim">🔴 gastando sem retorno</span>`;
-      if(x.roas<3) return `<span class="pill" style="color:var(--acc);background:#F5A62322">🟡 ROAS baixo</span>`;
-      return `<span class="pill ok2">🟢 saudável</span>`;
-    };
-    t.innerHTML = camps.length? `<table class="tabela">
-      <tr><th>Campanha / Produto</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">CTR</th><th style="text-align:right">Pedidos</th><th style="text-align:right">GMV</th><th style="text-align:right">ROAS</th><th>Diagnóstico</th></tr>
-      ${camps.map(x=>`<tr><td>${esc(String(x.nome)).slice(0,50)}</td>
-        <td style="text-align:right;font-family:var(--mono)">${brl(x.gasto)}</td>
-        <td style="text-align:right;font-family:var(--mono)">${x.cliques}</td>
-        <td style="text-align:right;font-family:var(--mono)">${x.ctr!=null?String(x.ctr).replace(".",",")+"%":"—"}</td>
-        <td style="text-align:right;font-family:var(--mono)">${x.pedidos}</td>
-        <td style="text-align:right;font-family:var(--mono)">${brl(x.gmv)}</td>
-        <td style="text-align:right;font-family:var(--mono)"><b>${x.roas!=null?String(x.roas).replace(".",",")+"x":"—"}</b></td>
-        <td>${diag(x)}</td></tr>`).join("")}
-    </table>` : `<p class="vazio">${s?"Nenhuma campanha ativa encontrada nos últimos 30 dias.":"As campanhas aparecem quando um canal com ads estiver conectado (Shopee primeiro; Mercado Ads e TikTok na sequência)."}</p>`;
-  });
-  document.getElementById("adsIA").onclick = async()=>{
-    const b=document.getElementById("adsIA"), area=document.getElementById("adsAnalise");
-    b.disabled=true; b.textContent="🧠 analisando seus ads…";
-    area.innerHTML=`<div class="card" style="margin-bottom:12px"><p class="vazio">⚙️ puxando os números e pensando…</p></div>`;
-    const { data:{ session } } = await sb.auth.getSession();
-    try{
-      const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-chat",{
-        method:"POST", headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
-        body: JSON.stringify({ mensagens:[{ role:"user", content:"Analise meus anúncios pagos agora: puxe os dados de ads, avalie gasto, CTR e ROAS geral e por campanha, e me diga objetivamente: o que pausar, o que escalar, onde trocar o criativo/anúncio e se vale testar outro produto. Se algum canal não tiver dados, diga o porquê em uma linha." }] })
-      });
-      const d = await r.json();
-      area.innerHTML = `<div class="card" style="margin-bottom:12px"><b class="tit">🧠 Análise da IA</b><div class="bub ai" style="max-width:100%;margin-top:10px">${d.success?fmt(d.resposta):"Ops: "+esc(d.error)}</div></div>`;
-    }catch(_){ area.innerHTML=`<div class="card"><p class="vazio">falha de conexão — tenta de novo</p></div>`; }
-    b.disabled=false; b.textContent="🧠 Análise da IA — ROAS, o que pausar, o que escalar";
-  };
-}
+<section><div class="w">
+  <div class="fecho">
+    <p class="eyebrow" style="margin-bottom:14px">Comece agora</p>
+    <h2>Sua concorrência está renovando promoção na mão.</h2>
+    <p class="lead" style="margin:16px auto 0;text-align:left;max-width:52ch">
+      Conecte uma conta e veja, na sua própria loja, o que ela encontra em 2 minutos.</p>
+    <div class="cta"><a class="btn btn-p" href="/app/">Testar grátis →</a></div>
+  </div>
+</div></section>
 
-// ── Integrações (formato ERPCB: sidebar, autenticação, sincronizar/reconectar/desconectar, regras) ──
-let CANAL_SEL = "mercado_livre";
-const REGRAS_CANAL = {
-  mercado_livre: [
-    ["Importação automática de pedidos (últimos 30 dias, seg·qua·sex + botão)", "ok"],
-    ["Importar taxas do marketplace por pedido", "ok"],
-    ["Importar valor do frete", "ok"],
-    ["Cliente real do pedido (nome do comprador)", "ok"],
-    ["Etapa pelo status real (importado → concluído / cancelado)", "ok"],
-    ["Etiqueta de transporte em ZPL (impressão em lote)", "ok"],
-    ["Tokens renovados automaticamente (conexão não expira)", "ok"],
-    ["Faturamento NF-e direto da fila", "breve"],
-  ],
-  shopee: [
-    ["Importação automática de pedidos", "ok"],
-    ["Avaliações respondidas no tom da marca (nota baixa vira alerta)", "ok"],
-    ["Sentinela de saldo de Ads", "ok"],
-    ["Tokens renovados automaticamente", "ok"],
-    ["Faturamento NF-e direto da fila", "breve"],
-  ],
-  tiktok: [
-    ["Importação automática de pedidos", "ok"],
-    ["Oferta relâmpago sempre no ar (renova 3 dias, mesmos preços)", "ok"],
-    ["Tokens renovados automaticamente", "ok"],
-    ["Faturamento NF-e direto da fila", "breve"],
-  ],
-};
-function viewCanais(c){
-  const d = CACHE.painel;
-  const cx = Object.fromEntries((d.conexoes||[]).map(x=>[x.plataforma,x]));
-  const desenha = ()=>{
-    const conn = cx[CANAL_SEL]; const on = conn?.status === "conectada";
-    const [nome] = NOMES[CANAL_SEL];
-    const lado = Object.entries(NOMES).map(([k,[n]])=>{
-      const okk = cx[k]?.status === "conectada";
-      return `<button class="itg ${k===CANAL_SEL?"atv":""}" data-k="${k}">${ico(k,18)} <span style="flex:1;text-align:left">${n}</span><span class="ponto" style="background:${okk?"#3ddc84":"var(--t3)"}"></span></button>`;
-    }).join("");
-    const regras = (REGRAS_CANAL[CANAL_SEL]||[]).map(([txt,st])=>`
-      <div class="regra"><span style="color:${st==="ok"?"#3ddc84":"var(--acc)"}">${st==="ok"?"✓":"⏳"}</span><span style="flex:1">${txt}</span>
-      <small style="color:${st==="ok"?"#3ddc84":"var(--acc)"};font-weight:700">${st==="ok"?"Ativado":"Em breve"}</small></div>`).join("");
-    c.innerHTML = `
-      <h1>Integrações</h1><div class="sub-h1">Conecte suas contas — a autorização é feita no site oficial de cada plataforma</div>
-      <div style="display:grid;grid-template-columns:230px 1fr;gap:14px;margin-top:12px" class="itg-grid">
-        <div class="card" style="padding:8px">${lado}</div>
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:10px">
-            <b class="tit">Autenticação — ${nome}</b>
-            <span class="pill ${on?"ok2":"ruim"}" style="margin-left:auto">${on?"Conectado":"Não conectado"}</span>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px" class="itg-form">
-            <label class="lb">Login<input class="busca w100" id="itgLogin" value="${on?"carregando…":"—"}" readonly></label>
-            <label class="lb">Canal de venda<input class="busca w100" value="${nome}" readonly></label>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-            ${on?`<button class="mini" id="itgSync" style="background:var(--n);border-color:var(--n);color:#04101C">🔄 Sincronizar agora</button>`:""}
-            <a class="mini" id="itgConectar" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#1A0F00"}" href="${OAUTH}?fluxo=authorize&plataforma=${CANAL_SEL}&loja=${d.loja.id}" onclick="try{localStorage.setItem('sp_loja','${d.loja.id}')}catch(e){}">${on?"Reconectar":"Conectar"}</a>
-            ${on?`<button class="mini" id="itgDesc" style="color:#FF9B9B;border-color:#FF6B6B44">Desconectar</button>`:""}
-          </div>
-          ${on&&conn.conectada_em?`<small style="color:var(--t3);display:block;margin-top:8px">conectada em ${(conn.conectada_em||"").slice(0,10)}</small>`:""}
-          <h2 style="margin-top:20px">Regras de operação</h2>
-          <div>${regras}</div>
-        </div>
-      </div>`;
-    document.querySelectorAll(".itg").forEach(b=>b.onclick=()=>{ CANAL_SEL=b.dataset.k; desenha(); });
-    if(on){
-      acaoApi("canal_info",{ plataforma: CANAL_SEL }).then(r=>{
-        const el=document.getElementById("itgLogin"); if(!el) return;
-        el.value = (r.success && r.resultado.login) ? r.resultado.login : (conn.conectada_em?"conta conectada":"—");
-      });
-      const sy=document.getElementById("itgSync");
-      if(sy) sy.onclick = async()=>{ sy.disabled=true; sy.textContent="sincronizando…";
-        const r=await acaoApi("sincronizar_pedidos");
-        sy.disabled=false; sy.textContent="🔄 Sincronizar agora";
-        alert(r.success?`Sincronizado: ${r.resultado.sincronizados} pedido(s) ✅`:"Ops: "+r.error);
-        CACHE.dados=null; };
-      const de=document.getElementById("itgDesc");
-      if(de) de.onclick = async()=>{
-        if(!confirm(`Desconectar o ${nome}? A loja para de sincronizar esse canal (dá pra reconectar quando quiser).`)) return;
-        const r=await acaoApi("desconectar_canal",{ plataforma: CANAL_SEL });
-        if(!r.success) return alert("Ops: "+r.error);
-        const { data } = await sb.rpc("sp_painel"); CACHE.painel=data; CACHE.dados=null; shell();
-      };
-    }
-  };
-  desenha();
-}
+</main>
 
-window.addEventListener("hashchange",()=>{ const v=(location.hash||"#dashboard").slice(1); if(v!==VIEW){ VIEW=v; if(CACHE.painel) shell(); } });
-render();
-</script></body></html>
+<footer><div class="w">
+  <span>SmartPlace AI</span>
+  <a href="/privacidade/">Privacidade</a>
+  <a href="/termos/">Termos</a>
+  <a href="mailto:emersonumar@gmail.com">Contato</a>
+  <span class="dir">GROWTH DIGITAL MIDIA · Campo Grande/MS</span>
+</div></footer>
+
+</body></html>
