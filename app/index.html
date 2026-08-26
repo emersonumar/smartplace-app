@@ -810,9 +810,7 @@ async function viewFiscal(c){
       endereco:{ logradouro:d.logradouro, numero:d.numero, bairro:d.bairro,
                  municipio:d.municipio, cep:d.cep, codigo_municipio:d.codigo_municipio } });
     if(!rr.success) return { erro: rr.error };
-    alert("Empresa cadastrada ✅
-
-" + (rr.resultado.proximo||""));
+    alert("Empresa cadastrada \u2705\n\n" + (rr.resultado.proximo||""));
     viewFiscal(c);
   });
 
