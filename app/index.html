@@ -165,6 +165,11 @@ input:focus{outline:2px solid #1F6B4A55}
 .conta .fim .r{color:var(--n)}
 .conta .fim .v{color:var(--n);font-weight:700}
 .conta .obs{font-size:.7rem;color:var(--t2);margin-top:3px;line-height:1.35}
+/* duas colunas de trabalho (calculadora+regras, chat+automacoes) */
+.colunas{display:grid;grid-template-columns:1fr 1.35fr;gap:26px;align-items:start}
+@media(max-width:980px){ .colunas{grid-template-columns:1fr} }
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:460px){ .campos{grid-template-columns:1fr} }
 .cabRel{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;border-bottom:2px solid var(--acc);padding-bottom:12px;margin:22px 0 0}
 /* Dentro do cabecalho o subtitulo nao leva regua propria: no desktop as duas
    coincidem, mas no celular elas empilham e viram duas linhas. */
@@ -547,40 +552,49 @@ function pedidosFiltrados(r){
 const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 function viewPedidos(c){
   c.innerHTML = `
-    <h1>Pedidos</h1><div class="sub-h1">Fila unificada dos seus canais — selecione pedidos pra faturar e imprimir etiquetas</div>
-    <div class="grid4" id="pedkpis" style="margin-top:10px"></div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0 4px">
-      <span class="chips" id="etapaTabs" style="margin:0"></span>
-      <select id="mesSel" class="busca" style="min-width:0;margin-left:auto"></select>
-    </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
-      <input class="busca" id="buscaPed" placeholder="Buscar pedido, cliente, produto, SKU…" value="${esc(FILTRO.busca)}">
-      <span class="chips" id="canalChips" style="margin:0"></span>
-      <span style="margin-left:auto;display:flex;gap:8px;position:relative">
-        <button class="mini" id="syncPed">↻ Sincronizar</button>
-        <button class="mini" id="btnNfe">Faturar</button>
-        <button class="mini" id="btnEtq" style="background:var(--acc);border-color:var(--acc);color:#FBFAF7">Gerar etiqueta</button>
-        <button class="mini" id="btnImp"> Imprimir </button>
+    <div class="cabRel">
+      <div style="flex:1 1 300px">
+        <h1 style="margin:0">Pedidos</h1>
+        <div class="sub-h1" id="pedResumo">Fila unificada dos seus canais</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;position:relative">
+        <select id="mesSel" class="busca" style="min-width:0"></select>
+        <button class="mini" id="syncPed">Sincronizar</button>
+        <button class="mini" id="btnImp">Imprimir</button>
         <div id="impMenu" class="card" style="display:none;position:absolute;right:0;top:115%;z-index:30;min-width:260px;padding:8px">
           <button class="impop" data-imp="etq">Etiquetas de transporte</button>
           <button class="impop" data-imp="danfe">DANFE Simplificada</button>
           <button class="impop" data-imp="danfe_etq">DANFE Simplificada + Etiqueta de transporte</button>
           <button class="impop" data-imp="danfe_pdf">DANFE completa (PDF)</button>
         </div>
-      </span>
+      </div>
     </div>
-    <div id="selBar" style="margin-bottom:8px"></div>
-    <label style="display:flex;align-items:center;gap:8px;color:var(--t3);font-size:.76rem;margin-bottom:8px"><input type="checkbox" id="selTodos"> Selecionar todos da página</label>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 10px">
+      <span class="chips" id="etapaTabs" style="margin:0"></span>
+      <span class="chips" id="canalChips" style="margin:0 0 0 auto"></span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <input class="busca" id="buscaPed" placeholder="Buscar pedido, cliente, produto, SKU…" value="${esc(FILTRO.busca)}" style="flex:1">
+      <label style="display:flex;align-items:center;gap:7px;color:var(--t2);font-size:.78rem;white-space:nowrap"><input type="checkbox" id="selTodos"> Selecionar todos</label>
+    </div>
+    <div id="selBar"></div>
+    <div class="card" style="padding:16px 20px;overflow-x:auto" id="pedcard"><p class="vazio">carregando…</p></div>
     <div id="etqArea"></div>`;
   const somaSel = lista => lista.filter(p=>SEL.has(p.pedido_id)).reduce((s,p)=>s+Number(p.total||0),0);
   const atualizaSel = lista=>{
     const n=SEL.size;
-    document.getElementById("btnNfe").textContent = "Faturar"+(n?` (${n})`:"");
-    document.getElementById("btnEtq").textContent = "Gerar etiqueta"+(n?` (${n})`:"");
-    document.getElementById("selBar").innerHTML = n?`<span class="chip atv" style="cursor:default">${n} pedido(s) · ${brl(somaSel(lista))}</span> <button class="chip" id="limparSel">✕ Limpar seleção</button>`:"";
+    document.getElementById("selBar").innerHTML = n?`
+      <div style="border:1px solid var(--acc);background:var(--p);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <b style="font-size:.86rem">${n} pedido${n>1?"s":""} marcado${n>1?"s":""}</b>
+        <span style="color:var(--t3)">·</span>
+        <span style="font-size:.84rem;color:var(--t2)">${brl(somaSel(lista))}</span>
+        <button class="mini" id="btnNfe" style="background:var(--n);border-color:var(--n);color:#FFF">Emitir nota${n>1?" dos "+n:""}</button>
+        <button class="mini" id="btnEtq">Gerar etiqueta</button>
+        <button class="mini" id="limparSel" style="margin-left:auto;border-color:transparent;color:var(--t3)">Limpar</button>
+      </div>`:"";
     const ls=document.getElementById("limparSel");
     if(ls) ls.onclick=()=>{ SEL.clear(); document.querySelectorAll(".selPed").forEach(cb=>cb.checked=false); const st=document.getElementById("selTodos"); if(st) st.checked=false; atualizaSel(lista); };
+    ligaLote();
   };
   const fill = r=>{
     if(!document.getElementById("pedcard")) return;
@@ -588,11 +602,9 @@ function viewPedidos(c){
     const todos = r.ultimos||[];
     const conta = e => todos.filter(p=>etapaDe(p)===e).length;
     const nImp=conta("importado"), nConc=conta("concluido"), nCanc=conta("cancelado"), nFat=conta("faturado");
-    document.getElementById("pedkpis").innerHTML = `
-      <div class="card kpi"><div class="val">${nImp}</div><div class="lbl">Importado</div></div>
-      <div class="card kpi"><div class="val">${nFat}</div><div class="lbl">Faturado</div></div>
-      <div class="card kpi"><div class="val" style="color:var(--n)">${nConc}</div><div class="lbl">Concluído / Expedido</div></div>
-      <div class="card kpi"><div class="val" style="color:#A33A2A">${nCanc}</div><div class="lbl">Cancelado</div></div>`;
+    const semNota = todos.filter(p=>etapaDe(p)!=="cancelado" && !p.nota_chave).length;
+    const pr = document.getElementById("pedResumo");
+    if(pr) pr.innerHTML = `${todos.length} pedidos no período${semNota?` · <span style="color:var(--no)">${semNota} ainda sem nota fiscal</span>`:""}`;
     document.getElementById("etapaTabs").innerHTML = [["importado","Pendentes",nImp],["faturado","Faturados",nFat],["concluido","Concluídos",nConc],["cancelado","Cancelados",nCanc],["todas","Todas",todos.length]]
       .map(([v,nm,q])=>`<button class="chip ${FILTRO.etapa===v?"atv":""}" data-st="${v}">${nm} (${q})</button>`).join("");
     const meses=[...new Set(todos.map(p=>(p.criado_canal_em||"").slice(0,7)))].filter(Boolean).sort().reverse();
@@ -616,8 +628,8 @@ function viewPedidos(c){
           <td>${esc(item).slice(0,42)}${(p.itens||[]).length>1?` <small style="color:var(--t3)">+${p.itens.length-1}</small>`:""}</td>
           <td style="text-align:right;font-family:var(--mono);white-space:nowrap"><b>${brl(p.total)}</b>${p.taxa?`<br><small style="color:var(--t3)">taxa ${brl(p.taxa)}</small>`:""}</td>
           <td><span class="pill ${cls}">${rot}</span></td>
-          <td style="color:var(--t3);font-size:.72rem">—</td>
-          <td style="color:var(--t3);font-size:.72rem">${p.envio_id?"disponível":"—"}</td></tr>`; }).join("")}
+          <td style="font-size:.76rem">${p.nota_chave?`<span style="color:var(--t2)">emitida</span>`:etapaDe(p)==="cancelado"?`<span style="color:var(--t3)">não emitir</span>`:`<span style="color:var(--no)">falta emitir</span>`}</td>
+          <td style="font-size:.76rem">${p.envio_id?`<span style="color:var(--t2)">disponível</span>`:p.canal==="mercado_livre"?`<span style="color:var(--t3)">—</span>`:`<span style="color:var(--t3)">no Seller Center</span>`}</td></tr>`; }).join("")}
     </table>` : "<p class='vazio'>Nenhum pedido nesse filtro.</p>";
     document.querySelectorAll("#etapaTabs .chip").forEach(b=>b.onclick=()=>{ FILTRO.etapa=b.dataset.st; fill(r); });
     document.querySelectorAll("#canalChips .chip").forEach(b=>b.onclick=()=>{ FILTRO.canal=b.dataset.cn; fill(r); });
@@ -632,12 +644,15 @@ function viewPedidos(c){
   document.getElementById("syncPed").onclick = async()=>{
     const b=document.getElementById("syncPed"); b.disabled=true; b.textContent="sincronizando…";
     const r=await acaoApi("sincronizar_pedidos");
-    b.disabled=false; b.textContent="↻ Sincronizar";
+    b.disabled=false; b.textContent="Sincronizar";
     if(!r.success) return alert("Ops: "+r.error);
     fill(await dados(true));
   };
-  document.getElementById("btnEtq").onclick = gerarEtiquetas;
-  document.getElementById("btnNfe").onclick = ()=>alert("O faturamento automático de NF-e direto da fila está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
+  // Os botões do lote vivem na barra de seleção e são recriados a cada marcação.
+  function ligaLote(){
+    const be=document.getElementById("btnEtq"); if(be) be.onclick = gerarEtiquetas;
+    const bn=document.getElementById("btnNfe"); if(bn) bn.onclick = ()=>alert("O faturamento automático de NF-e direto da fila está em integração — é a próxima entrega. Por enquanto, a nota sai pelo seu emissor de sempre.");
+  }
   const menu=document.getElementById("impMenu");
   document.getElementById("btnImp").onclick = ()=>{ menu.style.display = menu.style.display==="none"?"block":"none"; };
   document.querySelectorAll(".impop").forEach(b=>b.onclick=()=>{
@@ -725,36 +740,39 @@ async function viewCarteira(c){
   const uma = lojas.length <= 1;
 
   const linha = l => {
-    const chips = (l.canais||[]).map(x=>`<span class="chip" style="padding:3px 9px;font-size:.68rem">${NOMES[x]?NOMES[x][0]:x}</span>`).join(" ")
-      || `<span class="chip" style="padding:3px 9px;font-size:.68rem;opacity:.45">sem canal</span>`;
-    const sinal = l.criticos ? `<span style="color:#A33A2A">${l.criticos} crítico(s)</span>`
-      : (l.sem_canal ? `<span style="color:var(--acc)">falta conectar</span>` : `<span style="color:var(--n)">em dia</span>`);
+    const canais = (l.canais||[]).map(x=>NOMES[x]?NOMES[x][0]:x).join(" · ")
+      || `<span style="color:var(--t3)">nenhum ainda</span>`;
+    // "Precisa de você" diz O QUE fazer, não um selo genérico de situação
+    const precisa = l.criticos ? `<span style="color:var(--no)">${l.criticos} alerta(s) crítico(s)</span>`
+      : (l.sem_canal ? `<span style="color:var(--no)">falta conectar o primeiro canal</span>` : `<span style="color:var(--t2)">em dia</span>`);
     const atual = LOJA_ATUAL ? LOJA_ATUAL === l.id : (lojas[0] && lojas[0].id === l.id);
-    return `<tr>
-      <td><b>${esc(l.nome)}</b><br><small style="color:var(--t3)">${esc(l.papel||"")}</small></td>
-      <td>${chips}</td>
-      <td style="text-align:right;font-family:var(--mono)">${l.pedidos_30d}</td>
-      <td style="text-align:right;font-family:var(--mono)">${brl(l.receita_30d)}</td>
-      <td style="text-align:right;font-family:var(--mono)">${brl(l.ticket)}</td>
-      <td style="text-align:right;font-family:var(--mono)">${l.taxa_pct==null?"—":l.taxa_pct+"%"}</td>
-      <td style="text-align:right">${sinal}</td>
-      <td style="text-align:right"><button class="chip trocar" data-loja="${l.id}"${atual?" disabled style=\"opacity:.45\"":""}>${atual?"aberta":"Entrar"}</button></td>
+    const atencao = l.criticos || l.sem_canal;
+    return `<tr${atencao?' style="background:#FDF9F8"':""}>
+      <td><b>${esc(l.nome)}</b><br><small style="color:var(--t3)">${l.papel==="dono"?"você é dono":"você é gestor"}</small></td>
+      <td style="font-size:.82rem">${canais}</td>
+      <td style="text-align:right">${l.pedidos_30d}</td>
+      <td style="text-align:right;font-weight:600">${brl(l.receita_30d)}</td>
+      <td style="text-align:right">${brl(l.ticket)}</td>
+      <td style="font-size:.82rem">${precisa}</td>
+      <td style="text-align:right">${atual?`<span style="font-size:.78rem;color:var(--t3)">está aberta</span>`:`<button class="mini trocar" data-loja="${l.id}">Entrar</button>`}</td>
     </tr>`;
   };
 
   c.innerHTML = `
-    <h1>Carteira de clientes</h1>
-    <div class="sub-h1">As lojas que você atende — entre em qualquer uma sem pedir a senha do cliente</div>
-    <div class="grid" style="margin:14px 0">
-      <div class="card"><div class="lbl">Lojas</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${d.total_lojas}</div></div>
-      <div class="card"><div class="lbl">Faturamento 30 dias</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${brl(d.receita_30d)}</div></div>
-      <div class="card"><div class="lbl">Pedidos 30 dias</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${d.pedidos_30d}</div></div>
-      <div class="card"><div class="lbl">Precisam de atenção</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px;color:${d.precisam_atencao?"#A33A2A":"var(--n)"}">${d.precisam_atencao}</div></div>
+    <div class="cabRel"><div>
+      <h1 style="margin:0">Lojas que você atende</h1>
+      <div class="sub-h1">Você entra na operação de cada cliente sem pedir a senha dele. Trocar de loja troca todas as telas.</div>
+    </div></div>
+    <div class="numeros" style="margin-top:16px">
+      <div><div class="lbl">Lojas</div><div class="val">${d.total_lojas}</div><div class="sub">na carteira</div></div>
+      <div><div class="lbl">Faturamento</div><div class="val">${brl(d.receita_30d)}</div><div class="sub">somado · 30 dias</div></div>
+      <div><div class="lbl">Pedidos</div><div class="val">${d.pedidos_30d}</div><div class="sub">somados · 30 dias</div></div>
+      <div${d.precisam_atencao?' style="background:#FDF7F5"':""}><div class="lbl">Precisam de você</div><div class="val"${d.precisam_atencao?' style="color:var(--no)"':""}>${d.precisam_atencao}</div><div class="sub">${d.precisam_atencao?"resolver hoje":"tudo em dia"}</div></div>
     </div>
-    <div class="card" style="padding:0;overflow:hidden">
+    <div class="card" style="margin-top:16px;padding:16px 20px">
       <div style="overflow-x:auto"><table class="tabela"><thead><tr>
         <th>Loja</th><th>Canais</th><th style="text-align:right">Pedidos</th><th style="text-align:right">Faturamento</th>
-        <th style="text-align:right">Ticket</th><th style="text-align:right">Taxas</th><th style="text-align:right">Situação</th><th></th>
+        <th style="text-align:right">Ticket</th><th>Precisa de você</th><th></th>
       </tr></thead><tbody>${lojas.map(linha).join("")}</tbody></table></div>
     </div>
     ${uma?`<div class="card" style="margin-top:12px"><p style="font-size:.88rem;color:var(--t2);margin:0">
@@ -771,35 +789,73 @@ async function viewProdutos(c){
   if(!r.success){ c.innerHTML = `<h1>Produtos</h1><p class="vazio">${esc(r.error)}</p>`; return; }
   const d = r.resultado, ps = d.produtos||[];
 
-  const linha = p => `<tr>
+  // Linha com problema ganha fundo — o olho encontra o que falta sem ler tudo.
+  const linha = p => {
+    const pende = p.custo==null || !p.ncm || !(p.canais||[]).length;
+    return `<tr${pende?' style="background:#FDF9F8"':""}>
     <td><b>${esc(p.sku)}</b></td>
     <td>${esc(String(p.nome||"").slice(0,52))}</td>
-    <td style="text-align:right;font-family:var(--mono)">${p.custo==null?`<span style="color:var(--acc)">falta</span>`:brl(p.custo)}</td>
-    <td style="text-align:right;font-family:var(--mono)">${p.ncm||`<span style="color:var(--acc)">falta</span>`}</td>
-    <td style="text-align:right;font-family:var(--mono)">${p.peso==null?"—":p.peso+" kg"}</td>
-    <td>${(p.canais||[]).length?(p.canais||[]).map(x=>`<span class="chip" style="padding:3px 9px;font-size:.68rem">${NOMES[x]?NOMES[x][0]:x}</span>`).join(" "):`<span style="color:var(--t3);font-size:.78rem">sem anúncio ligado</span>`}</td>
-    <td style="text-align:right"><button class="chip ed" data-sku="${esc(p.sku)}">Editar</button></td>
-  </tr>`;
+    <td style="text-align:right">${p.custo==null?`<span style="color:var(--no);font-size:.8rem;font-weight:600">falta cadastrar</span>`:brl(p.custo)}</td>
+    <td style="text-align:right">${p.ncm||`<span style="color:var(--no);font-size:.8rem;font-weight:600">falta o NCM</span>`}</td>
+    <td style="text-align:right">${p.peso==null?"—":String(p.peso).replace(".",",")+" kg"}</td>
+    <td>${(p.canais||[]).length?(p.canais||[]).map(x=>NOMES[x]?NOMES[x][0]:x).join(" · "):`<span style="color:var(--no);font-size:.78rem">nenhum ligado</span>`}</td>
+    <td style="text-align:right"><button class="mini ed" data-sku="${esc(p.sku)}">Editar</button></td>
+  </tr>`;};
+
+  let FILTRO = "todos", BUSCA = "";
+  const filtrar = () => ps.filter(p =>
+    (FILTRO==="todos" || (FILTRO==="semcusto" && p.custo==null) || (FILTRO==="semanuncio" && !(p.canais||[]).length))
+    && (!BUSCA || String(p.sku).toLowerCase().includes(BUSCA) || String(p.nome||"").toLowerCase().includes(BUSCA)));
 
   c.innerHTML = `
-    <h1>Produtos</h1>
-    <div class="sub-h1">Um cadastro por SKU — o custo alimenta a margem, o NCM alimenta a nota</div>
-    <div class="grid" style="margin:14px 0">
-      <div class="card"><div class="lbl">Cadastrados</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px">${d.total}</div></div>
-      <div class="card"><div class="lbl">Sem custo</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px;color:${d.sem_custo?"var(--acc)":"var(--n)"}">${d.sem_custo}</div></div>
-      <div class="card"><div class="lbl">Sem anúncio ligado</div><div style="font-family:var(--mono);font-size:1.45rem;font-weight:600;margin-top:6px;color:${d.sem_anuncio?"var(--acc)":"var(--n)"}">${d.sem_anuncio}</div></div>
-      <div class="card" style="display:flex;flex-direction:column;gap:8px;justify-content:center">
-        <button class="chip" id="novoProd" style="background:var(--acc);color:#FBFAF7;border-color:var(--acc);font-weight:700">Novo produto</button>
-        <button class="chip" id="casarSku">Ligar anúncios pelo SKU</button>
+    <div class="cabRel">
+      <div style="flex:1 1 300px">
+        <h1 style="margin:0">Seus produtos</h1>
+        <div class="sub-h1">Um cadastro por SKU — não um por anúncio. É daqui que sai o custo, o peso e o dado fiscal.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="mini" id="impCat">Importar do Tiny ou Bling</button>
+        <button class="mini" id="casarSku">Ligar anúncios pelo SKU</button>
+        <button class="mini" id="novoProd" style="background:var(--acc);color:#FBFAF7;border-color:var(--acc)">Novo produto</button>
       </div>
     </div>
-    ${d.aviso?`<div class="card" style="margin-bottom:12px;border-color:#F5A62366"><p style="margin:0;font-size:.88rem;color:var(--t2)">${esc(d.aviso)}</p></div>`:""}
-    <div class="card" style="padding:0;overflow:hidden">
+    <div class="numeros" style="margin-top:16px;grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div><div class="lbl">Cadastrados</div><div class="val">${d.total}</div><div class="sub">produtos no catálogo</div></div>
+      <div${d.sem_custo?' style="background:#FDF7F5"':""}><div class="lbl">Sem custo</div><div class="val"${d.sem_custo?' style="color:var(--no)"':""}>${d.sem_custo}</div><div class="sub">a margem real não calcula sem ele</div></div>
+      <div${d.sem_anuncio?' style="background:#FDF7F5"':""}><div class="lbl">Sem anúncio ligado</div><div class="val"${d.sem_anuncio?' style="color:var(--no)"':""}>${d.sem_anuncio}</div><div class="sub">o custo não chega na margem sem o vínculo</div></div>
+    </div>
+    <div class="card" style="margin-top:16px;padding:16px 20px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input class="busca" id="pBusca" placeholder="Buscar por SKU ou nome" style="flex:1;min-width:180px">
+        <button class="chip atv" data-f="todos">Todos</button>
+        <button class="chip" data-f="semcusto">Sem custo</button>
+        <button class="chip" data-f="semanuncio">Sem anúncio</button>
+      </div>
       <div style="overflow-x:auto"><table class="tabela"><thead><tr>
         <th>SKU</th><th>Produto</th><th style="text-align:right">Custo</th><th style="text-align:right">NCM</th>
-        <th style="text-align:right">Peso</th><th>Anúncios</th><th></th>
-      </tr></thead><tbody>${ps.length?ps.map(linha).join(""):`<tr><td colspan="7"><p class="vazio" style="margin:0">Nenhum produto ainda. Comece por "Novo produto", ou cadastre um e use "Ligar anúncios pelo SKU".</p></td></tr>`}</tbody></table></div>
+        <th style="text-align:right">Peso</th><th>Anúncios ligados</th><th></th>
+      </tr></thead><tbody id="pCorpo"></tbody></table></div>
+      <div style="border-top:1px solid var(--l2);margin-top:12px;padding-top:11px;display:flex;gap:14px;align-items:center;font-size:.8rem;color:var(--t2)">
+        <span id="pConta"></span>
+        <span style="margin-left:auto">O SKU é o que amarra o produto ao anúncio. Sem ele, o custo não chega na margem.</span>
+      </div>
     </div>`;
+
+  const desenhar = () => {
+    const lista = filtrar();
+    document.getElementById("pCorpo").innerHTML = lista.length ? lista.map(linha).join("")
+      : `<tr><td colspan="7"><p class="vazio" style="margin:0">${ps.length?"Nada com esse filtro.":"Nenhum produto ainda. Comece por \"Novo produto\" ou importe do Tiny/Bling."}</p></td></tr>`;
+    document.getElementById("pConta").textContent = `Mostrando ${lista.length} de ${ps.length}`;
+    c.querySelectorAll(".ed").forEach(b=>b.onclick = ()=>{
+      const p = ps.find(x=>String(x.sku)===b.dataset.sku); if(p) abrirProduto(p);
+    });
+  };
+  c.querySelectorAll(".chip[data-f]").forEach(b=>b.onclick=()=>{
+    FILTRO=b.dataset.f;
+    c.querySelectorAll(".chip[data-f]").forEach(x=>x.classList.toggle("atv",x===b));
+    desenhar();
+  });
+  document.getElementById("pBusca").oninput = e=>{ BUSCA=e.target.value.trim().toLowerCase(); desenhar(); };
 
   const CAMPOS_PROD = [
     { id:"sku",  rot:"SKU",   req:true, exemplo:"2851-PRETO-M", dica:"É ele que amarra o produto aos anúncios dos canais" },
@@ -820,9 +876,20 @@ async function viewProdutos(c){
   });
 
   document.getElementById("novoProd").onclick = ()=>abrirProduto(null);
-  c.querySelectorAll(".ed").forEach(b=>b.onclick = ()=>{
-    const p = ps.find(x=>String(x.sku)===b.dataset.sku); if(p) abrirProduto(p);
-  });
+  const bImp = document.getElementById("impCat");
+  if(bImp) bImp.onclick = ()=>formulario("Importar do Tiny ou Bling", [
+      { id:"origem", rot:"De onde vem", tipo:"select", padrao:"bling", opcoes:[["bling","Bling"],["tiny","Tiny"]] },
+      { id:"token", rot:"Token de API", req:true, dica:"Usado uma vez pra buscar os produtos — não fica guardado" },
+    ], null, async dados=>{
+      const rr = await acaoApi("importar_catalogo", { ...dados, confirmar:false });
+      if(!rr.success) return { erro: humano(rr.error) };
+      const pv = rr.resultado||{};
+      if(!confirm(`${pv.importaveis??0} produto(s) prontos pra importar (${pv.sem_custo??0} sem custo, ${pv.sem_sku??0} sem SKU serão ignorados). Importar?`)) return;
+      const rc = await acaoApi("importar_catalogo", { ...dados, confirmar:true });
+      if(!rc.success) return { erro: humano(rc.error) };
+      viewProdutos(c);
+    });
+  desenhar();
   document.getElementById("casarSku").onclick = async()=>{
     const pv = await acaoApi("vincular_por_sku", { confirmar:false });
     if(!pv.success) return alert("Ops: "+pv.error);
@@ -844,19 +911,37 @@ async function viewFiscal(c){
   if(!r.success){ c.innerHTML = `<h1>Fiscal</h1><p class="vazio">${esc(r.error)}</p>`; return; }
   const f = r.resultado;
   const passo = f.passo;
-  const marca = ok => ok?`<span style="color:var(--n)">✓</span>`:`<span style="color:var(--t3)">○</span>`;
   const feitoEmpresa = !!f.eminota_empresa_id, feitoCert = !!f.cert_vencimento;
 
-  c.innerHTML = `
-    <h1>Fiscal</h1>
-    <div class="sub-h1">Configure uma vez para emitir nota direto da fila de pedidos</div>
+  const etapa = (ok, num, nome, detalhe, pendencia) => `
+      <div style="display:flex;gap:11px;align-items:center;padding:14px 20px;${ok?"":"background:#FDF7F5"}">
+        ${ok
+          ? `<span style="width:22px;height:22px;border-radius:50%;background:var(--n);color:#FFF;display:grid;place-items:center;font-size:12px;flex:none">✓</span>`
+          : `<span style="width:22px;height:22px;border-radius:50%;border:2px solid var(--no);color:var(--no);display:grid;place-items:center;font-size:11px;font-weight:700;flex:none">${num}</span>`}
+        <div><b style="font-size:.86rem">${num} · ${nome}</b>
+        <div style="font-size:.78rem;color:${ok?"var(--t2)":"var(--no)"}">${ok?detalhe:pendencia}</div></div>
+      </div>`;
 
-    <div class="card" style="margin:14px 0">
-      <div style="display:flex;gap:22px;flex-wrap:wrap;font-size:.88rem">
-        <span>${marca(feitoEmpresa)} 1. Dados da empresa</span>
-        <span>${marca(feitoCert)} 2. Certificado digital</span>
-        <span>${marca(feitoEmpresa&&feitoCert)} 3. Regras fiscais</span>
+  c.innerHTML = `
+    <div class="cabRel">
+      <div style="flex:1 1 300px">
+        <h1 style="margin:0">Configuração fiscal</h1>
+        <div class="sub-h1">Uma vez só. Depois disso a nota do pedido sai daqui, sem contratar emissor à parte.</div>
       </div>
+      <div style="display:flex;align-items:center;gap:9px;border:1px solid ${f.ambiente===1?"#A33A2A44":"var(--gold)"};background:${f.ambiente===1?"#FDF7F5":"#FDF8F0"};padding:7px 14px;font-size:.8rem">
+        <span style="color:var(--t2)">Ambiente</span>
+        <b style="color:${f.ambiente===1?"var(--no)":"#8A6A2E"}">${f.ambiente===1?"PRODUÇÃO":"HOMOLOGAÇÃO"}</b>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--l2);background:var(--p);margin-top:16px" class="itg-grid">
+      ${etapa(feitoEmpresa,1,"Dados da empresa", esc(f.razao_social||"preenchidos"), "falta preencher — é o que cria seu cadastro no emissor")}
+      <div style="border-left:1px solid var(--l)">${etapa(feitoCert,2,"Certificado digital",
+        "vence em "+esc(String(f.cert_vencimento||"").split("-").reverse().join("/")),
+        "falta enviar — sem ele a SEFAZ não aceita nota")}</div>
+      <div style="border-left:1px solid var(--l)">${etapa(feitoEmpresa&&feitoCert,3,"Regras fiscais",
+        "CFOP "+esc(f.cfop_dentro||"5102")+" / "+esc(f.cfop_fora||"6102"),
+        "liberam depois das etapas 1 e 2")}</div>
     </div>
 
     <div class="card" style="margin-bottom:12px">
@@ -890,6 +975,12 @@ async function viewFiscal(c){
         <button class="chip" id="btnAmb" ${feitoEmpresa&&feitoCert?"":"disabled"}>${f.ambiente===1?"Voltar para homologação":"Virar produção"}</button>
       </div>
       <p style="font-size:.8rem;color:var(--t3);margin:10px 0 0">O CFOP é escolhido na hora da nota: dentro do estado usa um, fora usa outro. Por isso ele fica aqui, e não no produto.</p>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <b class="tit">Notas emitidas</b>
+      <div style="font-size:1.6rem;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums">${f.notas_emitidas??0}</div>
+      <p style="font-size:.8rem;color:var(--t3);margin:6px 0 0">${(f.notas_emitidas??0)?"no total, por esta loja":"nenhuma ainda — a primeira sai em homologação, que é nota de teste sem valor fiscal, pra você conferir o DANFE antes de virar produção"}</p>
     </div>`;
 
   const be = document.getElementById("btnEmpresa");
@@ -981,7 +1072,19 @@ function viewIA(c){
   const feed = (d.acoes||[]).slice(0,10).map(a=>`<div class="ev"><span class="t">${(a.quando||"").slice(5,16).replace("T"," ")}</span><span>${esc(a.descricao)} ${a.resultado==="ok"?"<b style='color:var(--n)'>✓</b>":"⚠"}</span></div>`).join("")
     || "<p class='vazio'>Conecte um canal — as ações da IA aparecem aqui.</p>";
   c.innerHTML = `
-    <h1>Gestão IA</h1><div class="sub-h1">A IA que opera sua loja: comandos de um clique, pedidos em português e automações 24h</div>
+    <div class="cabRel"><div>
+      <h1 style="margin:0">Gestão IA</h1>
+      <div class="sub-h1">Peça em português — ela mostra o que vai fazer e espera seu sim. Nada de preço muda sozinho.</div>
+    </div></div>
+    <div class="colunas" style="margin-top:4px;grid-template-columns:1.35fr 1fr">
+    <div>
+    <h2>Fale com a IA — peça qualquer coisa</h2>
+    <div class="card chat">
+      <div class="chat" id="chatMsgs" style="max-height:44vh;overflow-y:auto">${bolhas()}</div>
+      <div class="inpt"><input id="chatIn" placeholder="ex.: quanto vendi essa semana? · aplica 15% no que está sem promoção" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
+        <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
+    </div>
+    <div id="acxSaida"></div>
     <h2>Ações rápidas — escolha o canal e a IA executa agora</h2>
     <div class="grid">
       <div class="card"><b class="tit">Colocar em promoção</b><br><small style="color:var(--t3);font-size:.75rem">aplica % de desconto nos anúncios que estão sem promoção</small>
@@ -1012,16 +1115,16 @@ function viewIA(c){
         <div class="chips" style="margin:10px 0 0"><button class="chip acx" data-acao="produtos_listar">Listar anúncios</button></div></div>
     </div>
 
-    <div id="acxSaida"></div>
-
-    <h2>Fale com a IA — peça qualquer coisa</h2>
-    <div class="card chat">
-      <div class="chat" id="chatMsgs" style="max-height:44vh;overflow-y:auto">${bolhas()}</div>
-      <div class="inpt"><input id="chatIn" placeholder="ex.: quanto vendi essa semana? · aplica 15% no que está sem promoção" style="flex:1;background:none;border:0;padding:4px 0;font-size:.84rem">
-        <button class="btn" id="chatSend" style="padding:8px 16px;font-size:.85rem">Enviar</button></div>
     </div>
-    <h2>Automações</h2><div class="grid">${autos}</div>
-    <h2>A IA trabalhou por você</h2><div class="card feed">${feed}</div>`;
+
+    <div>
+      <h2>Trabalhando sozinha</h2>
+      <div style="font-size:.8rem;color:var(--t2);margin:-4px 0 10px">Automação nunca faz o que não dá pra desfazer sem você ter dito sim.</div>
+      <div class="card" style="padding:6px 20px" id="autoLista"><p class="vazio">carregando automações…</p></div>
+      <h2>Últimas execuções</h2>
+      <div class="card feed">${feed}</div>
+    </div>
+    </div>`;
   document.getElementById("chatSend").onclick = enviarChat;
   document.getElementById("chatIn").onkeydown = e=>{ if(e.key==="Enter") enviarChat(); };
   document.querySelectorAll(".acx").forEach(b=>b.onclick = async()=>{
@@ -1128,10 +1231,35 @@ function viewIA(c){
       alert(r.success ? "Feito \n\n" + JSON.stringify(r.resultado, null, 1).replace(/[{}"]/g,"") : "Ops: " + r.error);
     }
   });
-  document.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
-    await sb.rpc("sp_alternar_automacao",{ p_tipo: b.dataset.tipo, p_ligada: b.dataset.ligada!=="true" });
-    const { data } = await sb.rpc("sp_painel"); CACHE.painel = data; shell();
-  });
+  // A lista vem do catálogo do motor: cada linha diz se EXECUTA ou SÓ AVISA —
+  // essa distinção está escrita no código desde o início e o cliente nunca via.
+  const desenhaAutos = async()=>{
+    const el = document.getElementById("autoLista"); if(!el) return;
+    const r = await acaoApi("automacoes_listar", {});
+    if(!r.success){ el.innerHTML = `<p class="vazio">${esc(humano(r.error))}</p>`; return; }
+    const FREQ = { "6h":"a cada 6h", diaria:"diária", semanal:"semanal" };
+    el.innerHTML = (r.resultado.automacoes||[]).map(a=>`
+      <div style="display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--fina);align-items:flex-start">
+        <button class="tgl ${a.ligada?"on2":"off2"}" data-tipo="${esc(a.tipo)}" data-ligada="${a.ligada}" style="margin:2px 0 0"></button>
+        <div style="flex:1;min-width:0">
+          <b style="font-size:.86rem;color:${a.ligada?"var(--t)":"var(--t2)"}">${esc(a.nome)}</b>
+          <div style="font-size:.76rem;color:var(--t3);line-height:1.4">${esc(a.explica)}</div>
+          ${a.ultimo_resultado?`<div style="font-size:.74rem;color:var(--t2);margin-top:3px">última: ${esc(String(a.ultimo_resultado).slice(0,80))}</div>`:""}
+        </div>
+        <div style="text-align:right;flex:none">
+          <div style="font-size:.72rem;color:var(--t3)">${FREQ[a.frequencia]||esc(a.frequencia)}</div>
+          <div style="font-size:.7rem;font-weight:600;color:${a.so_avisa?"var(--no)":"var(--n)"}">${a.so_avisa?"só avisa":"executa"}</div>
+        </div>
+      </div>`).join("");
+    el.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
+      const liga = b.dataset.ligada!=="true";
+      const rr = await acaoApi("automacao_definir", { tipo:b.dataset.tipo, ligada:liga });
+      if(!rr.success) return alert(humano(rr.error));
+      if(rr.resultado?.aviso) alert(rr.resultado.aviso);
+      desenhaAutos();
+    });
+  };
+  desenhaAutos();
 }
 
 // ── Etiquetas (Visualizador ZPL — idêntico ao do ERPCB) ──
@@ -1142,7 +1270,10 @@ const LABEL_SIZES = [
 const DPI_OPTIONS = [["6 dpmm (152 dpi)","6dpmm"],["8 dpmm (203 dpi)","8dpmm"],["12 dpmm (300 dpi)","12dpmm"],["24 dpmm (600 dpi)","24dpmm"]];
 function viewEtiquetas(c){
   c.innerHTML = `
-    <h1>Visualizador ZPL</h1><div class="sub-h1">Gere pela aba Pedidos ou cole um código ZPL — renderiza etiqueta de envio, DANFE e etiqueta com produtos</div>
+    <div class="cabRel"><div>
+      <h1 style="margin:0">Etiquetas de envio</h1>
+      <div class="sub-h1">Sai em ZPL, direto na térmica. Marque os pedidos na aba Pedidos e gere em lote — ou cole um código aqui.</div>
+    </div></div>
     <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
       <div>
         <div class="card">
@@ -1150,7 +1281,7 @@ function viewEtiquetas(c){
             <span style="margin-left:auto;display:flex;gap:8px">
               <button class="mini" id="zplArq">Carregar Arquivo</button>
               <input type="file" id="zplFile" accept=".zpl,.txt" style="display:none">
-              <button class="mini" id="zplLimpar">↺ Limpar</button>
+              <button class="mini" id="zplLimpar">Limpar</button>
             </span></div>
           <textarea id="zplTxt" style="width:100%;height:230px;margin-top:10px;background:var(--p2);border:1px solid var(--l);border-radius:10px;color:var(--t);font-family:var(--mono);font-size:.75rem;padding:10px" placeholder="Cole o código ZPL aqui...&#10;&#10;^XA&#10;^FO50,50^A0N,50,50^FDHello World^FS&#10;^XZ"></textarea>
         </div>
@@ -1472,28 +1603,42 @@ async function renderZpl(zpl){
 const PRESET_CANAL = { ml:["Mercado Livre",14,6], shopee:["Shopee",20,4], tiktok:["TikTok Shop",13.6,2] };
 function viewPrecos(c){
   c.innerHTML = `
-    <h1>Precificação</h1><div class="sub-h1">Calculadora de preço + tabela precificadora dos seus anúncios — a IA nunca vende fora do piso/teto</div>
-    <div class="grid" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">
-      <div class="card">
-        <b class="tit">Calculadora de preço</b>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px">
-          <label class="lb">Canal<select id="cCanal" class="busca w100">
-            <option value="ml">Mercado Livre</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select></label>
-          <label class="lb">Custo do produto (R$)<input id="cCusto" type="number" step="0.01" class="busca w100" placeholder="0,00"></label>
-          <label class="lb">Embalagem/extra (R$)<input id="cExtra" type="number" step="0.01" class="busca w100" value="0"></label>
-          <label class="lb">Taxa do canal (%)<input id="cTaxa" type="number" step="0.1" class="busca w100" value="14"></label>
-          <label class="lb">Taxa fixa (R$)<input id="cFixa" type="number" step="0.01" class="busca w100" value="6"></label>
-          <label class="lb">Imposto (%)<input id="cImp" type="number" step="0.01" class="busca w100" value="0"></label>
-          <label class="lb">Ads (%) — quanto do preço vai pra anúncio<input id="cAds" type="number" step="0.1" class="busca w100" value="0" placeholder="ex.: 10"></label>
-          <label class="lb">Margem desejada (%)<input id="cMarg" type="number" step="0.1" class="busca w100" value="20"></label>
+    <h1>Precificação</h1><div class="sub-h1">O piso e o teto que você define aqui são a trava do sistema — a IA não fura, nem por ordem sua.</div>
+    <div class="colunas">
+      <div>
+        <h2 style="margin-top:20px">Calcular preço de venda</h2>
+        <div class="card" style="padding:20px">
+          <div class="campos">
+            <label class="lb">Custo do produto<input id="cCusto" type="number" step="0.01" class="busca w100" placeholder="R$ 0,00"></label>
+            <label class="lb">Canal<select id="cCanal" class="busca w100">
+              <option value="ml">Mercado Livre</option><option value="shopee">Shopee</option><option value="tiktok">TikTok Shop</option></select></label>
+            <label class="lb">Margem desejada (%)<input id="cMarg" type="number" step="0.1" class="busca w100" value="20"></label>
+            <label class="lb">Frete que você banca (R$)<input id="cFixa" type="number" step="0.01" class="busca w100" value="6"></label>
+          </div>
+          <details style="margin-top:14px">
+            <summary style="cursor:pointer;font-size:.8rem;color:var(--t2)">Taxas e embalagem — já vêm dos seus pedidos</summary>
+            <div class="campos" style="margin-top:12px">
+              <label class="lb">Embalagem/extra (R$)<input id="cExtra" type="number" step="0.01" class="busca w100" value="0"></label>
+              <label class="lb">Comissão do canal (%)<input id="cTaxa" type="number" step="0.1" class="busca w100" value="14"></label>
+              <label class="lb">Imposto (%)<input id="cImp" type="number" step="0.01" class="busca w100" value="0"></label>
+              <label class="lb">Ads (%)<input id="cAds" type="number" step="0.1" class="busca w100" value="0"></label>
+            </div>
+            <small style="color:var(--t3);font-size:.74rem;display:block;margin-top:10px">Ads (%) é quanto do preço você reinveste em anúncio. ROAS 5 → 20. ROAS 10 → 10. Sem anúncio pago → 0.</small>
+          </details>
+          <div id="cRes"></div>
+          <button class="btn" id="cCalc" style="width:100%;margin-top:16px">Calcular preço</button>
         </div>
-        <small style="color:var(--t3);font-size:.72rem;display:block;margin-top:10px"><b>Ads (%)</b> = quanto do preço você reinveste em anúncio. Exemplo: se teu ROAS é <b>5</b> (cada R$ 1 de ads traz R$ 5 de venda), coloca <b>20</b>. ROAS 10 → 10. Produto sem anúncio pago → deixa <b>0</b>.</small>
-        <button class="btn" id="cCalc" style="width:100%;margin-top:12px;font-size:.9rem">Calcular preço</button>
       </div>
-      <div class="card" id="cRes"><b class="tit">Resultado</b><p class="vazio">Preencha o custo e clique em Calcular.</p></div>
-    </div>
-    <h2 style="display:flex;align-items:center;gap:10px">Tabela precificadora — seus anúncios<button class="mini" id="pRecalc">↻ recalcular com os parâmetros acima</button></h2>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="precCard"><p class="vazio">carregando anúncios…</p></div>`;
+
+      <div>
+        <h2 style="margin-top:20px;display:flex;align-items:baseline;gap:12px">Regras de piso e teto
+          <span id="qtdRegras" style="font-family:var(--sans);font-size:.76rem;letter-spacing:0;text-transform:none;color:var(--t2);font-weight:400"></span>
+          <button class="mini" id="pRecalc" style="margin-left:auto">Recalcular</button></h2>
+        <div class="card" style="padding:16px 20px;overflow-x:auto" id="precCard"><p class="vazio">carregando anúncios…</p></div>
+        <div id="avisoPiso"></div>
+      </div>
+    </div>`;
+
   const V = id => Number(document.getElementById(id).value||0);
   document.getElementById("cCanal").onchange = e=>{ const [,t,f]=PRESET_CANAL[e.target.value];
     document.getElementById("cTaxa").value=t; document.getElementById("cFixa").value=f; };
@@ -1501,68 +1646,112 @@ function viewPrecos(c){
     if(f.imposto_pct!=null && !V("cImp")) document.getElementById("cImp").value=f.imposto_pct;
     if(f.taxa_pct!=null) document.getElementById("cTaxa").value=f.taxa_pct;
   });
+
+  // A conta aberta, linha por linha. O número final sozinho não convence
+  // ninguém a mudar preço — o caminho até ele convence.
   const calc = ()=>{
+    const el = document.getElementById("cRes");
     const custo=V("cCusto")+V("cExtra"), fixa=V("cFixa");
-    const pct=(V("cTaxa")+V("cImp")+V("cAds"))/100, marg=V("cMarg")/100;
-    const el=document.getElementById("cRes");
-    if(!custo) return el.innerHTML=`<b class="tit">Resultado</b><p class="vazio">Informe o custo do produto.</p>`;
+    const pctT=V("cTaxa"), pctI=V("cImp"), pctA=V("cAds");
+    const pct=(pctT+pctI+pctA)/100, marg=V("cMarg")/100;
+    if(!custo) return el.innerHTML=`<p class="vazio" style="margin-top:14px">Informe o custo do produto pra ver a conta.</p>`;
     const den=1-pct-marg;
-    if(den<=0.01) return el.innerHTML=`<b class="tit">Resultado</b><p class="vazio">Taxas + margem passam de 100% — impossível. Reduza a margem ou as taxas.</p>`;
-    const sug=(custo+fixa)/den;
-    const sug90=Math.max(Math.floor(sug)+0.90, sug);
-    const linha=(p)=>{ const luc=p*(1-pct)-fixa-custo; return { p, luc, mg: p? luc/p*100 : 0 }; };
-    const cen=[linha(sug90),linha(sug90*1.05),linha(sug90*1.10),linha(sug90*1.20)];
-    const partes=[["Custo",custo,"#6A87A3"],["Taxas",sug90*(V("cTaxa")+V("cAds"))/100+fixa,"#F5A623"],["Imposto",sug90*V("cImp")/100,"#A33A2A"],["Lucro",cen[0].luc,"#1F6B4A"]];
-    const tot=partes.reduce((s,x)=>s+Math.max(0,x[1]),0)||1;
-    el.innerHTML=`<b class="tit">Resultado</b>
-      <div style="margin-top:12px"><div class="lbl" style="font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)">Preço de venda sugerido</div>
-      <div style="font-family:var(--mono);font-size:1.9rem;color:var(--n)">${brl(sug90)}</div>
-      <small style="color:var(--t3)">lucro de <b style="color:#1F6B4A">${brl(cen[0].luc)}</b> por venda · margem ${cen[0].mg.toFixed(1).replace(".",",")}%</small></div>
-      <div style="display:flex;height:14px;border-radius:99px;overflow:hidden;margin:14px 0 4px">${partes.map(([n,v,cor])=>`<div title="${n}: ${brl(v)}" style="width:${Math.max(0,v)/tot*100}%;background:${cor}"></div>`).join("")}</div>
-      <small style="color:var(--t3)">${partes.map(([n,v,cor])=>`<span style="color:${cor}">●</span> ${n} ${brl(v)}`).join(" · ")}</small>
-      <table class="tabela" style="margin-top:14px"><tr><th>Cenário</th><th style="text-align:right">Preço</th><th style="text-align:right">Lucro</th><th style="text-align:right">Margem</th></tr>
-      ${[["Sugerido",cen[0]],["+5%",cen[1]],["+10%",cen[2]],["+20%",cen[3]]].map(([n,x])=>`<tr><td>${n}</td><td style="text-align:right;font-family:var(--mono)">${brl(x.p)}</td><td style="text-align:right;font-family:var(--mono);color:${x.luc>=0?"#1F6B4A":"#A33A2A"}">${brl(x.luc)}</td><td style="text-align:right;font-family:var(--mono)">${x.mg.toFixed(1).replace(".",",")}%</td></tr>`).join("")}</table>`;
+    if(den<=0.01) return el.innerHTML=`<p class="vazio" style="margin-top:14px;color:var(--no)">Taxas mais margem passam de 100% — não existe preço que feche. Reduza a margem ou as taxas.</p>`;
+    const sug=Math.max(Math.floor((custo+fixa)/den)+0.90,(custo+fixa)/den);
+    const comissao=sug*pctT/100, imposto=sug*pctI/100, ads=sug*pctA/100;
+    const luc=sug-custo-fixa-comissao-imposto-ads;
+    const linha=(r,v,forte)=>`<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:.86rem${forte?";border-top:1px solid var(--l);margin-top:4px;padding-top:11px":""}">
+      <span style="color:${forte?"var(--t)":"var(--t2)"};font-weight:${forte?600:400}">${r}</span>
+      <span style="font-variant-numeric:tabular-nums;font-weight:${forte?700:400}">${v}</span></div>`;
+    const cen=p=>({p, luc:p-custo-fixa-p*pct, mg:p?(p-custo-fixa-p*pct)/p*100:0});
+    el.innerHTML = `
+      <div style="border-top:1px solid var(--l2);margin-top:18px;padding-top:14px">
+        <h2 style="margin:0 0 6px">A conta</h2>
+        ${linha("Custo do produto", brl(custo))}
+        ${linha("Frete que você banca", brl(fixa))}
+        ${linha("Comissão do canal ("+String(pctT).replace(".",",")+"%)", brl(comissao))}
+        ${pctI?linha("Imposto ("+String(pctI).replace(".",",")+"%)", brl(imposto)):""}
+        ${pctA?linha("Anúncio ("+String(pctA).replace(".",",")+"%)", brl(ads)):""}
+        <div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--acc);margin-top:8px;padding-top:12px">
+          <span style="font-weight:600">Preço sugerido</span>
+          <span style="font-size:1.6rem;font-weight:700;color:var(--n);letter-spacing:-.02em;font-variant-numeric:tabular-nums">${brl(sug)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:.84rem;color:var(--t2)">
+          <span>Sobra por peça</span><span style="font-variant-numeric:tabular-nums">${brl(luc)} · ${luc/sug*100>=0?"":""}${(luc/sug*100).toFixed(1).replace(".",",")}%</span>
+        </div>
+        <table class="tabela" style="margin-top:16px">
+          <tr><th>Se vender por</th><th style="text-align:right">Sobra</th><th style="text-align:right">Margem</th></tr>
+          ${[["o sugerido",sug],["5% acima",sug*1.05],["10% acima",sug*1.10],["20% acima",sug*1.20]].map(([n,p])=>{const x=cen(p);
+            return `<tr><td>${n} — ${brl(p)}</td><td style="text-align:right;color:${x.luc>=0?"var(--n)":"var(--no)"}">${brl(x.luc)}</td><td style="text-align:right">${x.mg.toFixed(1).replace(".",",")}%</td></tr>`;}).join("")}
+        </table>
+        <small style="color:var(--t3);font-size:.76rem;display:block;margin-top:10px">Pra aplicar num anúncio, use a coluna <b>Sugerido</b> da tabela ao lado.</small>
+      </div>`;
   };
   document.getElementById("cCalc").onclick = calc;
+
   const carregaPrec = async()=>{
     const a = await acaoApi("precificador_lista");
     const el=document.getElementById("precCard"); if(!el) return;
-    if(!a.success) return el.innerHTML=`<p class="vazio">${esc(a.error||"indisponível")}</p>`;
+    if(!a.success) return el.innerHTML=`<p class="vazio">${esc(humano(a.error||"indisponível"))}</p>`;
     const prods=(a.resultado.produtos||[]);
     const pct=(V("cTaxa")+V("cImp")+V("cAds"))/100, marg=V("cMarg")/100, fixa=V("cFixa");
+    let abaixo=[];
+    // A SITUAÇÃO é a coluna que faz a tabela valer: piso e teto sozinhos são
+    // dois números; o que importa é se o preço de hoje está fora deles.
+    const situacao = p=>{
+      if(p.piso==null && p.teto==null) return ["sem regra","",""];
+      if(p.piso!=null && p.preco<Number(p.piso)) return ["abaixo do piso","ruim","1"];
+      if(p.teto!=null && p.preco>Number(p.teto)) return ["acima do teto","ruim",""];
+      return ["dentro","ok",""];
+    };
     el.innerHTML = prods.length? `<table class="tabela">
-      <tr><th>Produto</th><th>Status</th><th style="text-align:right">Preço atual</th><th>Custo R$</th><th>Piso R$</th><th>Teto R$</th><th style="text-align:right">Margem atual</th><th style="text-align:right">Preço sugerido</th><th></th></tr>
+      <tr><th>Produto</th><th style="text-align:right">Piso</th><th style="text-align:right">Preço hoje</th><th style="text-align:right">Teto</th><th style="text-align:right">Margem</th><th>Situação</th><th style="text-align:right">Sugerido</th></tr>
       ${prods.map(p=>{
         const custo=p.custo!=null?Number(p.custo):null;
         const mLuc = custo!=null? p.preco*(1-pct)-fixa-custo : null;
         const mPct = mLuc!=null&&p.preco? mLuc/p.preco*100 : null;
         const den=1-pct-marg;
         const sug = custo!=null&&den>0.01? Math.floor((custo+fixa)/den)+0.90 : null;
-        return `<tr>
-          <td>${esc(p.titulo||"—").slice(0,48)}<br><small style="font-family:var(--mono);font-size:.68rem;color:var(--t3)">${esc(p.id)}</small></td>
-          <td><span class="pill ${p.status==="active"?"ok":"ruim"}">${p.status==="active"?"ativo":esc(p.status)}</span></td>
-          <td style="text-align:right;font-family:var(--mono)"><b>${brl(p.preco)}</b></td>
-          <td><input class="edt" data-id="${esc(p.id)}" data-campo="custo" type="number" step="0.01" value="${custo??""}" placeholder="—"></td>
-          <td><input class="edt" data-id="${esc(p.id)}" data-campo="piso" type="number" step="0.01" value="${p.piso??""}" placeholder="—"></td>
-          <td><input class="edt" data-id="${esc(p.id)}" data-campo="teto" type="number" step="0.01" value="${p.teto??""}" placeholder="—"></td>
-          <td style="text-align:right;font-family:var(--mono);color:${mPct==null?"var(--t3)":mPct>=0?"#1F6B4A":"#A33A2A"}">${mPct==null?"informe o custo":brl(mLuc)+"<br><small>"+mPct.toFixed(1).replace(".",",")+"%</small>"}</td>
-          <td style="text-align:right;font-family:var(--mono);color:var(--n)">${sug!=null?brl(sug):"—"}</td>
-          <td>${sug!=null?`<button class="mini aplicar" data-id="${esc(p.id)}" data-preco="${sug.toFixed(2)}">Aplicar</button>`:""}</td></tr>`;}).join("")}
-    </table>` : "<p class='vazio'>Nenhum anúncio encontrado — conecte o Mercado Livre.</p>";
+        const [txt,cls,alerta]=situacao(p);
+        if(alerta) abaixo.push({titulo:p.titulo,piso:p.piso,preco:p.preco,id:p.id});
+        return `<tr${alerta?' style="background:#FDF9F8"':""}>
+          <td><b>${esc(p.titulo||"—").slice(0,44)}</b><br><small style="font-size:.7rem;color:var(--t3)">${esc(p.id)}${custo==null?" · sem custo":""}</small></td>
+          <td style="text-align:right"><input class="edt" data-id="${esc(p.id)}" data-campo="piso" type="number" step="0.01" value="${p.piso??""}" placeholder="definir"></td>
+          <td style="text-align:right;font-weight:600;${alerta?"color:var(--no)":""}">${brl(p.preco)}</td>
+          <td style="text-align:right"><input class="edt" data-id="${esc(p.id)}" data-campo="teto" type="number" step="0.01" value="${p.teto??""}" placeholder="definir"></td>
+          <td style="text-align:right;color:${mPct==null?"var(--t3)":mPct>=0?"var(--n)":"var(--no)"}">${mPct==null?'<span style="font-size:.8rem">falta o custo</span>':mPct.toFixed(1).replace(".",",")+"%"}</td>
+          <td>${cls?`<span class="pill ${cls}">${txt}</span>`:`<span style="font-size:.78rem;color:var(--t3)">${txt}</span>`}</td>
+          <td style="text-align:right">${sug!=null?`<b>${brl(sug)}</b><br><button class="mini aplicar" data-id="${esc(p.id)}" data-preco="${sug.toFixed(2)}" style="margin-top:4px">Aplicar</button>`:'<span style="font-size:.8rem;color:var(--t3)">—</span>'}</td></tr>`;}).join("")}
+    </table>` : "<p class='vazio'>Nenhum anúncio encontrado — conecte o Mercado Livre em Integrações.</p>";
+
+    const q=document.getElementById("qtdRegras");
+    if(q){ const comRegra=prods.filter(p=>p.piso!=null||p.teto!=null).length;
+      q.textContent = prods.length? `${comRegra} de ${prods.length} anúncios com regra` : ""; }
+
+    // O aviso só aparece quando existe o problema — alerta permanente vira ruído.
+    const av=document.getElementById("avisoPiso");
+    if(av) av.innerHTML = abaixo.length? `<div class="alerta" style="border-left-color:var(--gold);margin-top:14px">
+      <b style="color:var(--t)">${abaixo.length===1?"Um anúncio está":abaixo.length+" anúncios estão"} abaixo do próprio piso.</b>
+      Isso acontece quando o preço foi mudado direto no marketplace, por fora daqui.
+      ${abaixo.slice(0,3).map(x=>`<br>· ${esc(String(x.titulo||"").slice(0,40))} — hoje ${brl(x.preco)}, piso ${brl(x.piso)}
+        <button class="mini subirPiso" data-id="${esc(x.id)}" data-preco="${Number(x.piso).toFixed(2)}">Subir para ${brl(x.piso)}</button>`).join("")}
+      </div>` : "";
+
     document.querySelectorAll(".edt").forEach(i=>i.onchange=async()=>{
       const r=await acaoApi("regras_preco_definir",{ produto_id:i.dataset.id, [i.dataset.campo]: i.value===""?null:+i.value });
-      if(!r.success) alert("Ops: "+r.error); else carregaPrec();
+      if(!r.success) alert(humano(r.error)); else carregaPrec();
     });
-    document.querySelectorAll(".aplicar").forEach(b=>b.onclick=async()=>{
+    const aplicar = async(b)=>{
       if(!confirm("Mudar o preço do "+b.dataset.id+" para "+brl(+b.dataset.preco)+" no Mercado Livre?")) return;
-      b.disabled=true; b.textContent="aplicando…";
+      b.disabled=true; const t=b.textContent; b.textContent="aplicando…";
       const r=await acaoApi("atualizar_preco",{ item_id:b.dataset.id, preco:+b.dataset.preco });
-      b.disabled=false; b.textContent="Aplicar";
-      r.success? carregaPrec() : alert("Ops: "+r.error);
-    });
+      b.disabled=false; b.textContent=t;
+      r.success? carregaPrec() : alert(humano(r.error));
+    };
+    document.querySelectorAll(".aplicar,.subirPiso").forEach(b=>b.onclick=()=>aplicar(b));
   };
   carregaPrec();
-  document.getElementById("pRecalc").onclick = carregaPrec;
+  document.getElementById("pRecalc").onclick = ()=>{ carregaPrec(); calc(); };
 }
 
 // ── Fale com a IA ──
@@ -1596,17 +1785,24 @@ async function enviarChat(){
 // ── Ads (gestão completa: gasto, ROAS, campanhas, análise da IA) ──
 function viewAds(c){
   c.innerHTML = `
-    <h1>Ads</h1><div class="sub-h1">Gestão dos anúncios pagos: gasto, cliques, ROAS por campanha — e a IA dizendo o que pausar, escalar ou trocar</div>
-    <div class="grid4" id="adskpi" style="margin-top:10px"><div class="card"><p class="vazio">carregando…</p></div></div>
-    <div style="margin:14px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn" id="adsIA" style="font-size:.88rem;padding:10px 18px">Análise da IA — ROAS, o que pausar, o que escalar</button>
-      <small style="color:var(--t3)">ela puxa os números reais e devolve o plano</small>
+    <div class="cabRel">
+      <div style="flex:1 1 300px">
+        <h1 style="margin:0">Anúncio pago</h1>
+        <div class="sub-h1">A pergunta é uma só: o anúncio está pagando ou comendo a margem?</div>
+      </div>
+      <button class="mini" id="adsIA" style="background:var(--acc);border-color:var(--acc);color:#FBFAF7">Análise da IA — o que pausar, o que escalar</button>
     </div>
+    <div class="grid4" id="adskpi" style="margin-top:16px"><div class="card kpi"><p class="vazio">carregando…</p></div></div>
     <div id="adsAnalise"></div>
     <h2>Campanhas — últimos 30 dias</h2>
-    <div class="card" style="padding:6px 14px;overflow-x:auto" id="adsCamp"><p class="vazio">carregando…</p></div>
-    <div class="card" style="margin-top:12px"><b class="tit">Sentinela de verba</b><br>
-      <small style="color:var(--t2)">A automação <b>Sentinela de verba de ads</b> (aba Gestão IA) confere o saldo a cada rodada e avisa antes da verba acabar — campanha nunca para por falta de saldo.</small></div>`;
+    <div class="card" style="padding:16px 20px;overflow-x:auto" id="adsCamp"><p class="vazio">carregando…</p></div>
+    <div style="border:1px solid var(--l2);background:var(--p);margin-top:14px;padding:14px 20px;display:flex;gap:13px;align-items:center">
+      <div style="flex:1;min-width:0">
+        <b style="font-size:.86rem">Avisar quando o saldo estiver acabando</b>
+        <div style="font-size:.78rem;color:var(--t3)">Campanha que para por falta de saldo perde o aprendizado do leilão e não volta igual. Liga e desliga na aba Gestão IA.</div>
+      </div>
+      <span style="font-size:.7rem;font-weight:600;color:var(--no);flex:none">só avisa</span>
+    </div>`;
   acaoApi("ads_dados").then(a=>{
     const k=document.getElementById("adskpi"), t=document.getElementById("adsCamp");
     if(!k) return;
@@ -1662,7 +1858,6 @@ function viewAds(c){
 }
 
 // ── Integrações (formato ERPCB: sidebar, autenticação, sincronizar/reconectar/desconectar, regras) ──
-let CANAL_SEL = "mercado_livre";
 const REGRAS_CANAL = {
   mercado_livre: [
     ["Importação automática de pedidos (últimos 30 dias, seg·qua·sex + botão)", "ok"],
@@ -1691,59 +1886,77 @@ const REGRAS_CANAL = {
 function viewCanais(c){
   const d = CACHE.painel;
   const cx = Object.fromEntries((d.conexoes||[]).map(x=>[x.plataforma,x]));
+  // O que cada canal tem de único — é o argumento pra conectar, não decoração.
+  const PITCH = {
+    mercado_livre: "Etiqueta pela API, disputa de catálogo e controle de campanha — só ele tem os três.",
+    shopee: "A única das três com cupom de loja e resposta de avaliação pela API.",
+    tiktok: "A única com promoção relâmpago que se renova sozinha. Quase nenhum sistema fala com ela no Brasil.",
+  };
   const desenha = ()=>{
-    const conn = cx[CANAL_SEL]; const on = conn?.status === "conectada";
-    const [nome] = NOMES[CANAL_SEL];
-    const lado = Object.entries(NOMES).map(([k,[n]])=>{
-      const okk = cx[k]?.status === "conectada";
-      return `<button class="itg ${k===CANAL_SEL?"atv":""}" data-k="${k}">${ico(k,18)} <span style="flex:1;text-align:left">${n}</span><span class="ponto" style="background:${okk?"#1F6B4A":"var(--t3)"}"></span></button>`;
-    }).join("");
-    const regras = (REGRAS_CANAL[CANAL_SEL]||[]).map(([txt,st])=>`
-      <div class="regra"><span style="color:${st==="ok"?"#1F6B4A":"var(--acc)"}">${st==="ok"?"✓":"⏳"}</span><span style="flex:1">${txt}</span>
-      <small style="color:${st==="ok"?"#1F6B4A":"var(--acc)"};font-weight:700">${st==="ok"?"Ativado":"Em breve"}</small></div>`).join("");
-    c.innerHTML = `
-      <h1>Integrações</h1><div class="sub-h1">Conecte suas contas — a autorização é feita no site oficial de cada plataforma</div>
-      <div style="display:grid;grid-template-columns:230px 1fr;gap:14px;margin-top:12px" class="itg-grid">
-        <div class="card" style="padding:8px">${lado}</div>
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:10px">
-            <b class="tit">Autenticação — ${nome}</b>
-            <span class="pill ${on?"ok2":"ruim"}" style="margin-left:auto">${on?"Conectado":"Não conectado"}</span>
+    const linha = (k)=>{
+      const [nome] = NOMES[k];
+      const conn = cx[k]; const on = conn?.status === "conectada";
+      const regras = (REGRAS_CANAL[k]||[]).map(([txt,st])=>`
+        <div class="regra"><span style="color:${st==="ok"?"var(--n)":"var(--gold)"}">${st==="ok"?"✓":"…"}</span><span style="flex:1">${txt}</span>
+        <small style="color:${st==="ok"?"var(--n)":"var(--gold)"};font-weight:600">${st==="ok"?"Ativado":"Em breve"}</small></div>`).join("");
+      return `
+      <div class="card" style="padding:20px 24px;border-left:3px solid ${on?"var(--n)":"var(--l)"};margin-top:-1px">
+        <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+          <div style="flex:1;min-width:230px">
+            <div style="display:flex;align-items:center;gap:10px">
+              ${ico(k,20)} <b style="font-size:1.02rem">${nome}</b>
+              <span class="pill ${on?"ok":"ruim"}" style="background:${on?"var(--nd)":"var(--p2)"};color:${on?"var(--n)":"var(--t2)"}">${on?"conectada":"não conectada"}</span>
+            </div>
+            <div style="font-size:.82rem;color:var(--t2);margin-top:5px" id="itgSub-${k}">
+              ${on?`conectada em ${(conn.conectada_em||"").slice(0,10)}`:PITCH[k]||""}
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px" class="itg-form">
-            <label class="lb">Login<input class="busca w100" id="itgLogin" value="${on?"carregando…":"—"}" readonly></label>
-            <label class="lb">Canal de venda<input class="busca w100" value="${nome}" readonly></label>
+          <div style="display:flex;gap:8px;align-items:center;flex:none">
+            ${on?`<button class="mini itgSync" data-k="${k}" style="background:var(--n);border-color:var(--n);color:#FFF">Sincronizar</button>`:""}
+            <a class="mini" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#FBFAF7"}" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}" onclick="try{localStorage.setItem('sp_loja','${d.loja.id}')}catch(e){}">${on?"Reconectar":"Conectar"}</a>
+            ${on?`<button class="mini itgDesc" data-k="${k}" style="color:var(--no);border-color:#A33A2A44">Desconectar</button>`:""}
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-            ${on?`<button class="mini" id="itgSync" style="background:var(--n);border-color:var(--n);color:#FFFFFF">Sincronizar agora</button>`:""}
-            <a class="mini" id="itgConectar" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#FBFAF7"}" href="${OAUTH}?fluxo=authorize&plataforma=${CANAL_SEL}&loja=${d.loja.id}" onclick="try{localStorage.setItem('sp_loja','${d.loja.id}')}catch(e){}">${on?"Reconectar":"Conectar"}</a>
-            ${on?`<button class="mini" id="itgDesc" style="color:#A33A2A;border-color:#A33A2A44">Desconectar</button>`:""}
-          </div>
-          ${on&&conn.conectada_em?`<small style="color:var(--t3);display:block;margin-top:8px">conectada em ${(conn.conectada_em||"").slice(0,10)}</small>`:""}
-          <h2 style="margin-top:20px">Regras de operação</h2>
-          <div>${regras}</div>
         </div>
+        ${k==="mercado_livre"&&on?`
+        <div class="alerta" style="margin:14px 0 0">
+          <b style="color:var(--t)">Duas permissões faltando</b> — cada uma destrava uma parte inteira do sistema.
+          <div style="margin-top:7px;font-size:.83rem">
+            · <b style="color:var(--t)">Comunicações pré e pós-vendas</b> → responder perguntas de quem quer comprar<br>
+            · <b style="color:var(--t)">Faturamento de uma venda</b> → CPF e endereço do comprador, sem os quais a nota não sai
+          </div>
+          <div style="margin-top:8px;font-size:.8rem;color:var(--t3)">Depois de liberar, use Reconectar — a autorização antiga não ganha permissão nova sozinha.</div>
+        </div>`:""}
+        ${on?`<details style="margin-top:12px"><summary style="cursor:pointer;font-size:.8rem;color:var(--t2)">Regras de operação deste canal</summary><div style="margin-top:8px">${regras}</div></details>`:""}
       </div>`;
-    document.querySelectorAll(".itg").forEach(b=>b.onclick=()=>{ CANAL_SEL=b.dataset.k; desenha(); });
-    if(on){
-      acaoApi("canal_info",{ plataforma: CANAL_SEL }).then(r=>{
-        const el=document.getElementById("itgLogin"); if(!el) return;
-        el.value = (r.success && r.resultado.login) ? r.resultado.login : (conn.conectada_em?"conta conectada":"—");
+    };
+    c.innerHTML = `
+      <div class="cabRel"><div>
+        <h1 style="margin:0">Suas contas</h1>
+        <div class="sub-h1">A autorização é feita no site de cada marketplace. Sua senha nunca passa por aqui.</div>
+      </div></div>
+      <div style="margin-top:16px">${Object.keys(NOMES).map(linha).join("")}</div>`;
+
+    Object.keys(NOMES).forEach(k=>{
+      if(cx[k]?.status!=="conectada") return;
+      acaoApi("canal_info",{ plataforma:k }).then(r=>{
+        const el=document.getElementById("itgSub-"+k); if(!el) return;
+        if(r.success && r.resultado.login) el.textContent = `${r.resultado.login} · conectada em ${(cx[k].conectada_em||"").slice(0,10)}`;
       });
-      const sy=document.getElementById("itgSync");
-      if(sy) sy.onclick = async()=>{ sy.disabled=true; sy.textContent="sincronizando…";
-        const r=await acaoApi("sincronizar_pedidos");
-        sy.disabled=false; sy.textContent="Sincronizar agora";
-        alert(r.success?`Sincronizado: ${r.resultado.sincronizados} pedido(s) `:"Ops: "+r.error);
-        CACHE.dados=null; };
-      const de=document.getElementById("itgDesc");
-      if(de) de.onclick = async()=>{
-        if(!confirm(`Desconectar o ${nome}? A loja para de sincronizar esse canal (dá pra reconectar quando quiser).`)) return;
-        const r=await acaoApi("desconectar_canal",{ plataforma: CANAL_SEL });
-        if(!r.success) return alert("Ops: "+r.error);
-        const { data } = await sb.rpc("sp_painel"); CACHE.painel=data; CACHE.dados=null; shell();
-      };
-    }
+    });
+    c.querySelectorAll(".itgSync").forEach(sy=>sy.onclick = async()=>{
+      sy.disabled=true; sy.textContent="sincronizando…";
+      const r=await acaoApi("sincronizar_pedidos");
+      sy.disabled=false; sy.textContent="Sincronizar";
+      alert(r.success?`Sincronizado: ${r.resultado.sincronizados} pedido(s)`:humano(r.error));
+      CACHE.dados=null;
+    });
+    c.querySelectorAll(".itgDesc").forEach(de=>de.onclick = async()=>{
+      const k=de.dataset.k, [nome]=NOMES[k];
+      if(!confirm(`Desconectar o ${nome}? A loja para de sincronizar esse canal (dá pra reconectar quando quiser).`)) return;
+      const r=await acaoApi("desconectar_canal",{ plataforma:k });
+      if(!r.success) return alert(humano(r.error));
+      const { data } = await sb.rpc("sp_painel"); CACHE.painel=data; CACHE.dados=null; shell();
+    });
   };
   desenha();
 }
