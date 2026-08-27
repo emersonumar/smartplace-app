@@ -166,6 +166,9 @@ input:focus{outline:2px solid #1F6B4A55}
 .conta .fim .v{color:var(--n);font-weight:700}
 .conta .obs{font-size:.7rem;color:var(--t2);margin-top:3px;line-height:1.35}
 .cabRel{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;border-bottom:2px solid var(--acc);padding-bottom:12px;margin:22px 0 0}
+/* Dentro do cabecalho o subtitulo nao leva regua propria: no desktop as duas
+   coincidem, mas no celular elas empilham e viram duas linhas. */
+.cabRel .sub-h1{border-bottom:0;padding-bottom:0}
 @media(max-width:900px){ .numeros{grid-template-columns:1fr 1fr} .conta{grid-template-columns:1fr 1fr 1fr} }
 @media(max-width:560px){ .conta{grid-template-columns:1fr 1fr} .numeros>div{padding:13px 15px} .numeros .val{font-size:1.35rem} }
 @media(max-width:460px){ .grid{grid-template-columns:1fr} .grid4{grid-template-columns:1fr 1fr}
