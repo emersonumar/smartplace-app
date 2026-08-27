@@ -141,6 +141,29 @@ input:focus{outline:2px solid #1F6B4A55}
 }
 /* Um KPI por linha no celular vira rolagem demais pra ver quatro numeros;
    dois cabem e o rotulo ainda le. */
+/* Os quatro números do período: divididos por régua, sem caixa em volta.
+   Caixa em torno de número não acrescenta informação — só ruído. */
+.numeros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--l2);border-bottom:1px solid var(--l2);background:var(--p)}
+.numeros>div{padding:15px 22px;border-left:1px solid var(--l)}
+.numeros>div:first-child{border-left:0}
+.numeros .lbl{font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;color:var(--t3);font-weight:600}
+.numeros .val{font-size:1.8rem;font-weight:600;letter-spacing:-.028em;margin-top:4px;font-variant-numeric:tabular-nums}
+.numeros .sub{font-size:.76rem;color:var(--t2);margin-top:3px}
+/* A conta vai até o fim e diz quando é parcial, em vez de parar no meio
+   mostrando travessão. */
+.conta{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--l2);background:var(--p);margin-top:14px}
+.conta>div{padding:14px 18px;border-left:1px solid var(--l)}
+.conta>div:first-child{border-left:0}
+.conta .r{font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);font-weight:600}
+.conta .v{font-size:1.02rem;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+.conta .falta{font-size:.86rem;font-weight:400;color:var(--t3);margin-top:5px}
+.conta .fim{border-left:2px solid var(--acc);background:#F4F7F4}
+.conta .fim .r{color:var(--n)}
+.conta .fim .v{color:var(--n);font-weight:700}
+.conta .obs{font-size:.7rem;color:var(--t2);margin-top:3px;line-height:1.35}
+.cabRel{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;border-bottom:2px solid var(--acc);padding-bottom:12px;margin:22px 0 0}
+@media(max-width:900px){ .numeros{grid-template-columns:1fr 1fr} .conta{grid-template-columns:1fr 1fr 1fr} }
+@media(max-width:560px){ .conta{grid-template-columns:1fr 1fr} .numeros>div{padding:13px 15px} .numeros .val{font-size:1.35rem} }
 @media(max-width:460px){ .grid{grid-template-columns:1fr} .grid4{grid-template-columns:1fr 1fr}
   .kpi .lbl{font-size:.6rem;letter-spacing:.06em} .kpi .val{font-size:1.15rem} .kpi .sub{font-size:.7rem} }
 </style></head><body>
@@ -166,7 +189,7 @@ function trocarLoja(id){
   render();
 }
 const app = document.getElementById("app");
-const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#4DE8F4","TT","tiktok.svg"]};
+const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#161616","TT","tiktok-tinta.svg"]};
 const ico = (c,s=18)=> NOMES[c]?`<img src="/icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
 const AUTOS = {
 nunca_sem_desconto:["Nunca sem desconto","reaplica o desconto que venceu, com o mesmo % de antes","mercado_livre"],
@@ -306,16 +329,22 @@ function grafCanais(porCanal){
 function viewDashboard(c){
   const d = CACHE.painel;
   c.innerHTML = `
-    <h1>Dashboard</h1><div class="sub-h1">Vendas dos seus canais — dados reais</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0">
-      <input type="date" class="busca" id="fDe" value="${FDASH.de}" style="min-width:0">
-      <span style="color:var(--t3);font-size:.8rem">até</span>
-      <input type="date" class="busca" id="fAte" value="${FDASH.ate}" style="min-width:0">
-      <span class="chips" id="fCanais" style="margin:0"></span>
-      <button class="mini" id="csv" style="margin-left:auto">⬇ Exportar CSV</button>
+    <div class="cabRel">
+      <div style="flex:1 1 260px">
+        <h1 style="margin:0">Resultado do período</h1>
+        <div class="sub-h1" style="margin:2px 0 0" id="periodoTxt"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input type="date" class="busca" id="fDe" value="${FDASH.de}" style="min-width:0">
+        <span style="color:var(--t3);font-size:.8rem">até</span>
+        <input type="date" class="busca" id="fAte" value="${FDASH.ate}" style="min-width:0">
+        <span class="chips" id="fCanais" style="margin:0"></span>
+        <button class="mini" id="csv">Exportar CSV</button>
+      </div>
     </div>
-    <div class="grid4" id="kpis"><div class="card kpi"><div class="vazio">carregando…</div></div></div>
-    <div class="card" style="margin-top:12px;padding:10px 18px" id="finstrip"></div>
+    <div class="numeros" id="kpis" style="margin-top:16px"><div><div class="vazio">carregando…</div></div></div>
+    <div id="metaLinha"></div>
+    <div class="conta" id="finstrip"></div>
     <div class="grid" style="margin-top:12px">
       <div class="card"><b class="tit">Valor total de pedidos por dia</b><div id="grafico" style="margin-top:8px"><p class="vazio">carregando…</p></div><div id="situacao" style="margin-top:12px"></div></div>
       <div class="card"><b class="tit">Valor total por canal no período</b><div id="grafcanal" style="margin-top:8px"><p class="vazio">carregando…</p></div></div>
@@ -344,12 +373,20 @@ async function carregarDash(){
   {
     const k = document.getElementById("kpis"); if(!k) return;
     if(r.erro){ k.innerHTML = `<p class='vazio'>${esc(r.erro)}</p>`; return; }
+    const pecaPorPed = r.dias30.pedidos ? (r.produtos_vendidos/r.dias30.pedidos) : 0;
     k.innerHTML = `
-      <div class="card kpi"><div class="lbl">Valor total</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">no período filtrado</div></div>
-      <div class="card kpi"><div class="lbl">Quantidade de pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">pagos no período</div></div>
-      <div class="card kpi"><div class="lbl">Produtos vendidos</div><div class="val">${r.produtos_vendidos??"—"}</div><div class="sub">peças no período</div></div>
-      <div class="card kpi"><div class="lbl">Ticket médio</div><div class="val" style="color:var(--n)">${brl(r.dias30.ticket)}</div><div class="sub">por pedido</div></div>
-      <div class="card kpi" id="metacard"></div>`;
+      <div><div class="lbl">Faturamento</div><div class="val">${brl(r.dias30.total)}</div><div class="sub">no período filtrado</div></div>
+      <div><div class="lbl">Pedidos</div><div class="val">${r.dias30.pedidos}</div><div class="sub">pagos no período</div></div>
+      <div><div class="lbl">Peças</div><div class="val">${r.produtos_vendidos??"—"}</div><div class="sub">${pecaPorPed?pecaPorPed.toFixed(2).replace(".",",")+" peça por pedido":"peças no período"}</div></div>
+      <div><div class="lbl">Ticket médio</div><div class="val">${brl(r.dias30.ticket)}</div><div class="sub">por pedido pago</div></div>`;
+    const pt = document.getElementById("periodoTxt");
+    if(pt){
+      const dt = x=>{ const [a,m,dd]=String(x).split("-"); return dd&&m&&a?`${dd}/${m}/${a}`:x; };
+      const canalTxt = FDASH.canal&&FDASH.canal!=="todos" ? (NOMES[FDASH.canal]||[FDASH.canal])[0] : "todos os canais";
+      pt.textContent = `${dt(FDASH.de)} a ${dt(FDASH.ate)} · ${canalTxt}`;
+    }
+    const metaLinha = document.getElementById("metaLinha");
+    if(metaLinha) metaLinha.innerHTML = `<div class="card kpi" id="metacard" style="margin-top:14px;max-width:420px"></div>`;
     const f = r.financeiro||{};
     const meta = f.meta_mes ? Number(f.meta_mes) : null;
     const mc = document.getElementById("metacard");
@@ -372,17 +409,44 @@ async function carregarDash(){
     }
     const fs = document.getElementById("finstrip");
     if(fs){
-      const cel = (valor,rot,cor)=>`<div style="flex:1;min-width:150px;padding:6px 14px;border-right:1px solid var(--l)"><b style="font-variant-numeric:tabular-nums;${cor?`color:${cor}`:""}">${valor}</b><br><small style="color:var(--t3);font-size:.64rem;letter-spacing:.08em">${rot}</small></div>`;
-      const falta = t=>`<span style="color:var(--t3);font-weight:400;font-size:.86rem">${t}</span>`;
-      fs.innerHTML = `<div style="display:flex;gap:0;flex-wrap:wrap;align-items:center">
-        ${cel(brl(f.faturamento_sem_frete),"FATURAMENTO SEM FRETE")}
-        ${cel(f.custo!=null?brl(f.custo):falta("falta cadastrar"),"PREÇO DE CUSTO"+(f.custo_pct!=null?` (${f.custo_pct}%)`:""))}
-        ${cel(f.margem_bruta_pct!=null?f.margem_bruta_pct.toFixed(2).replace(".",",")+"%":falta("depende do custo"),"MARGEM BRUTA")}
-        ${cel(f.impostos!=null?brl(f.impostos):falta("falta configurar"),"IMPOSTOS"+(f.imposto_pct!=null?` (${f.imposto_pct}%)`:""))}
-        ${cel(brl(f.taxa),"TAXA DE VENDA ("+(f.taxa_pct!=null?String(f.taxa_pct).replace(".",","):"0")+"%)")}
-        ${cel(f.contribuicao!=null?brl(f.contribuicao):falta("depende do custo"),"LUCRO"+(f.margem_contrib_pct!=null?` (${String(f.margem_contrib_pct).replace(".",",")}%)`:""),"#1F6B4A")}
-        <button class="mini" id="cfgFin" title="configurar % de custo e imposto" style="margin:0 10px">⚙</button>
+      // Cada passo é uma subtração explícita. Onde falta dado, a célula diz o que
+      // fazer em vez de mostrar um traço mudo.
+      const passo = (rot,valor,obs,cls)=>`<div class="${cls||""}">
+        <div class="r">${rot}</div>
+        ${valor!=null?`<div class="v">${valor}</div>`:""}
+        ${obs?`<div class="${valor!=null?"obs":"falta"}">${obs}</div>`:""}
       </div>`;
+
+      const bruto = Number(r.dias30.total)||0;
+      const comissao = Number(f.taxa)||0;
+      const frete = Number(f.frete)||0;
+      const temCusto = f.custo!=null, temImposto = f.impostos!=null;
+      const completo = temCusto && temImposto && f.contribuicao!=null;
+      const sobra = completo ? Number(f.contribuicao)
+                             : bruto - comissao - frete;
+      const pctSobra = bruto ? Math.round(sobra/bruto*100) : 0;
+
+      fs.innerHTML =
+        passo("Faturamento", brl(bruto), "tudo que entrou no período")
+      + passo("Comissão do canal", "&minus; "+brl(comissao),
+              (f.taxa_pct!=null?String(f.taxa_pct).replace(".",",")+"% do bruto":""))
+      + passo("Frete que você bancou", "&minus; "+brl(frete), "")
+      + passo("Custo dos produtos",
+              temCusto ? "&minus; "+brl(f.custo) : null,
+              temCusto ? (f.custo_pct!=null?f.custo_pct+"% do bruto":"") : "falta cadastrar")
+      + passo("Imposto",
+              temImposto ? "&minus; "+brl(f.impostos) : null,
+              temImposto ? (f.imposto_pct!=null?f.imposto_pct+"% do bruto":"") : "falta configurar")
+      + passo(completo ? "Sobra" : "Sobra parcial", brl(sobra),
+              completo ? pctSobra+"% do faturamento"
+                       : "antes do custo e do imposto &mdash; "+pctSobra+"% do bruto",
+              "fim")
+      + `<div style="grid-column:1/-1;border-left:0;border-top:1px solid var(--l);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:.78rem;color:var(--t2)">${completo
+            ? "A conta está fechada: custo e imposto configurados."
+            : "Enquanto faltar custo ou imposto, este resultado é parcial &mdash; ele ainda vai diminuir."}</span>
+          <button class="mini" id="cfgFin" style="margin-left:auto">${completo?"Alterar custo e imposto":"Configurar custo e imposto"}</button>
+        </div>`;
       document.getElementById("cfgFin").onclick = async()=>{
         const c = prompt("% de CUSTO sobre o faturamento (ex.: 27.2):", f.custo_pct??"");
         if(c===null) return;
