@@ -139,7 +139,10 @@ input:focus{outline:2px solid #1F6B4A55}
   .bub{max-width:100%}
   .etq{max-width:100%}
 }
-@media(max-width:460px){ .grid,.grid4{grid-template-columns:1fr} }
+/* Um KPI por linha no celular vira rolagem demais pra ver quatro numeros;
+   dois cabem e o rotulo ainda le. */
+@media(max-width:460px){ .grid{grid-template-columns:1fr} .grid4{grid-template-columns:1fr 1fr}
+  .kpi .lbl{font-size:.6rem;letter-spacing:.06em} .kpi .val{font-size:1.15rem} .kpi .sub{font-size:.7rem} }
 </style></head><body>
 <div class="topo" id="topo" style="display:none"><div class="topo-in">
   <div class="logo">Smart<em>Place</em> AI</div>
