@@ -1803,42 +1803,101 @@ function viewAds(c){
       </div>
       <span style="font-size:.7rem;font-weight:600;color:var(--no);flex:none">só avisa</span>
     </div>`;
-  acaoApi("ads_dados").then(a=>{
+  Promise.all([acaoApi("ads_dados"), acaoApi("campanhas_listar"), dados()]).then(([a, ml, base])=>{
     const k=document.getElementById("adskpi"), t=document.getElementById("adsCamp");
     if(!k) return;
-    if(!a.success){ k.innerHTML=`<div class="card"><p class="vazio">${esc(a.error||"indisponível")}</p></div>`; t.innerHTML="<p class='vazio'>—</p>"; return; }
+    if(!a.success){ k.innerHTML=`<div class="card kpi"><p class="vazio">${esc(humano(a.error||"indisponível"))}</p></div>`; t.innerHTML=`<p class='vazio'>${esc(humano(a.error||"—"))}</p>`; return; }
     const cn=a.resultado.canais||{};
     const s=cn.shopee, m=cn.mercado_livre, tt=cn.tiktok;
-    const cards=[];
+
+    // A fita do desenho: a pergunta é uma só, então os números são os dela.
+    // O "% do faturamento" cruza com as vendas do período; o saldo vira prazo.
+    const gasto30 = Number(s?.d30?.gasto||0);
+    const gmv30 = Number(s?.d30?.gmv||0);
+    const retorno = gasto30 ? gmv30/gasto30 : null;
+    const fat30 = Number(base?.dias30?.total||0);
+    const pctFat = fat30 && gasto30 ? gasto30/fat30*100 : null;
+    const gastoDia = Number(s?.d7?.gasto||0)/7;
+    const saldo = s?.saldo!=null ? Number(s.saldo) : null;
+    const diasSaldo = saldo!=null && gastoDia>0 ? Math.round(saldo/gastoDia) : null;
+
     if(s){
-      cards.push(`<div class="card kpi"><div class="lbl">${ico("shopee",15)} Gasto 30 dias</div><div class="val">${brl(s.d30?.gasto)}</div><div class="sub">7 dias: ${brl(s.d7?.gasto)} · saldo ${brl(s.saldo)}</div></div>`);
-      cards.push(`<div class="card kpi"><div class="lbl">ROAS 30 dias</div><div class="val" style="color:${s.roas30==null?"var(--t3)":s.roas30>=3?"#1F6B4A":s.roas30>=1?"var(--acc)":"#A33A2A"}">${s.roas30!=null?String(s.roas30).replace(".",",")+"x":"—"}</div><div class="sub">cada R$ 1 em ads virou R$ ${s.roas30!=null?String(s.roas30).replace(".",","):"—"}</div></div>`);
-      cards.push(`<div class="card kpi"><div class="lbl">Cliques / CTR</div><div class="val">${s.d30?.cliques??"—"}</div><div class="sub">CTR ${s.ctr30!=null?String(s.ctr30).replace(".",",")+"%":"—"} · ${s.d30?.impressoes??0} impressões</div></div>`);
-      cards.push(`<div class="card kpi"><div class="lbl">GMV via ads</div><div class="val" style="color:var(--n)">${brl(s.d30?.gmv)}</div><div class="sub">${s.d30?.pedidos??0} pedido(s) em 30 dias</div></div>`);
+      k.innerHTML = `
+        <div class="card kpi"><div class="lbl">Gasto</div><div class="val">${brl(gasto30)}</div><div class="sub">últimos 30 dias</div></div>
+        <div class="card kpi"><div class="lbl">Venda vinda de ads</div><div class="val">${brl(gmv30)}</div><div class="sub">${s.d30?.pedidos??0} pedido(s)</div></div>
+        <div class="card kpi"><div class="lbl">Retorno</div><div class="val" style="color:${retorno==null?"var(--t3)":retorno>=3?"var(--n)":retorno>=1.5?"var(--t)":"var(--no)"}">${retorno!=null?retorno.toFixed(1).replace(".",",")+"×":"—"}</div><div class="sub">por real gasto</div></div>
+        <div class="card kpi"><div class="lbl">Do faturamento</div><div class="val">${pctFat!=null?pctFat.toFixed(1).replace(".",",")+"%":"—"}</div><div class="sub">virou anúncio</div></div>
+        <div class="card kpi" style="background:var(--p2)"><div class="lbl">Saldo</div><div class="val">${saldo!=null?brl(saldo):"—"}</div><div class="sub"${diasSaldo!=null&&diasSaldo<=7?' style="color:var(--no)"':""}>${diasSaldo!=null?`acaba em ~${diasSaldo} dia${diasSaldo===1?"":"s"}`:"ritmo ainda sem leitura"}</div></div>`;
+    } else {
+      const cards=[];
+      if(m) cards.push(`<div class="card kpi"><div class="lbl">${ico("mercado_livre",15)} Mercado Ads</div><div class="val" style="color:var(--t3)">${m.advertiser_id?"ativo":"—"}</div><div class="sub">${esc(m.info||"")}</div></div>`);
+      if(tt) cards.push(`<div class="card kpi"><div class="lbl">${ico("tiktok",15)} TikTok Ads</div><div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(tt.info||"")}</div></div>`);
+      if(!cards.length) cards.push(`<div class="card kpi"><p class="vazio">Conecte um canal com anúncios pagos pra ver gasto e retorno aqui. A leitura mais completa hoje é a da Shopee.</p></div>`);
+      k.innerHTML = cards.join("");
     }
-    if(m) cards.push(`<div class="card kpi"><div class="lbl">${ico("mercado_livre",15)} Mercado Ads</div><div class="val" style="color:var(--t3)">${m.advertiser_id?"ativo":"—"}</div><div class="sub">${esc(m.info||"")}</div></div>`);
-    if(tt) cards.push(`<div class="card kpi"><div class="lbl">${ico("tiktok",15)} TikTok Ads</div><div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(tt.info||"")}</div></div>`);
-    if(!cards.length) cards.push(`<div class="card"><p class="vazio">Conecte um canal com anúncios pagos (Shopee Ads é o mais completo) pra ver gasto e ROAS aqui.</p></div>`);
-    k.innerHTML = cards.join("");
-    const camps = s?.campanhas||[];
-    const diag = x=>{
-      if(!x.cliques) return `<span class="pill ruim">sem cliques</span>`;
-      if(x.roas==null||!x.gasto) return `<span class="pill ok">—</span>`;
-      if(x.roas<1) return `<span class="pill ruim">gastando sem retorno</span>`;
-      if(x.roas<3) return `<span class="pill" style="color:var(--acc);background:#F5A62322">ROAS baixo</span>`;
-      return `<span class="pill ok2">🟢 saudável</span>`;
-    };
-    t.innerHTML = camps.length? `<table class="tabela">
-      <tr><th>Campanha / Produto</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">CTR</th><th style="text-align:right">Pedidos</th><th style="text-align:right">GMV</th><th style="text-align:right">ROAS</th><th>Diagnóstico</th></tr>
-      ${camps.map(x=>`<tr><td>${esc(String(x.nome)).slice(0,50)}</td>
-        <td style="text-align:right;font-family:var(--mono)">${brl(x.gasto)}</td>
-        <td style="text-align:right;font-family:var(--mono)">${x.cliques}</td>
-        <td style="text-align:right;font-family:var(--mono)">${x.ctr!=null?String(x.ctr).replace(".",",")+"%":"—"}</td>
-        <td style="text-align:right;font-family:var(--mono)">${x.pedidos}</td>
-        <td style="text-align:right;font-family:var(--mono)">${brl(x.gmv)}</td>
-        <td style="text-align:right;font-family:var(--mono)"><b>${x.roas!=null?String(x.roas).replace(".",",")+"x":"—"}</b></td>
-        <td>${diag(x)}</td></tr>`).join("")}
-    </table>` : `<p class="vazio">${s?"Nenhuma campanha ativa encontrada nos últimos 30 dias.":"As campanhas aparecem quando um canal com ads estiver conectado (Shopee primeiro; Mercado Ads e TikTok na sequência)."}</p>`;
+
+    // Tabela única: performance da Shopee (que não deixa controlar) e controle
+    // do Mercado Livre (que ainda não entrega performance por campanha). Dizer
+    // qual metade cada canal oferece vale mais que fingir a tabela completa.
+    const linhas = [];
+    (s?.campanhas||[]).forEach(x=>linhas.push({
+      nome:String(x.nome||"").slice(0,44), canal:"Shopee",
+      gasto:x.gasto, cliques:x.cliques, ctr:x.ctr, gmv:x.gmv, roas:x.roas, orc:null,
+      acao:`<span style="font-size:.76rem;color:var(--t3)">só no Seller Center</span>`}));
+    const mlCamps = (ml&&ml.success && ml.resultado.campanhas)||[];
+    mlCamps.forEach(x=>{
+      const pausada = String(x.status||"").toLowerCase()!=="active";
+      linhas.push({ nome:String(x.nome||("Campanha "+x.id)).slice(0,44), canal:"Mercado Livre",
+        gasto:null, cliques:null, ctr:null, gmv:null, roas:null,
+        orc:x.orcamento_diario, pausada,
+        acao:`<button class="mini mlCamp" data-id="${esc(String(x.id))}" data-alvo="${pausada?"active":"paused"}">${pausada?"Reativar":"Pausar"}</button>
+              <button class="mini mlOrc" data-id="${esc(String(x.id))}">Orçamento</button>`});
+    });
+
+    const fmtRoas = r=> r==null ? `<span style="color:var(--t3)">—</span>`
+      : `<b style="color:${r>=3?"var(--n)":r>=1.3?"var(--t)":"var(--no)"}">${Number(r).toFixed(1).replace(".",",")}×</b>`;
+    t.innerHTML = linhas.length? `<table class="tabela">
+      <tr><th>Campanha</th><th>Canal</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">CTR</th><th style="text-align:right">Venda</th><th style="text-align:right">Retorno</th><th style="text-align:right">Orçamento/dia</th><th style="text-align:right"></th></tr>
+      ${linhas.map(x=>`<tr${x.pausada?' style="opacity:.55"':""}>
+        <td><b>${esc(x.nome)}</b>${x.pausada?' <span class="pill ruim">pausada</span>':""}</td>
+        <td style="font-size:.82rem">${x.canal}</td>
+        <td style="text-align:right">${x.gasto!=null?brl(x.gasto):`<span style="color:var(--t3)">—</span>`}</td>
+        <td style="text-align:right">${x.cliques??`<span style="color:var(--t3)">—</span>`}</td>
+        <td style="text-align:right">${x.ctr!=null?String(x.ctr).replace(".",",")+"%":`<span style="color:var(--t3)">—</span>`}</td>
+        <td style="text-align:right">${x.gmv!=null?brl(x.gmv):`<span style="color:var(--t3)">—</span>`}</td>
+        <td style="text-align:right">${fmtRoas(x.roas)}</td>
+        <td style="text-align:right">${x.orc!=null?brl(x.orc):`<span style="color:var(--t3)">—</span>`}</td>
+        <td style="text-align:right;white-space:nowrap">${x.acao}</td></tr>`).join("")}
+      </table>
+      ${mlCamps.length?`<div style="font-size:.76rem;color:var(--t3);margin-top:10px">O Mercado Livre ainda não entrega gasto por campanha pela API — o controle funciona, a leitura fica com a Shopee.</div>`:""}`
+      : `<p class="vazio">${s||mlCamps.length?"Nenhuma campanha encontrada nos últimos 30 dias.":"As campanhas aparecem quando um canal com ads estiver conectado."}</p>`;
+
+    // O aviso do desenho: campanha devolvendo menos do que come, dito sozinho —
+    // sem esperar alguém pedir a análise.
+    const ruins = (s?.campanhas||[]).filter(x=>Number(x.gasto||0)>50 && x.roas!=null && Number(x.roas)<1.3);
+    if(ruins.length){
+      const r0 = ruins[0];
+      t.insertAdjacentHTML("beforeend", `<div class="alerta" style="margin-top:14px">
+        <b style="color:var(--t)">"${esc(String(r0.nome).slice(0,40))}" está devolvendo R$ ${Number(r0.roas).toFixed(2).replace(".",",")} por real gasto.</b>
+        Com a comissão do canal em cima, essa campanha está no prejuízo — cada venda dela custa mais do que rende.
+        <div style="font-size:.8rem;color:var(--t3);margin-top:6px">A Shopee não deixa pausar campanha pela API — pausa no Seller Center, leva um minuto.${ruins.length>1?` E tem mais ${ruins.length-1} campanha(s) na mesma situação.`:""}</div>
+      </div>`);
+    }
+
+    t.querySelectorAll(".mlCamp").forEach(b=>b.onclick = async()=>{
+      const liga = b.dataset.alvo==="active";
+      if(!confirm(liga?"Reativar esta campanha no Mercado Livre?":"Pausar derruba a exibição na hora. Voltar é imediato, mas o aprendizado do leilão não volta igual. Pausar?")) return;
+      b.disabled=true;
+      const r=await acaoApi("campanha_ajustar",{ id:b.dataset.id, status:b.dataset.alvo, confirmar:true });
+      b.disabled=false;
+      r.success? viewAds(document.getElementById("conteudo")) : alert(humano(r.error));
+    });
+    t.querySelectorAll(".mlOrc").forEach(b=>b.onclick = async()=>{
+      const v = prompt("Novo orçamento diário (R$) — é quanto você aceita gastar POR DIA:");
+      if(!v) return;
+      const r=await acaoApi("campanha_ajustar",{ id:b.dataset.id, orcamento:+String(v).replace(",","."), confirmar:true });
+      r.success? viewAds(document.getElementById("conteudo")) : alert(humano(r.error));
+    });
   });
   document.getElementById("adsIA").onclick = async()=>{
     const b=document.getElementById("adsIA"), area=document.getElementById("adsAnalise");
