@@ -236,14 +236,26 @@ const humano = t => String(t||"")
   .replace(/mercado_livre/g,"Mercado Livre").replace(/tiktok/g,"TikTok Shop").replace(/shopee/g,"Shopee");
 async function acaoApi(acao, params){
   const { data:{ session } } = await sb.auth.getSession();
-  const r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
-    body: JSON.stringify({ acao, params: params||{}, loja_id: LOJA_ATUAL || undefined })
-  });
-  let d; try { d = await r.json(); } catch(_) { d = null; }
-  if (!d || typeof d !== "object") return { success:false, error: msgErro(null, r) };
+  // Plataforma pedindo pausa ("Retry after 1234ms") não é assunto do cliente:
+  // espera o tempo pedido e repete sozinha antes de mostrar qualquer erro.
+  let d = null, r = null;
+  for (let tent = 0; tent < 3; tent++){
+    r = await fetch("https://ssgeggkaweixaqxxtbqm.supabase.co/functions/v1/smartplace-acoes",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+session.access_token, "apikey":ANON },
+      body: JSON.stringify({ acao, params: params||{}, loja_id: LOJA_ATUAL || undefined })
+    });
+    try { d = await r.json(); } catch(_) { d = null; }
+    if (!d || typeof d !== "object") return { success:false, error: msgErro(null, r) };
+    if (d.success) return d;
+    const m = String(d.error||"").match(/Retry after (\d+)ms/i);
+    const pausa = m ? Math.min(Number(m[1])+500, 12000) : (r.status===429 ? 4000 : 0);
+    if (!pausa || tent === 2) break;
+    await new Promise(res=>setTimeout(res, pausa));
+  }
   if (!d.success && !d.error) d.error = msgErro(d, r);
+  if (/rate limit|retry after/i.test(String(d.error||"")))
+    d.error = "O canal está limitando as chamadas agora (cota da plataforma, não é problema da sua loja). Já repeti a tentativa — aguarda um instante e pede de novo.";
   return d;
 }
 
