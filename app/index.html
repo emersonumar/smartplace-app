@@ -1725,16 +1725,17 @@ function viewPrecos(c){
         const den=1-pct-marg;
         const sug = custo!=null&&den>0.01? Math.floor((custo+fixa)/den)+0.90 : null;
         const [txt,cls,alerta]=situacao(p);
-        if(alerta) abaixo.push({titulo:p.titulo,piso:p.piso,preco:p.preco,id:p.id});
+        if(alerta) abaixo.push({titulo:p.titulo,piso:p.piso,preco:p.preco,id:p.id,canal:p.canal});
+        const canal=p.canal||"mercado_livre";
         return `<tr${alerta?' style="background:#FDF9F8"':""}>
-          <td><b>${esc(p.titulo||"—").slice(0,44)}</b><br><small style="font-size:.7rem;color:var(--t3)">${esc(p.id)}${custo==null?" · sem custo":""}</small></td>
-          <td style="text-align:right"><input class="edt" data-id="${esc(p.id)}" data-campo="piso" type="number" step="0.01" value="${p.piso??""}" placeholder="definir"></td>
+          <td><b>${esc(p.titulo||"—").slice(0,44)}</b><br><small style="font-size:.7rem;color:var(--t3)">${humano(esc(canal))} · ${esc(p.id)}${custo==null?" · sem custo":""}</small></td>
+          <td style="text-align:right"><input class="edt" data-id="${esc(p.id)}" data-canal="${esc(canal)}" data-campo="piso" type="number" step="0.01" value="${p.piso??""}" placeholder="definir"></td>
           <td style="text-align:right;font-weight:600;${alerta?"color:var(--no)":""}">${brl(p.preco)}</td>
-          <td style="text-align:right"><input class="edt" data-id="${esc(p.id)}" data-campo="teto" type="number" step="0.01" value="${p.teto??""}" placeholder="definir"></td>
+          <td style="text-align:right"><input class="edt" data-id="${esc(p.id)}" data-canal="${esc(canal)}" data-campo="teto" type="number" step="0.01" value="${p.teto??""}" placeholder="definir"></td>
           <td style="text-align:right;color:${mPct==null?"var(--t3)":mPct>=0?"var(--n)":"var(--no)"}">${mPct==null?'<span style="font-size:.8rem">falta o custo</span>':mPct.toFixed(1).replace(".",",")+"%"}</td>
           <td>${cls?`<span class="pill ${cls}">${txt}</span>`:`<span style="font-size:.78rem;color:var(--t3)">${txt}</span>`}</td>
-          <td style="text-align:right">${sug!=null?`<b>${brl(sug)}</b><br><button class="mini aplicar" data-id="${esc(p.id)}" data-preco="${sug.toFixed(2)}" style="margin-top:4px">Aplicar</button>`:'<span style="font-size:.8rem;color:var(--t3)">—</span>'}</td></tr>`;}).join("")}
-    </table>` : "<p class='vazio'>Nenhum anúncio encontrado — conecte o Mercado Livre em Integrações.</p>";
+          <td style="text-align:right">${sug!=null?`<b>${brl(sug)}</b><br><button class="mini aplicar" data-id="${esc(p.id)}" data-canal="${esc(canal)}" data-preco="${sug.toFixed(2)}" style="margin-top:4px">Aplicar</button>`:'<span style="font-size:.8rem;color:var(--t3)">—</span>'}</td></tr>`;}).join("")}
+    </table>` : "<p class='vazio'>Nenhum anúncio encontrado — conecte o Mercado Livre ou o TikTok Shop em Integrações.</p>";
 
     const q=document.getElementById("qtdRegras");
     if(q){ const comRegra=prods.filter(p=>p.piso!=null||p.teto!=null).length;
@@ -1746,17 +1747,18 @@ function viewPrecos(c){
       <b style="color:var(--t)">${abaixo.length===1?"Um anúncio está":abaixo.length+" anúncios estão"} abaixo do próprio piso.</b>
       Isso acontece quando o preço foi mudado direto no marketplace, por fora daqui.
       ${abaixo.slice(0,3).map(x=>`<br>· ${esc(String(x.titulo||"").slice(0,40))} — hoje ${brl(x.preco)}, piso ${brl(x.piso)}
-        <button class="mini subirPiso" data-id="${esc(x.id)}" data-preco="${Number(x.piso).toFixed(2)}">Subir para ${brl(x.piso)}</button>`).join("")}
+        <button class="mini subirPiso" data-id="${esc(x.id)}" data-canal="${esc(x.canal||"mercado_livre")}" data-preco="${Number(x.piso).toFixed(2)}">Subir para ${brl(x.piso)}</button>`).join("")}
       </div>` : "";
 
     document.querySelectorAll(".edt").forEach(i=>i.onchange=async()=>{
-      const r=await acaoApi("regras_preco_definir",{ produto_id:i.dataset.id, [i.dataset.campo]: i.value===""?null:+i.value });
+      const r=await acaoApi("regras_preco_definir",{ produto_id:i.dataset.id, canal:i.dataset.canal||"mercado_livre", [i.dataset.campo]: i.value===""?null:+i.value });
       if(!r.success) alert(humano(r.error)); else carregaPrec();
     });
     const aplicar = async(b)=>{
-      if(!confirm("Mudar o preço do "+b.dataset.id+" para "+brl(+b.dataset.preco)+" no Mercado Livre?")) return;
+      const canal=b.dataset.canal||"mercado_livre";
+      if(!confirm("Mudar o preço do "+b.dataset.id+" para "+brl(+b.dataset.preco)+" no "+humano(canal)+"?")) return;
       b.disabled=true; const t=b.textContent; b.textContent="aplicando…";
-      const r=await acaoApi("atualizar_preco",{ item_id:b.dataset.id, preco:+b.dataset.preco });
+      const r=await acaoApi("atualizar_preco",{ item_id:b.dataset.id, preco:+b.dataset.preco, canal });
       b.disabled=false; b.textContent=t;
       r.success? carregaPrec() : alert(humano(r.error));
     };
