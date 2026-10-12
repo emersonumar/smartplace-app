@@ -56,7 +56,18 @@
   if (!state) { try { state = localStorage.getItem("sp_loja") || ""; } catch (e) {} }
 
   if (!code) return falhar("O TikTok não devolveu o código de autorização.");
-  if (!state) return falhar("Não identificamos sua loja. Volte ao painel e clique em Conectar novamente, na mesma aba.");
+  // Instalação feita pela loja de apps do TikTok chega sem a loja do SmartPlace.
+  // Guarda o código e manda pro painel: depois do login, ele conclui na loja certa.
+  if (!state) {
+    try {
+      localStorage.setItem("sp_tt_code_pendente", JSON.stringify({ code: code, em: Date.now() }));
+      document.getElementById("tit").textContent = "Quase lá";
+      document.getElementById("msg").textContent = "Entre no painel do SmartPlace para concluir a conexão da sua loja TikTok Shop.";
+      return location.replace(PAINEL + "?conectar=tiktok");
+    } catch (e) {
+      return falhar("Não identificamos sua loja. Volte ao painel e clique em Conectar novamente, na mesma aba.");
+    }
+  }
 
   location.replace(
     OAUTH + "?fluxo=callback&plataforma=tiktok" +

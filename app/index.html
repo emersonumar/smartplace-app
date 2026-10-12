@@ -266,7 +266,21 @@ async function render(){
   if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
   if(data?.sem_loja){ document.getElementById("topo").style.display="none"; return telaOnboarding(); }
   CACHE.painel = data;
+  if(concluirTiktokPendente(data.loja?.id)) return;
   shell();
+}
+
+// Instalação feita pela loja de apps do TikTok volta sem dizer a loja do
+// SmartPlace: a página de retorno guarda o código e, com o login feito, ele é
+// concluído na loja de quem entrou. O código do TikTok vale poucos minutos.
+function concluirTiktokPendente(lojaId){
+  let p = null;
+  try { p = JSON.parse(localStorage.getItem("sp_tt_code_pendente") || "null"); } catch(e) {}
+  if(!p || !p.code || !lojaId) return false;
+  try { localStorage.removeItem("sp_tt_code_pendente"); } catch(e) {}
+  if(Date.now() - Number(p.em || 0) > 10*60*1000) return false;
+  location.replace(`${OAUTH}?fluxo=callback&plataforma=tiktok&code=${encodeURIComponent(p.code)}&state=${encodeURIComponent(lojaId)}`);
+  return true;
 }
 
 function telaLogin(){
