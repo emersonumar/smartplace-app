@@ -1723,7 +1723,11 @@ function viewPrecos(c){
         const mLuc = custo!=null? p.preco*(1-pct)-fixa-custo : null;
         const mPct = mLuc!=null&&p.preco? mLuc/p.preco*100 : null;
         const den=1-pct-marg;
-        const sug = custo!=null&&den>0.01? Math.floor((custo+fixa)/den)+0.90 : null;
+        // A sugestão nunca sai da faixa que o lojista definiu: fora dela, a trava
+        // recusaria o "Aplicar" e o botão pareceria quebrado.
+        let sug = custo!=null&&den>0.01? Math.floor((custo+fixa)/den)+0.90 : null;
+        if(sug!=null && p.piso!=null && sug<Number(p.piso)) sug=Number(p.piso);
+        if(sug!=null && p.teto!=null && sug>Number(p.teto)) sug=Number(p.teto);
         const [txt,cls,alerta]=situacao(p);
         if(alerta) abaixo.push({titulo:p.titulo,piso:p.piso,preco:p.preco,id:p.id,canal:p.canal});
         const canal=p.canal||"mercado_livre";
