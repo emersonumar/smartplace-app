@@ -324,13 +324,16 @@ function telaLogin(criando = new URLSearchParams(location.search).has("criar")){
     /already (been )?registered/i.test(m) ? "Esse e-mail já tem conta. Clique em \"Já tem conta? Entrar\"." :
     /at least 6/i.test(m) ? "A senha precisa ter pelo menos 6 caracteres." :
     /validate email|invalid format/i.test(m) ? "Esse e-mail não parece válido." :
+    /not confirmed/i.test(m) ? "Falta confirmar seu e-mail: clique no link que enviamos pra você e depois entre aqui." :
     /invalid login/i.test(m) ? "E-mail ou senha errados." : m;
   document.getElementById("trocar").onclick = ()=> telaLogin(!criando);
   document.getElementById("entrar").onclick = async()=>{
     if(criando){
-      const { data, error } = await sb.auth.signUp({ email: email.value, password: senha.value });
+      const { data, error } = await sb.auth.signUp({ email: email.value, password: senha.value,
+        options: { emailRedirectTo: "https://smartplaceai.app/app/" } });
       if(error) return erro(error.message);
-      return data.session ? render() : erro("Conta criada! Já pode entrar.");
+      if(data.session) return render();
+      return erro("Conta criada! Enviamos um link pro seu e-mail. Clique nele pra ativar a conta e depois entre aqui.");
     }
     const { error } = await sb.auth.signInWithPassword({ email: email.value, password: senha.value });
     error ? erro(error.message) : render();
@@ -361,7 +364,7 @@ function shell(){
   ti.style.display = dias === null ? "none" : "";
   if(dias !== null) ti.textContent = dias <= 1 ? "teste grátis: último dia" : `teste grátis: faltam ${dias} dias`;
   const aa = document.getElementById("autosAtivas");
-  if(aa){ const n = (d.automacoes||[]).length; aa.textContent = n ? `${n} automaç${n>1?"ões":"ão"} ativa${n>1?"s":""}` : "nenhuma automação ligada"; }
+  if(aa){ const n = (d.automacoes||[]).filter(a=>a.ligada).length; aa.textContent = n ? `${n} automaç${n>1?"ões":"ão"} ativa${n>1?"s":""}` : "nenhuma automação ligada"; }
   document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}</button>`).join("");
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
