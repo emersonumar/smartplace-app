@@ -321,8 +321,9 @@ function telaLogin(criando = new URLSearchParams(location.search).has("criar")){
     <div class="erro" id="erro"></div>
   </div>`;
   const erro = m => document.getElementById("erro").textContent =
-    /already registered/i.test(m) ? "Esse e-mail já tem conta. Clique em \"Já tem conta? Entrar\"." :
+    /already (been )?registered/i.test(m) ? "Esse e-mail já tem conta. Clique em \"Já tem conta? Entrar\"." :
     /at least 6/i.test(m) ? "A senha precisa ter pelo menos 6 caracteres." :
+    /validate email|invalid format/i.test(m) ? "Esse e-mail não parece válido." :
     /invalid login/i.test(m) ? "E-mail ou senha errados." : m;
   document.getElementById("trocar").onclick = ()=> telaLogin(!criando);
   document.getElementById("entrar").onclick = async()=>{
