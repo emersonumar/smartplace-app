@@ -181,7 +181,7 @@ input:focus{outline:2px solid #1F6B4A55}
 </style></head><body>
 <div class="topo" id="topo" style="display:none"><div class="topo-in">
   <div class="logo">Smart<em>Place</em> AI</div>
-  <div class="dir"><span class="live"><span class="dot"></span> <span id="autosAtivas">automações ativas</span></span><span id="lojaNome" style="color:var(--t);font-size:.82rem"></span><button class="sair" id="sair">sair</button></div>
+  <div class="dir"><span class="live"><span class="dot"></span> <span id="autosAtivas">automações ativas</span></span><a id="testeInfo" class="pill" href="/#precos" style="display:none;text-decoration:none;color:var(--gold);background:var(--p2)"></a><span id="lojaNome" style="color:var(--t);font-size:.82rem"></span><button class="sair" id="sair">sair</button></div>
 </div><div class="nav-wrap"><div class="nav" id="nav"></div>
 </div></div>
 <div class="wrap" id="app"></div>
@@ -266,8 +266,33 @@ async function render(){
   if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
   if(data?.sem_loja){ document.getElementById("topo").style.display="none"; return telaOnboarding(); }
   CACHE.painel = data;
+  const dias = diasDeTeste(data.loja);
+  if(dias !== null && dias <= 0) return telaTesteAcabou(data);
   if(concluirTiktokPendente(data.loja?.id)) return;
   shell();
+}
+
+// Teste grátis de 14 dias. null = loja assinante (ou interna), sem contagem.
+function diasDeTeste(loja){
+  if(!loja || loja.status !== "trial" || !loja.teste_ate) return null;
+  return Math.ceil((new Date(loja.teste_ate) - Date.now()) / 86400000);
+}
+
+function telaTesteAcabou(d){
+  document.getElementById("topo").style.display="none";
+  const assunto = encodeURIComponent("Quero assinar o SmartPlace - " + d.loja.nome);
+  app.innerHTML = `
+  <div class="centro" style="max-width:440px">
+    <div class="logo" style="text-align:center;font-size:1.5rem">Smart<em>Place</em> AI</div>
+    <p style="text-align:center;font-weight:600;margin:0">Seu teste grátis de 14 dias acabou</p>
+    <p style="color:var(--t2);text-align:center;font-size:.9rem;margin:0">Seus dados e seus canais continuam guardados. Escolha um plano e a IA volta a trabalhar na sua loja.</p>
+    <div style="display:flex;justify-content:space-between;border:1px solid var(--l);padding:12px 14px;font-size:.9rem"><b>Essencial</b><span>R$ 199,90/mês</span></div>
+    <div style="display:flex;justify-content:space-between;border:1px solid var(--l);padding:12px 14px;font-size:.9rem"><b>Ilimitado</b><span>R$ 399,90/mês</span></div>
+    <a class="btn" style="text-align:center;text-decoration:none" href="mailto:emersonumar@gmail.com?subject=${assunto}">Quero assinar</a>
+    <a class="link" href="/#precos">Ver o que cada plano inclui</a>
+    <button class="link" id="sairFim">Sair</button>
+  </div>`;
+  document.getElementById("sairFim").onclick = async()=>{ await sb.auth.signOut(); render(); };
 }
 
 // Instalação feita pela loja de apps do TikTok volta sem dizer a loja do
@@ -283,25 +308,31 @@ function concluirTiktokPendente(lojaId){
   return true;
 }
 
-function telaLogin(){
+function telaLogin(criando = new URLSearchParams(location.search).has("criar")){
+  // "Começar grátis" no site chega com ?criar=1 e abre direto no cadastro.
   app.innerHTML = `
   <div class="centro">
     <div class="logo" style="text-align:center;font-size:1.6rem">Smart<em>Place</em> AI</div>
-    <p style="color:var(--t2);text-align:center;font-size:.9rem">Sua loja de marketplaces no piloto automático</p>
+    <p style="color:var(--t2);text-align:center;font-size:.9rem">${criando ? "Crie sua conta e teste grátis por 14 dias. Sem cartão de crédito." : "Sua loja de marketplaces no piloto automático"}</p>
     <input id="email" type="email" placeholder="seu e-mail">
-    <input id="senha" type="password" placeholder="senha">
-    <button class="btn" id="entrar">Entrar</button>
-    <button class="link" id="criar">Não tem conta? Criar agora</button>
+    <input id="senha" type="password" placeholder="${criando ? "crie uma senha (mínimo 6 letras ou números)" : "senha"}">
+    <button class="btn" id="entrar">${criando ? "Começar teste grátis" : "Entrar"}</button>
+    <button class="link" id="trocar">${criando ? "Já tem conta? Entrar" : "Não tem conta? Teste grátis por 14 dias"}</button>
     <div class="erro" id="erro"></div>
   </div>`;
-  const erro = m => document.getElementById("erro").textContent = m;
+  const erro = m => document.getElementById("erro").textContent =
+    /already registered/i.test(m) ? "Esse e-mail já tem conta. Clique em \"Já tem conta? Entrar\"." :
+    /at least 6/i.test(m) ? "A senha precisa ter pelo menos 6 caracteres." :
+    /invalid login/i.test(m) ? "E-mail ou senha errados." : m;
+  document.getElementById("trocar").onclick = ()=> telaLogin(!criando);
   document.getElementById("entrar").onclick = async()=>{
+    if(criando){
+      const { data, error } = await sb.auth.signUp({ email: email.value, password: senha.value });
+      if(error) return erro(error.message);
+      return data.session ? render() : erro("Conta criada! Já pode entrar.");
+    }
     const { error } = await sb.auth.signInWithPassword({ email: email.value, password: senha.value });
-    error ? erro("Login falhou: "+error.message) : render();
-  };
-  document.getElementById("criar").onclick = async()=>{
-    const { error } = await sb.auth.signUp({ email: email.value, password: senha.value });
-    error ? erro(error.message) : erro("Conta criada! Já pode entrar.");
+    error ? erro(error.message) : render();
   };
 }
 
@@ -309,7 +340,7 @@ function telaOnboarding(){
   app.innerHTML = `
   <div class="centro">
     <div class="logo" style="text-align:center;font-size:1.5rem">Smart<em>Place</em> AI</div>
-    <p style="color:var(--t2);text-align:center">Qual o nome da sua loja?</p>
+    <p style="color:var(--t2);text-align:center">Qual o nome da sua loja?<br><span style="font-size:.82rem">Seu teste grátis de 14 dias começa agora.</span></p>
     <input id="nome" placeholder="ex.: Bella Moda Fitness">
     <button class="btn" id="ok">Criar minha loja</button>
     <div class="erro" id="erro"></div>
@@ -325,6 +356,9 @@ function shell(){
   const d = CACHE.painel;
   document.getElementById("topo").style.display="";
   document.getElementById("lojaNome").textContent = d.loja.nome;
+  const ti = document.getElementById("testeInfo"), dias = diasDeTeste(d.loja);
+  ti.style.display = dias === null ? "none" : "";
+  if(dias !== null) ti.textContent = dias <= 1 ? "teste grátis: último dia" : `teste grátis: faltam ${dias} dias`;
   const aa = document.getElementById("autosAtivas");
   if(aa){ const n = (d.automacoes||[]).length; aa.textContent = n ? `${n} automaç${n>1?"ões":"ão"} ativa${n>1?"s":""}` : "nenhuma automação ligada"; }
   document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}</button>`).join("");
