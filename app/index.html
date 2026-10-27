@@ -2369,7 +2369,7 @@ function viewAds(c){
     const top = (m?.anuncios||[]).filter(x=>x.gasto>0);
     if(top.length) document.getElementById("adsTop").innerHTML = `<h2>Anúncios que mais gastam — Mercado Livre</h2>
       <div class="card" style="padding:16px 20px;overflow-x:auto"><table class="tabela">
-      <tr><th>Anúncio</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">Vendas</th><th style="text-align:right">Venda</th><th style="text-align:right">Retorno</th></tr>
+      <tr><th style="min-width:230px">Anúncio</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">Vendas</th><th style="text-align:right">Venda</th><th style="text-align:right">Retorno</th></tr>
       ${top.map(x=>`<tr${x.pedidos===0?' style="background:var(--nof)"':""}>
         <td>${x.link?`<a href="${esc(x.link)}" target="_blank" rel="noopener" style="color:var(--t)">${esc(String(x.titulo||x.id).slice(0,120))}</a>`:esc(String(x.titulo||x.id).slice(0,120))}</td>
         <td style="text-align:right">${brl(x.gasto)}</td>
