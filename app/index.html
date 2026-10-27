@@ -408,9 +408,52 @@ function grafCanais(porCanal){
       <text x="${x}" y="${H+29}" fill="#8A8378" font-size="10" text-anchor="middle">${v?brl(v):"não conectada"}</text>`;}).join("")}
   </svg>`;
 }
+// Primeiro acesso: loja nova entra no Dashboard zerado e não sabe por onde
+// começar — é onde o teste grátis se perde. Três passos, cada um com o botão
+// que resolve; some quando tudo está feito ou quando o dono oculta.
+let IA_AUTO = null; // ação que a Gestão IA dispara ao abrir (vinda dos primeiros passos)
+const lsLe = k => { try { return localStorage.getItem(k); } catch(e) { return null; } };
+const lsGrava = (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} };
+function primeirosPassos(d){
+  const id = d.loja?.id || "";
+  if(lsLe("sp_onb_ocultar_"+id)) return "";
+  const conectou = (d.conexoes||[]).some(x=>x.status==="conectada");
+  const checou = !!lsLe("sp_onb_saude_"+id) || (d.acoes||[]).some(a=>/checagem de saúde/i.test(a.descricao||""));
+  const ligou = (d.automacoes||[]).some(a=>a.ligada);
+  if(conectou && checou && ligou) return "";
+  const passo = (n, feito, tit, sub, botao, alvo) => `
+    <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--fina)">
+      <span style="flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;${feito?"background:var(--n);color:#FFF":"border:1.5px solid var(--l2);color:var(--t2)"}">${feito?"✓":n}</span>
+      <div style="flex:1;min-width:0"><b style="font-size:.88rem;${feito?"color:var(--t3);text-decoration:line-through":""}">${tit}</b><div style="font-size:.76rem;color:var(--t3)">${sub}</div></div>
+      ${feito?"":(n>1 && !conectou)?`<span style="flex:none;font-size:.74rem;color:var(--t3)">depois do passo 1</span>`
+        :`<button class="mini onb" data-alvo="${alvo}" style="flex:none;background:var(--acc);border-color:var(--acc);color:#FBFAF7">${botao}</button>`}
+    </div>`;
+  return `<div class="card" id="onbCard" style="margin:20px 0 4px;padding:16px 20px">
+    <div style="display:flex;align-items:baseline;gap:10px">
+      <b class="tit" style="font-size:1rem">Primeiros passos</b>
+      <span style="font-size:.78rem;color:var(--t3)">${[conectou,checou,ligou].filter(Boolean).length} de 3</span>
+      <button class="link" id="onbOcultar" style="margin-left:auto;font-size:.76rem">Ocultar</button>
+    </div>
+    ${passo(1, conectou, "Conecte seu primeiro canal", "Mercado Livre, Shopee ou TikTok Shop — leva 1 minuto e não muda nada na sua loja", "Conectar", "canais")}
+    ${passo(2, checou, "Veja como está sua loja", "a IA confere promoção, frete grátis, avaliações e estoque em cada canal", "Checar agora", "saude")}
+    ${passo(3, ligou, "Ligue o que a IA faz sozinha", "promoção que nunca vence, avisos de devolução e de estoque — você escolhe", "Escolher", "ia")}
+  </div>`;
+}
+function ligarPrimeirosPassos(c, d){
+  const id = d.loja?.id || "";
+  const oc = c.querySelector("#onbOcultar");
+  if(oc) oc.onclick = ()=>{ lsGrava("sp_onb_ocultar_"+id, "1"); c.querySelector("#onbCard")?.remove(); };
+  c.querySelectorAll(".onb").forEach(b=>b.onclick = ()=>{
+    const alvo = b.dataset.alvo;
+    if(alvo==="saude"){ lsGrava("sp_onb_saude_"+id, "1"); IA_AUTO = "saude_loja"; VIEW = "ia"; }
+    else VIEW = alvo;
+    location.hash = VIEW; shell();
+  });
+}
+
 function viewDashboard(c){
   const d = CACHE.painel;
-  c.innerHTML = `
+  c.innerHTML = `${primeirosPassos(d)}
     <div class="cabRel">
       <div style="flex:1 1 260px">
         <h1 style="margin:0">Resultado do período</h1>
@@ -439,6 +482,7 @@ function viewDashboard(c){
         <button class="chip" data-m="prod">Por produto</button>
       </span></h2>
     <div class="card" id="topskus"><p class="vazio">carregando…</p></div>`;
+  ligarPrimeirosPassos(c, d);
   const chipsCanal = ()=>{
     document.getElementById("fCanais").innerHTML = [["todos","Todos"],...Object.keys(NOMES).map(k=>[k,NOMES[k][0]])]
       .map(([v,n])=>`<button class="chip ${FDASH.canal===v?"atv":""}" data-c="${v}">${n}</button>`).join("");
@@ -1593,6 +1637,8 @@ function viewIA(c){
     });
   };
   desenhaAutos();
+  // vindo dos "Primeiros passos": já dispara a ação pedida
+  if(IA_AUTO){ const b = c.querySelector(`.acx[data-acao="${IA_AUTO}"]`); IA_AUTO = null; if(b) b.click(); }
 }
 
 // ── Etiquetas (Visualizador ZPL — idêntico ao do ERPCB) ──
@@ -2294,24 +2340,25 @@ function viewCanais(c){
     const linha = (k)=>{
       const [nome] = NOMES[k];
       const conn = cx[k]; const on = conn?.status === "conectada";
+      const caiu = conn?.status === "expirada"; // a plataforma recusou a autorização: precisa reconectar
       const regras = (REGRAS_CANAL[k]||[]).map(([txt,st])=>`
         <div class="regra"><span style="color:${st==="ok"?"var(--n)":"var(--gold)"}">${st==="ok"?"✓":"…"}</span><span style="flex:1">${txt}</span>
         <small style="color:${st==="ok"?"var(--n)":"var(--gold)"};font-weight:600">${st==="ok"?"Ativado":"Em breve"}</small></div>`).join("");
       return `
-      <div class="card" style="padding:20px 24px;border-left:3px solid ${on?"var(--n)":"var(--l)"};margin-top:-1px">
+      <div class="card" style="padding:20px 24px;border-left:3px solid ${on?"var(--n)":caiu?"var(--no)":"var(--l)"};margin-top:-1px">
         <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
           <div style="flex:1;min-width:230px">
             <div style="display:flex;align-items:center;gap:10px">
               ${ico(k,20)} <b style="font-size:1.02rem">${nome}</b>
-              <span class="pill ${on?"ok":"ruim"}" style="background:${on?"var(--nd)":"var(--p2)"};color:${on?"var(--n)":"var(--t2)"}">${on?"conectada":"não conectada"}</span>
+              ${caiu?`<span class="pill ruim">conexão caiu</span>`:`<span class="pill ${on?"ok":"ruim"}" style="background:${on?"var(--nd)":"var(--p2)"};color:${on?"var(--n)":"var(--t2)"}">${on?"conectada":"não conectada"}</span>`}
             </div>
             <div style="font-size:.82rem;color:var(--t2);margin-top:5px" id="itgSub-${k}">
-              ${on?`conectada em ${(conn.conectada_em||"").slice(0,10)}`:PITCH[k]||""}
+              ${on?`conectada em ${(conn.conectada_em||"").slice(0,10)}`:caiu?`<span style="color:var(--no)">A plataforma pediu uma nova autorização. Clique em Reconectar e autorize de novo — seus dados continuam aqui.</span>`:PITCH[k]||""}
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex:none">
             ${on?`<button class="mini itgSync" data-k="${k}" style="background:var(--n);border-color:var(--n);color:#FFF">Sincronizar</button>`:""}
-            <a class="mini" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#FBFAF7"}" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}" onclick="try{localStorage.setItem('sp_loja','${d.loja.id}')}catch(e){}">${on?"Reconectar":"Conectar"}</a>
+            <a class="mini" style="text-decoration:none;${on?"":"background:var(--acc);border-color:var(--acc);color:#FBFAF7"}" href="${OAUTH}?fluxo=authorize&plataforma=${k}&loja=${d.loja.id}" onclick="try{localStorage.setItem('sp_loja','${d.loja.id}')}catch(e){}">${on||caiu?"Reconectar":"Conectar"}</a>
             ${on?`<button class="mini itgDesc" data-k="${k}" style="color:var(--no);border-color:#A33A2A44">Desconectar</button>`:""}
           </div>
         </div>
