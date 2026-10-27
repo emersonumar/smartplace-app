@@ -257,6 +257,7 @@ async function acaoApi(acao, params){
 async function render(){
   const { data:{ session } } = await sb.auth.getSession();
   if(!session){ document.getElementById("topo").style.display="none"; return telaLogin(); }
+  if(new URLSearchParams(location.search).has("nova_senha")) return telaNovaSenha();
   const { data, error } = await sb.rpc("sp_painel");
   if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
   if(data?.sem_loja){ document.getElementById("topo").style.display="none"; return telaOnboarding(); }
@@ -313,6 +314,7 @@ function telaLogin(criando = new URLSearchParams(location.search).has("criar")){
     <input id="senha" type="password" placeholder="${criando ? "crie uma senha (mínimo 6 letras ou números)" : "senha"}">
     <button class="btn" id="entrar">${criando ? "Começar teste grátis" : "Entrar"}</button>
     <button class="link" id="trocar">${criando ? "Já tem conta? Entrar" : "Não tem conta? Teste grátis por 14 dias"}</button>
+    ${criando ? "" : `<button class="link" id="esqueci">Esqueci minha senha</button>`}
     <div class="erro" id="erro"></div>
   </div>`;
   const erro = m => document.getElementById("erro").textContent =
@@ -320,8 +322,20 @@ function telaLogin(criando = new URLSearchParams(location.search).has("criar")){
     /at least 6/i.test(m) ? "A senha precisa ter pelo menos 6 caracteres." :
     /validate email|invalid format/i.test(m) ? "Esse e-mail não parece válido." :
     /not confirmed/i.test(m) ? "Falta confirmar seu e-mail: clique no link que enviamos pra você e depois entre aqui." :
-    /invalid login/i.test(m) ? "E-mail ou senha errados." : m;
+    /invalid login/i.test(m) ? "E-mail ou senha errados." :
+    /security purposes|rate limit/i.test(m) ? "Muitos pedidos seguidos. Aguarde um minuto e tente de novo." : m;
   document.getElementById("trocar").onclick = ()=> telaLogin(!criando);
+  // link do e-mail (confirmação ou senha nova) aberto depois de vencer ou já usado
+  if(/otp_expired|access_denied/.test(location.hash)){
+    erro("Esse link do e-mail já venceu ou já foi usado. Entre com sua senha ou peça um link novo.");
+    history.replaceState(null, "", location.pathname);
+  }
+  const esq = document.getElementById("esqueci");
+  if(esq) esq.onclick = async()=>{
+    if(!email.value) return erro("Digite seu e-mail no campo acima e clique de novo em \"Esqueci minha senha\".");
+    const { error } = await sb.auth.resetPasswordForEmail(email.value, { redirectTo: "https://smartplaceai.app/app/?nova_senha=1" });
+    erro(error ? error.message : "Pronto: se esse e-mail tiver conta, chega um link pra criar senha nova. Confira também o spam.");
+  };
   document.getElementById("entrar").onclick = async()=>{
     if(criando){
       const { data, error } = await sb.auth.signUp({ email: email.value, password: senha.value,
@@ -332,6 +346,26 @@ function telaLogin(criando = new URLSearchParams(location.search).has("criar")){
     }
     const { error } = await sb.auth.signInWithPassword({ email: email.value, password: senha.value });
     error ? erro(error.message) : render();
+  };
+}
+
+function telaNovaSenha(){
+  document.getElementById("topo").style.display="none";
+  app.innerHTML = `
+  <div class="centro">
+    <div class="logo" style="text-align:center;font-size:1.5rem">Smart<em>Place</em> AI</div>
+    <p style="color:var(--t2);text-align:center;font-size:.9rem">Crie sua senha nova</p>
+    <input id="senhaNova" type="password" placeholder="senha nova (mínimo 6 letras ou números)">
+    <button class="btn" id="salvarSenha">Salvar senha nova</button>
+    <div class="erro" id="erro"></div>
+  </div>`;
+  document.getElementById("salvarSenha").onclick = async()=>{
+    const { error } = await sb.auth.updateUser({ password: document.getElementById("senhaNova").value });
+    if(error) return document.getElementById("erro").textContent =
+      /at least 6/i.test(error.message) ? "A senha precisa ter pelo menos 6 caracteres." :
+      /different from the old/i.test(error.message) ? "A senha nova precisa ser diferente da anterior." : error.message;
+    history.replaceState(null, "", "/app/");
+    render();
   };
 }
 
