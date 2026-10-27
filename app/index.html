@@ -1394,6 +1394,45 @@ function quandoTxt(iso){
   return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})+" "+hm;
 }
 
+// "Testar a IA": o lojista pergunta como se fosse comprador e vê a resposta
+// que ela daria — sem publicar nada. É o que dá confiança pra ligar o automático.
+async function testarIA(){
+  const fundo = document.createElement("div");
+  fundo.style.cssText = "position:fixed;inset:0;background:#050B14CC;backdrop-filter:blur(3px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:36px 16px;overflow-y:auto";
+  fundo.innerHTML = `<div class="card" style="max-width:620px;width:100%;padding:24px 22px">
+    <b class="tit" style="font-size:1.05rem">Testar a IA nas perguntas</b>
+    <p style="font-size:.82rem;color:var(--t2);margin:6px 0 14px">Escreva como se fosse um comprador. Nada é publicado.</p>
+    <label style="display:flex;flex-direction:column;gap:5px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)">Anúncio
+      <select id="tiItem" style="background:var(--p2);border:1px solid var(--l);padding:9px 10px;font-family:var(--sans);font-size:.86rem;text-transform:none;letter-spacing:0;font-weight:400;color:var(--t)"><option>carregando anúncios…</option></select></label>
+    <label style="display:flex;flex-direction:column;gap:5px;margin-top:12px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)">Pergunta do comprador
+      <textarea id="tiTxt" rows="2" placeholder="ex.: tem no tamanho G na cor preta?" style="background:var(--p2);border:1px solid var(--l);padding:9px 10px;font-family:var(--sans);font-size:.88rem;text-transform:none;letter-spacing:0;font-weight:400;color:var(--t)"></textarea></label>
+    <div id="tiRes" style="margin-top:12px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="chip" id="tiFechar">Fechar</button>
+      <button class="chip" id="tiVer" style="background:var(--acc);color:#FBFAF7;border-color:var(--acc);font-weight:700">Ver resposta</button>
+    </div></div>`;
+  document.body.appendChild(fundo);
+  const fechar = ()=>fundo.remove();
+  fundo.onclick = e=>{ if(e.target===fundo) fechar(); };
+  document.getElementById("tiFechar").onclick = fechar;
+  const sel = document.getElementById("tiItem");
+  const r = await acaoApi("produtos_listar", { canal:"mercado_livre", limite:300 });
+  const itens = r.success ? (r.resultado.itens||[]).filter(i=>i.ativo) : [];
+  sel.innerHTML = itens.length ? itens.map(i=>`<option value="${esc(i.id)}">${esc(String(i.titulo).slice(0,80))}</option>`).join("") : `<option value="">nenhum anúncio ativo no Mercado Livre</option>`;
+  document.getElementById("tiVer").onclick = async e=>{
+    const b = e.target, res = document.getElementById("tiRes");
+    b.disabled = true; b.textContent = "Pensando…";
+    const rr = await acaoApi("pergunta_testar", { item_id: sel.value, texto: document.getElementById("tiTxt").value });
+    b.disabled = false; b.textContent = "Ver resposta";
+    if(!rr.success){ res.innerHTML = `<p style="color:var(--no);font-size:.86rem;margin:0">${esc(humano(rr.error))}</p>`; return; }
+    const x = rr.resultado;
+    res.innerHTML = `<div style="border-left:3px solid ${x.publicaria?"var(--n)":"var(--gold)"};background:var(--p2);padding:10px 14px">
+      <div style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${x.publicaria?"var(--n)":"var(--gold)"}">${x.publicaria?"No automático, publicaria":"Iria para você responder"}</div>
+      ${x.resposta?`<p style="font-size:.88rem;margin:6px 0 0;white-space:pre-wrap">${esc(x.resposta)}</p>`:""}
+      ${x.motivo?`<p style="font-size:.78rem;color:var(--t2);margin:6px 0 0">${esc(x.motivo)}</p>`:""}</div>`;
+  };
+}
+
 function viewIA(c){
   const d = CACHE.painel;
   const on = new Set((d.conexoes||[]).filter(x=>x.status==="conectada").map(x=>x.plataforma));
@@ -1449,6 +1488,7 @@ function viewIA(c){
 
       <h2>Precisa de você${pendentes.length?` · ${pendentes.length}`:""}</h2>
       <div class="card feed" id="iaPend">${pendentes.length ? pendentes.map(linhaPend).join("") : "<p class='vazio'>Nada esperando você agora.</p>"}</div>
+      <div id="iaPerg"></div>
 
       ${acoes.length?`<h2>Faça agora</h2>
       <div class="card" style="padding:4px 18px">${acoes.map(a=>`<div style="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--fina)">
@@ -1605,7 +1645,7 @@ function viewIA(c){
     const el = document.getElementById("autoLista"); if(!el) return;
     const r = await acaoApi("automacoes_listar", {});
     if(!r.success){ el.innerHTML = `<p class="vazio">${esc(humano(r.error))}</p>`; return; }
-    const FREQ = { "6h":"a cada 6h", diaria:"todo dia", semanal:"toda semana" };
+    const FREQ = { "15min":"a cada 15 min", "6h":"a cada 6h", diaria:"todo dia", semanal:"toda semana" };
     const grupos = ["Preço e promoções","Atendimento","Anúncios e estoque","Relatórios"];
     const lista = r.resultado.automacoes||[];
     el.innerHTML = grupos.map(g=>{
@@ -1621,9 +1661,26 @@ function viewIA(c){
           </div>
           <div style="font-size:.76rem;color:var(--t3);line-height:1.4;margin-top:2px">${esc(a.explica)}</div>
           ${a.ligada?`<div style="font-size:.72rem;color:var(--t2);margin-top:4px">${FREQ[a.frequencia]||esc(a.frequencia)}${a.ultima_execucao?` · última: ${quandoTxt(a.ultima_execucao)}${a.ultimo_resultado?" — "+esc(String(a.ultimo_resultado).slice(0,90)):""}`:" · roda na próxima rodada"}</div>`:""}
+          ${a.tipo==="responder_perguntas"?`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:.78rem">
+            <span style="color:var(--t2)">Antes de publicar:</span>
+            <select class="modoPerg" style="background:var(--p2);border:1px solid var(--l);padding:4px 8px;font-size:.78rem;font-family:var(--sans)">
+              <option value="aprovar"${(a.config?.modo||"aprovar")==="aprovar"?" selected":""}>eu aprovo cada resposta</option>
+              <option value="automatico"${a.config?.modo==="automatico"?" selected":""}>a IA publica sozinha</option>
+            </select>
+            <button class="mini" id="testarIA">Testar a IA</button></div>`:""}
         </div>
       </div>`).join("");
     }).join("");
+    const modo = el.querySelector(".modoPerg");
+    if(modo) modo.onchange = async()=>{
+      if(modo.value==="automatico" && !confirm("A IA vai publicar sozinha as respostas de que tiver certeza.\n\nAssunto delicado (defeito, troca, atraso) e pergunta sem informação no anúncio continuam vindo para você. Resposta no anúncio é pública e não dá pra apagar.\n\nConfirmar?")){ modo.value = "aprovar"; return; }
+      const a = lista.find(x=>x.tipo==="responder_perguntas");
+      const rr = await acaoApi("automacao_definir", { tipo:"responder_perguntas", ligada: !!a?.ligada, config:{ modo: modo.value } });
+      if(!rr.success) return mostra("Não deu certo", `<p style="font-size:.88rem;color:var(--no);margin:0">${esc(humano(rr.error))}</p>`);
+      desenhaAutos();
+    };
+    const bt = el.querySelector("#testarIA");
+    if(bt) bt.onclick = ()=> testarIA();
     el.querySelectorAll(".tgl").forEach(b=>b.onclick = async()=>{
       const liga = b.dataset.ligada!=="true";
       b.disabled = true;
@@ -1637,6 +1694,38 @@ function viewIA(c){
     });
   };
   desenhaAutos();
+
+  // Perguntas de comprador: o que a IA deixou pronto pra aprovar e o que é com o dono.
+  const desenhaPerguntas = async()=>{
+    const el = document.getElementById("iaPerg"); if(!el || !on.has("mercado_livre")) return;
+    const r = await acaoApi("perguntas_fila", {});
+    const ps = r.success ? (r.resultado.perguntas||[]) : [];
+    if(!ps.length){ el.innerHTML = ""; return; }
+    el.innerHTML = `<h2>Perguntas de clientes · ${ps.length}</h2><div class="card" style="padding:4px 18px">${ps.map(q=>`
+      <div class="perg" data-id="${esc(q.pergunta_id)}" style="padding:14px 0;border-bottom:1px solid var(--fina)">
+        <div style="font-size:.74rem;color:var(--t3)">${q.item_link?`<a href="${esc(q.item_link)}" target="_blank" rel="noopener" style="color:var(--t3)">${esc(String(q.item_titulo||"anúncio").slice(0,70))}</a>`:esc(q.item_titulo||"")} · ${quandoTxt(q.criada_em)}</div>
+        <div style="font-size:.88rem;margin:4px 0 8px"><b>${esc(q.pergunta)}</b></div>
+        ${q.status==="para_voce"?`<div style="font-size:.76rem;color:var(--no);margin-bottom:6px">${esc(q.motivo||"precisa de você")}</div>`:`<div style="font-size:.74rem;color:var(--n);margin-bottom:6px">Resposta pronta — confira e envie</div>`}
+        <textarea class="pergTxt" rows="3" maxlength="2000" placeholder="Escreva a resposta" style="width:100%;box-sizing:border-box;background:var(--p2);border:1px solid var(--l);padding:8px 10px;font-family:var(--sans);font-size:.84rem;resize:vertical">${esc(q.resposta||"")}</textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+          <button class="mini pergDesc">Descartar</button>
+          <button class="mini pergEnv" style="background:var(--acc);color:#FBFAF7;border-color:var(--acc)">Enviar resposta</button>
+        </div>
+        <p class="pergErro" style="color:var(--no);font-size:.8rem;margin:6px 0 0"></p>
+      </div>`).join("")}</div>`;
+    el.querySelectorAll(".perg").forEach(box=>{
+      const decide = async(enviar, botao)=>{
+        botao.disabled = true;
+        const rr = await acaoApi("pergunta_decidir", { pergunta_id: box.dataset.id, enviar, texto: box.querySelector(".pergTxt").value });
+        if(!rr.success){ botao.disabled = false; box.querySelector(".pergErro").textContent = humano(rr.error); return; }
+        box.innerHTML = `<p style="font-size:.84rem;color:${enviar?"var(--n)":"var(--t3)"};margin:0">${enviar?"Resposta publicada no anúncio.":"Descartada."}</p>`;
+      };
+      box.querySelector(".pergEnv").onclick = e=>decide(true, e.target);
+      box.querySelector(".pergDesc").onclick = e=>decide(false, e.target);
+    });
+  };
+  desenhaPerguntas();
+
   // vindo dos "Primeiros passos": já dispara a ação pedida
   if(IA_AUTO){ const b = c.querySelector(`.acx[data-acao="${IA_AUTO}"]`); IA_AUTO = null; if(b) b.click(); }
 }
