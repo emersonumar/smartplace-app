@@ -31,6 +31,8 @@ body{background:var(--g);color:var(--t);font-family:var(--sans);min-height:100vh
 .nav button{background:none;border:0;color:var(--t2);font-family:var(--sans);font-weight:500;font-size:.82rem;padding:11px 10px;cursor:pointer;box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
 .nav button:hover{color:var(--t)}
 .nav button.atv{color:var(--t);font-weight:600;box-shadow:inset 0 -2px 0 var(--n)}
+.nav .qtd{display:inline-block;min-width:17px;margin-left:5px;padding:0 5px;border-radius:99px;background:var(--gold);color:#FBFAF7;font-size:.66rem;font-weight:700;line-height:17px;text-align:center}
+.nav .qtd.urg{background:var(--no)}
 .dir{margin-left:auto;display:flex;align-items:center;gap:14px}
 /* o selo pulsante virou uma linha discreta: a IA se prova trabalhando, não piscando */
 .live{display:flex;align-items:center;gap:7px;color:var(--t2);font-size:.78rem;white-space:nowrap}
@@ -358,23 +360,33 @@ function shell(){
   if(dias !== null) ti.textContent = dias <= 1 ? "teste grátis: último dia" : `teste grátis: faltam ${dias} dias`;
   const aa = document.getElementById("autosAtivas");
   if(aa){ const n = (d.automacoes||[]).filter(a=>a.ligada).length; aa.textContent = n ? `${n} automaç${n>1?"ões":"ão"} ativa${n>1?"s":""}` : "nenhuma automação ligada"; }
-  document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}</button>`).join("");
+  document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}${v==="ia"?`<span class="qtd" id="qtdAvisos" style="display:none"></span>`:""}</button>`).join("");
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); });
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
-  const jaVi = new Set();
-  const alertas = (d.alertas||[])
-    .filter(a=>{ const k=(a.mensagem||"").trim(); if(!k||jaVi.has(k)) return false; jaVi.add(k); return true; })
-    .map(a=>`<div class="alerta" data-al="${a.id}" style="display:flex;gap:10px;align-items:flex-start"><span style="flex:1"><b style="color:var(--t)">${a.severidade==="urgente"||a.severidade==="critico"?"Urgente":"Atenção"}</b> ${esc(a.mensagem)}</span><button class="mini feitoTopo" data-id="${a.id}" style="flex:none">Feito</button></div>`).join("");
+  marcaAvisos();
+  const av = avisosAbertos(d), urg = av.filter(avisoUrgente).length;
   const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira, produtos:viewProdutos, fiscal:viewFiscal };
-  app.innerHTML = (VIEW==="ia" ? "" : alertas) + `<div id="conteudo"></div>`;
-  app.querySelectorAll(".feitoTopo").forEach(b=>b.onclick = async()=>{
-    b.disabled = true;
-    const r = await acaoApi("alerta_resolver", { id:Number(b.dataset.id) });
-    if(!r.success){ b.disabled = false; return; }
-    d.alertas = (d.alertas||[]).filter(a=>String(a.id)!==b.dataset.id);
-    b.closest("[data-al]").remove();
-  });
+  // só o Dashboard lembra, numa linha; a lista mora na Gestão IA
+  app.innerHTML = (VIEW==="dashboard" && av.length
+    ? `<div class="alerta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap${urg?";border-left-color:var(--no)":""}"><span style="flex:1"><b style="color:var(--t)">${av.length} aviso${av.length>1?"s":""} esperando você</b>${urg?` · ${urg} urgente${urg>1?"s":""}`:""}</span><button class="mini" id="verAvisos" style="flex:none">Ver na Gestão IA</button></div>`
+    : "") + `<div id="conteudo"></div>`;
+  const va = document.getElementById("verAvisos");
+  if(va) va.onclick = ()=>{ VIEW="ia"; location.hash=VIEW; shell(); };
   (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
+}
+
+// Avisos abertos sem repetição de texto; o número aparece no menu da Gestão IA.
+function avisosAbertos(d){
+  const jaVi = new Set();
+  return (d.alertas||[]).filter(a=>{ const k=(a.mensagem||"").trim(); if(!k||jaVi.has(k)) return false; jaVi.add(k); return true; });
+}
+function avisoUrgente(a){ return a.severidade==="urgente" || a.severidade==="critico"; }
+function marcaAvisos(){
+  const el = document.getElementById("qtdAvisos"); if(!el || !CACHE.painel) return;
+  const av = avisosAbertos(CACHE.painel);
+  el.style.display = av.length ? "" : "none";
+  el.textContent = av.length;
+  el.className = "qtd" + (av.some(avisoUrgente) ? " urg" : "");
 }
 
 async function dados(force){
@@ -1457,8 +1469,7 @@ function viewIA(c){
     { acao:"canibalizacao", tit:"Anúncios repetidos", sub:"anúncio seu competindo com anúncio seu", pode:on.size>0 },
   ].filter(a=>a.pode);
 
-  const jaVi = new Set();
-  const pendentes = (d.alertas||[]).filter(a=>{ const k=(a.mensagem||"").trim(); if(!k||jaVi.has(k)) return false; jaVi.add(k); return true; });
+  const pendentes = avisosAbertos(d);
   const selo = a => (a.severidade==="critico"||a.severidade==="urgente")
     ? `<span class="pill ruim">Urgente</span>` : a.severidade==="info"
     ? `<span class="pill" style="color:var(--t2);background:var(--p2)">Dica</span>`
@@ -1515,6 +1526,7 @@ function viewIA(c){
     if(!r.success){ b.disabled = false; return; }
     d.alertas = (d.alertas||[]).filter(a=>String(a.id)!==b.dataset.id);
     b.closest("[data-al]").remove();
+    marcaAvisos();
     if(!document.querySelector("#iaPend [data-al]")) document.getElementById("iaPend").innerHTML = "<p class='vazio'>Nada esperando você agora.</p>";
   });
 
