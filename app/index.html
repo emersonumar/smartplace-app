@@ -845,9 +845,226 @@ async function viewCarteira(c){
   c.querySelectorAll(".trocar").forEach(b=>{ b.onclick = ()=>trocarLoja(b.dataset.loja); });
 }
 
+// Produtos tem duas faces: os anúncios como estão nos canais (e o que falta
+// em cada um) e o cadastro por SKU, que é de onde sai custo e dado fiscal.
+let PROD_ABA = "anuncios";
+async function viewProdutos(c){
+  c.innerHTML = `
+    <div style="display:flex;gap:8px;margin:22px 0 4px;flex-wrap:wrap">
+      <button class="chip ${PROD_ABA==="anuncios"?"atv":""}" data-aba="anuncios">Anúncios nos canais</button>
+      <button class="chip ${PROD_ABA==="cadastro"?"atv":""}" data-aba="cadastro">Cadastro por SKU</button>
+    </div>
+    <div id="prodConteudo"></div>`;
+  c.querySelectorAll("[data-aba]").forEach(b=>b.onclick=()=>{ PROD_ABA=b.dataset.aba; viewProdutos(c); });
+  const alvo = document.getElementById("prodConteudo");
+  PROD_ABA==="anuncios" ? viewAnuncios(alvo) : viewCadastroSku(alvo);
+}
+
+let ANUNCIOS_CANAL = null;
+async function viewAnuncios(c){
+  c.innerHTML = `<p class="vazio">Carregando os anúncios dos seus canais…</p>`;
+  const r = await acaoApi("anuncios_canais", {});
+  if(!r.success){ c.innerHTML = `<p class="vazio">${esc(humano(r.error))}</p>`; return; }
+  const porCanal = r.resultado.canais || {};
+  const canais = Object.keys(porCanal);
+  if(!canais.length){ c.innerHTML = `<p class="vazio">Conecte um canal em Integrações para ver seus anúncios aqui.</p>`; return; }
+  if(!ANUNCIOS_CANAL || !canais.includes(ANUNCIOS_CANAL)) ANUNCIOS_CANAL = canais[0];
+  const outros = canais.filter(x=>x!==ANUNCIOS_CANAL);
+  const nome = k => NOMES[k] ? NOMES[k][0] : k;
+  let SO_FALTA = false, BUSCA = "";
+  const todos = porCanal[ANUNCIOS_CANAL] || [];
+  const faltam = todos.filter(a=>outros.some(o=>!(a.tambem_em||[]).includes(o))).length;
+
+  c.innerHTML = `
+    <div class="cabRel">
+      <div style="flex:1 1 300px">
+        <h1 style="margin:0">Seus anúncios</h1>
+        <div class="sub-h1">${outros.length
+          ? "Copie um anúncio para outro canal: a IA monta a ficha, o canal confere e você aprova antes de publicar."
+          : "Conecte outro canal em Integrações para copiar seus anúncios para ele."}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin:16px 0 0;flex-wrap:wrap">
+      ${canais.map(k=>`<button class="chip ${k===ANUNCIOS_CANAL?"atv":""}" data-canal="${k}" style="display:inline-flex;align-items:center;gap:7px">${ico(k,16)} ${esc(nome(k))} · ${(porCanal[k]||[]).length}</button>`).join("")}
+    </div>
+    <div class="card" style="margin-top:12px;padding:16px 20px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input class="busca" id="aBusca" placeholder="Buscar por título ou SKU" style="flex:1;min-width:180px">
+        ${outros.length?`<button class="chip" id="aFalta">Só os que faltam em outro canal · ${faltam}</button>`:""}
+      </div>
+      <div style="overflow-x:auto"><table class="tabela"><thead><tr>
+        <th></th><th>Anúncio</th><th style="text-align:right">Preço</th><th style="text-align:right">Estoque</th>
+        <th>Também está em</th><th></th>
+      </tr></thead><tbody id="aCorpo"></tbody></table></div>
+      ${(r.resultado.canais_com_falha||[]).length?`<p style="font-size:.8rem;color:var(--no);margin:10px 0 0">Não consegui ler: ${r.resultado.canais_com_falha.map(nome).join(", ")}.</p>`:""}
+    </div>`;
+
+  const linha = a => {
+    const em = a.tambem_em||[];
+    const copiar = outros.map(o=>`<button class="mini cp" data-id="${esc(a.id)}" data-dest="${o}" style="white-space:nowrap;${em.includes(o)?"":"border-color:var(--acc)"}">Copiar p/ ${esc(nome(o))}</button>`).join(" ");
+    return `<tr>
+      <td style="width:46px">${a.foto?`<img src="${esc(a.foto)}" alt="" style="width:40px;height:40px;object-fit:cover;display:block">`:""}</td>
+      <td><b style="font-size:.84rem">${esc(String(a.titulo||"").slice(0,70))}</b>
+        <div style="font-size:.72rem;color:var(--t3)">${a.sku?"SKU "+esc(a.sku)+" · ":""}${a.ativo?"ativo":"pausado"}</div></td>
+      <td style="text-align:right">${a.preco?brl(a.preco):(a.tem_variacao?"<span style='color:var(--t3);font-size:.78rem'>por variação</span>":"—")}</td>
+      <td style="text-align:right">${a.estoque??"—"}</td>
+      <td>${em.length?em.map(o=>`<span class="pill ok">${esc(nome(o))}</span>`).join(" "):(outros.length?`<span style="font-size:.76rem;color:var(--no)">só aqui</span>`:"")}</td>
+      <td style="text-align:right"><div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">${copiar}</div></td>
+    </tr>`;
+  };
+  const desenhar = ()=>{
+    const lista = todos.filter(a=>(!SO_FALTA || outros.some(o=>!(a.tambem_em||[]).includes(o)))
+      && (!BUSCA || String(a.titulo||"").toLowerCase().includes(BUSCA) || String(a.sku||"").toLowerCase().includes(BUSCA)));
+    document.getElementById("aCorpo").innerHTML = lista.length ? lista.map(linha).join("")
+      : `<tr><td colspan="6"><p class="vazio" style="margin:0">${todos.length?"Nada com esse filtro.":"Nenhum anúncio neste canal."}</p></td></tr>`;
+    c.querySelectorAll(".cp").forEach(b=>b.onclick=()=>{
+      const a = todos.find(x=>x.id===b.dataset.id);
+      copiarAnuncio(ANUNCIOS_CANAL, a, b.dataset.dest, ()=>viewAnuncios(c));
+    });
+  };
+  c.querySelectorAll("[data-canal]").forEach(b=>b.onclick=()=>{ ANUNCIOS_CANAL=b.dataset.canal; viewAnuncios(c); });
+  document.getElementById("aBusca").oninput = e=>{ BUSCA=e.target.value.trim().toLowerCase(); desenhar(); };
+  const bf = document.getElementById("aFalta");
+  if(bf) bf.onclick = ()=>{ SO_FALTA=!SO_FALTA; bf.classList.toggle("atv",SO_FALTA); desenhar(); };
+  desenhar();
+}
+
+// Cópia de anúncio entre canais: prévia montada no servidor (ficha + conferência
+// do próprio canal), o dono ajusta o que quiser e só então publica.
+function copiarAnuncio(origem, anuncio, destino, depois){
+  const nome = k => NOMES[k] ? NOMES[k][0] : k;
+  const LIM = { mercado_livre:60, shopee:120, tiktok:255 };
+  const fundo = document.createElement("div");
+  fundo.style.cssText = "position:fixed;inset:0;background:#050B14CC;backdrop-filter:blur(3px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:36px 16px;overflow-y:auto";
+  fundo.innerHTML = `<div class="card" style="max-width:760px;width:100%;padding:24px 22px"></div>`;
+  document.body.appendChild(fundo);
+  const caixa = fundo.firstElementChild;
+  const fechar = ()=>fundo.remove();
+  fundo.onclick = e=>{ if(e.target===fundo && !caixa.dataset.ocupado) fechar(); };
+  const topo = `<div style="display:flex;gap:10px;align-items:center">${ico(destino,20)}
+      <b class="tit" style="font-size:1.05rem">Copiar para ${esc(nome(destino))}</b></div>
+    <div style="font-size:.8rem;color:var(--t3);margin:4px 0 0">De ${esc(nome(origem))}: ${esc(String(anuncio.titulo||"").slice(0,90))}</div>`;
+
+  // A prévia leva de 20 s a 1 min: dizer em que passo está segura o cliente.
+  caixa.dataset.ocupado = "1";
+  const passos = ["Lendo o anúncio, as variações e as fotos…", "Escolhendo a categoria no "+nome(destino)+"…", "Preenchendo as características com a IA…", "Conferindo a ficha com o "+nome(destino)+"…"];
+  let ip = 0;
+  caixa.innerHTML = topo + `<p class="vazio" id="cpPasso" style="margin:22px 0 6px">${passos[0]}</p><p style="font-size:.76rem;color:var(--t3);margin:0">Pode levar até 1 minuto.</p>`;
+  const tique = setInterval(()=>{ ip = Math.min(ip+1, passos.length-1); const el = document.getElementById("cpPasso"); if(el) el.textContent = passos[ip]; }, 9000);
+
+  let TABELA = null; // imagem da tabela de medidas escolhida pelo dono (data URL)
+  acaoApi("copiar_preparar", { origem, item_id: anuncio.id, destino }).then(r=>{
+    clearInterval(tique); delete caixa.dataset.ocupado;
+    if(!r.success){
+      caixa.innerHTML = topo + `<p style="color:var(--no);font-size:.9rem;margin:18px 0">${esc(humano(r.error))}</p>
+        <div style="display:flex;justify-content:flex-end"><button class="chip" id="cpFechar">Fechar</button></div>`;
+      document.getElementById("cpFechar").onclick = fechar; return;
+    }
+    desenhaPrevia(r.resultado);
+  });
+
+  function desenhaPrevia(p){
+    const vs = p.variacoes || [];
+    const pedeGtin = (p.problemas||[]).some(x=>/código de barras/i.test(x)) || vs.some(v=>v.gtin);
+    const pedeTabela = (p.problemas||[]).some(x=>/tabela de medidas/i.test(x)) || TABELA;
+    const pedeCategoria = (p.problemas||[]).some(x=>/categoria sugerida/i.test(x));
+    const rotulo = v => Object.values(v.opcoes||{}).join(" · ") || "Único";
+    const campoNum = (cls, i, val, passo) => `<input class="${cls}" data-i="${i}" type="number" step="${passo}" value="${esc(String(val??""))}" style="width:96px;background:var(--p2);border:1px solid var(--l);padding:6px 8px;font-family:var(--mono);font-size:.82rem;text-align:right">`;
+    caixa.innerHTML = topo + `
+      <div style="display:flex;gap:6px;margin:16px 0 0;overflow-x:auto">
+        ${(p.fotos||[]).map(u=>`<img src="${esc(u)}" alt="" style="width:64px;height:64px;object-fit:cover;flex:none;border:1px solid var(--l2)">`).join("")}
+        ${p.total_fotos>(p.fotos||[]).length?`<div style="width:64px;height:64px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--l2);font-size:.8rem;color:var(--t2)">+${p.total_fotos-(p.fotos||[]).length}</div>`:""}
+      </div>
+      <label style="display:flex;flex-direction:column;gap:5px;margin:16px 0 0">
+        <span style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)">Título no ${esc(nome(destino))} <span id="cpConta" style="font-weight:500"></span></span>
+        <input id="cpTitulo" maxlength="${LIM[destino]||255}" value="${esc(p.titulo||"")}" style="background:var(--p2);border:1px solid var(--l);padding:10px 12px;font-size:.9rem;font-family:var(--sans)">
+      </label>
+      <div style="font-size:.82rem;color:var(--t2);margin:10px 0 0">Categoria: <b>${esc(p.categoria||"—")}</b></div>
+      <div style="overflow-x:auto;margin:14px 0 0"><table class="tabela"><thead><tr>
+        <th>Variação</th><th>SKU</th><th style="text-align:right">Preço</th><th style="text-align:right">Estoque</th>${pedeGtin?`<th>Código de barras</th>`:""}
+      </tr></thead><tbody>${vs.map((v,i)=>`<tr>
+        <td>${esc(rotulo(v))}</td><td style="font-size:.78rem;color:var(--t2)">${esc(v.sku||"—")}</td>
+        <td style="text-align:right">${campoNum("cpPreco",i,v.preco,"0.01")}</td>
+        <td style="text-align:right">${campoNum("cpEstoque",i,v.estoque,"1")}</td>
+        ${pedeGtin?`<td><input class="cpGtin" data-i="${i}" value="${esc(v.gtin||"")}" placeholder="EAN de 13 dígitos" style="width:150px;background:var(--p2);border:1px solid var(--l);padding:6px 8px;font-family:var(--mono);font-size:.82rem"></td>`:""}
+      </tr>`).join("")}</tbody></table></div>
+      ${(p.caracteristicas||[]).length?`<div style="margin:14px 0 0">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-bottom:6px">Características preenchidas pela IA</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 16px;font-size:.8rem">
+          ${p.caracteristicas.map(x=>`<div><span style="color:var(--t3)">${esc(x.nome)}:</span> ${esc(x.valor)}</div>`).join("")}
+        </div></div>`:""}
+      ${p.medidas_estimadas?`<p style="font-size:.78rem;color:var(--t3);margin:10px 0 0">A origem não tem medida de embalagem: usei 20×15×5 cm. Ajuste depois no canal se for diferente.</p>`:""}
+      <div id="cpProblemas"></div>
+      ${pedeTabela?`<label style="display:flex;flex-direction:column;gap:5px;margin:12px 0 0">
+        <span style="font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3)">Imagem da tabela de medidas</span>
+        <input id="cpTabela" type="file" accept="image/*" style="font-size:.82rem">
+        ${TABELA?`<span style="font-size:.76rem;color:var(--n)">Imagem escolhida.</span>`:""}
+      </label>`:""}
+      ${pedeCategoria?`<label style="display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:.84rem"><input id="cpAceita" type="checkbox"> A categoria está certa: publicar mesmo assim</label>`:""}
+      ${destino==="shopee"?`<label style="display:flex;gap:8px;align-items:center;margin:12px 0 0;font-size:.84rem"><input id="cpOculto" type="checkbox"> Publicar oculto (você revisa no Seller Center antes de liberar)</label>`:""}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin:20px 0 0;flex-wrap:wrap">
+        <button class="chip" id="cpCancelar">Cancelar</button>
+        <button class="chip" id="cpConferir" style="display:none">Conferir de novo</button>
+        <button class="chip" id="cpPublicar" style="background:var(--acc);color:#FBFAF7;border-color:var(--acc);font-weight:700">Publicar no ${esc(nome(destino))}</button>
+      </div>
+      <p id="cpErro" style="color:var(--no);font-size:.85rem;margin:10px 0 0"></p>`;
+
+    const tit = document.getElementById("cpTitulo"), conta = document.getElementById("cpConta");
+    const atualizaConta = ()=>{ conta.textContent = `(${tit.value.length}/${LIM[destino]||255})`; };
+    tit.oninput = atualizaConta; atualizaConta();
+    const ft = document.getElementById("cpTabela");
+    if(ft) ft.onchange = ()=>{ const f = ft.files[0]; if(!f) return; const rd = new FileReader(); rd.onload = ()=>{ TABELA = rd.result; }; rd.readAsDataURL(f); };
+    document.getElementById("cpCancelar").onclick = fechar;
+
+    const mostraProblemas = (pronto, problemas)=>{
+      document.getElementById("cpProblemas").innerHTML = pronto ? `<p style="font-size:.84rem;color:var(--n);margin:14px 0 0"><b>Pronto para publicar.</b> ${esc(p.confirme||"")}</p>`
+        : `<div style="border-left:3px solid var(--no);background:var(--nof);padding:10px 14px;margin:14px 0 0;font-size:.84rem">
+            <b>Antes de publicar, falta:</b><ul style="margin:6px 0 0;padding-left:18px">${problemas.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`;
+      const pub = document.getElementById("cpPublicar");
+      pub.disabled = !pronto; pub.style.opacity = pronto ? "" : ".45";
+      document.getElementById("cpConferir").style.display = pronto ? "none" : "";
+    };
+    mostraProblemas(p.pronto, p.problemas||[]);
+
+    const ajustes = ()=>{
+      const pega = cls => [...caixa.querySelectorAll("."+cls)].map(x=>x.value);
+      const a = { titulo: tit.value.trim(), precos: pega("cpPreco"), estoques: pega("cpEstoque") };
+      if(caixa.querySelector(".cpGtin")) a.gtins = pega("cpGtin");
+      if(TABELA) a.tabela_medidas = TABELA;
+      if(document.getElementById("cpAceita")?.checked) a.aceitar_categoria = true;
+      return a;
+    };
+    const ocupa = (botao, texto, fn)=>async()=>{
+      const erro = document.getElementById("cpErro"); erro.textContent = "";
+      const antes = botao.textContent; botao.disabled = true; botao.textContent = texto; caixa.dataset.ocupado = "1";
+      try { await fn(); } finally { delete caixa.dataset.ocupado; if(document.body.contains(botao)){ botao.disabled = false; botao.textContent = antes; } }
+    };
+    const bConf = document.getElementById("cpConferir");
+    bConf.onclick = ocupa(bConf, "Conferindo…", async()=>{
+      const rr = await acaoApi("copiar_conferir", { copia_id: p.copia_id, ajustes: ajustes() });
+      if(!rr.success) return document.getElementById("cpErro").textContent = humano(rr.error);
+      p.problemas = rr.resultado.problemas; p.pronto = rr.resultado.pronto;
+      mostraProblemas(rr.resultado.pronto, rr.resultado.problemas||[]);
+    });
+    const bPub = document.getElementById("cpPublicar");
+    bPub.onclick = ocupa(bPub, "Publicando…", async()=>{
+      const rr = await acaoApi("copiar_publicar", { copia_id: p.copia_id, ajustes: ajustes(), oculto: !!document.getElementById("cpOculto")?.checked });
+      if(!rr.success) return document.getElementById("cpErro").textContent = humano(rr.error);
+      const x = rr.resultado;
+      const links = (x.anuncios||[]).filter(a=>a.link).map(a=>`<li><a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(Object.values(a.opcoes||{}).join(" · ") || a.id)}</a></li>`).join("")
+        || (x.link?`<li><a href="${esc(x.link)}" target="_blank" rel="noopener">Ver o anúncio</a></li>`:"");
+      caixa.innerHTML = topo + `<p style="font-size:.95rem;margin:20px 0 6px"><b>Publicado no ${esc(nome(destino))}.</b>${x.oculto?" Está oculto: libere pelo Seller Center quando quiser.":""}</p>
+        ${links?`<ul style="font-size:.85rem;margin:6px 0;padding-left:18px">${links}</ul>`:`<p style="font-size:.85rem;color:var(--t2)">Código: ${esc((x.ids||[]).join(", "))}</p>`}
+        ${x.aviso?`<p style="font-size:.8rem;color:var(--t3);margin:8px 0 0">${esc(x.aviso)}</p>`:""}
+        <div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="chip" id="cpFim">Fechar</button></div>`;
+      document.getElementById("cpFim").onclick = ()=>{ fechar(); if(depois) depois(); };
+    });
+  }
+}
+
 // Produtos: um cadastro por SKU. É daqui que sai o custo (para a margem) e o
 // NCM (para a nota). Sem ele o cliente precisaria de um ERP só para isso.
-async function viewProdutos(c){
+async function viewCadastroSku(c){
   c.innerHTML = `<h1>Produtos</h1><div class="sub-h1">Um cadastro por SKU — o custo alimenta a margem, o NCM alimenta a nota</div><p class="vazio">Carregando…</p>`;
   const r = await acaoApi("produtos_cadastro", {});
   if(!r.success){ c.innerHTML = `<h1>Produtos</h1><p class="vazio">${esc(r.error)}</p>`; return; }
@@ -936,7 +1153,7 @@ async function viewProdutos(c){
   const abrirProduto = p => formulario(p?`Editar ${p.sku}`:"Novo produto", CAMPOS_PROD, p, async dados=>{
     const rr = await acaoApi("produto_salvar", dados);
     if(!rr.success) return { erro: rr.error };
-    viewProdutos(c);
+    viewCadastroSku(c);
   });
 
   document.getElementById("novoProd").onclick = ()=>abrirProduto(null);
@@ -951,7 +1168,7 @@ async function viewProdutos(c){
       if(!confirm(`${pv.importaveis??0} produto(s) prontos pra importar (${pv.sem_custo??0} sem custo, ${pv.sem_sku??0} sem SKU serão ignorados). Importar?`)) return;
       const rc = await acaoApi("importar_catalogo", { ...dados, confirmar:true });
       if(!rc.success) return { erro: humano(rc.error) };
-      viewProdutos(c);
+      viewCadastroSku(c);
     });
   desenhar();
   document.getElementById("casarSku").onclick = async()=>{
@@ -963,7 +1180,7 @@ async function viewProdutos(c){
     const rr = await acaoApi("vincular_por_sku", { confirmar:true });
     if(!rr.success) return alert("Ops: "+rr.error);
     alert(`${rr.resultado.vinculados} anúncio(s) ligados `);
-    viewProdutos(c);
+    viewCadastroSku(c);
   };
 }
 
