@@ -606,8 +606,10 @@ async function carregarLucroVendas(){
   if(!document.getElementById("lucroVendas")) return;
   if(!res.success) return el.innerHTML = `<p class="vazio">${esc(humano(res.error))}</p>`;
   const R = res.resultado, t = R.totais;
+  desenhaConta(R);
   if(!R.linhas.length) return el.innerHTML = `<p class="vazio">Nenhuma venda no período.</p>`;
   const lucroCompleto = t.sem_custo === 0;
+  const semVenda = lucroCompleto && R.config?.imposto_pct!=null ? Number(R.ads.sem_venda)||0 : 0;
   const pct = v => v==null ? "—" : v.toFixed(1).replace(".",",")+"%";
   const menos = v => v ? "&minus; "+brl(v) : "—";
   const desenha = ()=>{
@@ -633,6 +635,8 @@ async function carregarLucroVendas(){
           <td style="text-align:right">${pct(l.margem_pct)}</td>
           <td><span class="pill ${l.situacao==="conciliado"?"ok":"est"}" title="${l.situacao==="conciliado"?"Taxa e frete como o marketplace cobrou":"Calculado pela tabela do canal: pode mudar"}">${l.situacao}</span></td></tr>`; }).join("")}
         <tr style="font-weight:600"><td>Total · ${t.pedidos} venda${t.pedidos>1?"s":""}</td><td style="text-align:right">${brl(t.receita)}</td><td style="text-align:right">${menos(t.taxa)}</td><td style="text-align:right">${menos(t.frete)}</td><td style="text-align:right">${menos(t.ads)}</td><td style="text-align:right">${menos(t.imposto)}</td><td style="text-align:right">${lucroCompleto?menos(t.custo):"—"}</td><td style="text-align:right">${brl(lucroCompleto?t.lucro:t.sobra)}${lucroCompleto?"":'<br><span style="font-size:.68rem;font-weight:400;color:var(--t3)">antes do custo</span>'}</td><td></td><td></td></tr>
+        ${semVenda>0?`<tr><td colspan="7" style="color:var(--t2)">Ads do ML em anúncios que não venderam</td><td style="text-align:right">${menos(semVenda)}</td><td></td><td></td></tr>
+        <tr style="font-weight:600"><td colspan="7">Sobra do período</td><td style="text-align:right">${brl(t.lucro - semVenda)}</td><td></td><td></td></tr>`:""}
       </table>
       ${R.linhas.length>LUCRO_LINHAS?`<button class="mini" id="lucroMais" style="margin-top:10px">Ver todas as ${R.linhas.length}</button>`:""}
       <div style="font-size:.74rem;color:var(--t3);margin-top:10px"><b>Conciliado</b>: taxa e frete como o marketplace cobrou. <b>Estimado</b>: pela tabela do canal, ainda pode mudar. ${esc(R.ads.nota)}</div>`;
@@ -642,7 +646,65 @@ async function carregarLucroVendas(){
   desenha();
 }
 
+// A conta do período (do faturamento à sobra) sai do mesmo cálculo do lucro
+// venda a venda, pros dois baterem centavo a centavo.
+function desenhaConta(R){
+  const fs = document.getElementById("finstrip"); if(!fs) return;
+  // Cada passo é uma subtração explícita. Onde falta dado, a célula diz o que
+  // fazer em vez de mostrar um traço mudo.
+  const passo = (rot,valor,obs,cls)=>`<div class="${cls||""}">
+    <div class="r">${rot}</div>
+    ${valor!=null?`<div class="v">${valor}</div>`:""}
+    ${obs?`<div class="${valor!=null?"obs":"falta"}">${obs}</div>`:""}
+  </div>`;
+  const t = R.totais, cfg = R.config||{};
+  const bruto = Number(t.receita)||0;
+  const doBruto = v => bruto ? String((v/bruto*100).toFixed(1)).replace(".",",")+"% do bruto" : "";
+  const temCusto = t.pedidos ? t.sem_custo===0 : cfg.custo_pct!=null;
+  const temImposto = cfg.imposto_pct!=null;
+  const completo = temCusto && temImposto;
+  // Ads do ML no período inteiro, inclusive o gasto em anúncio que não vendeu
+  const ads = R.ads.total_ml;
+  const sobra = completo ? Number(t.lucro) - (Number(R.ads.sem_venda)||0)
+                         : bruto - Number(t.taxa) - Number(t.frete) - (ads||0);
+  const pctSobra = bruto ? Math.round(sobra/bruto*100) : 0;
+
+  fs.innerHTML =
+    passo("Faturamento", brl(bruto), "tudo que entrou no período")
+  + passo("Comissão do canal", "&minus; "+brl(t.taxa), doBruto(t.taxa))
+  + passo("Frete que você bancou", "&minus; "+brl(t.frete), "")
+  + passo("Custo dos produtos",
+          temCusto ? "&minus; "+brl(t.custo) : null,
+          temCusto ? doBruto(t.custo) : "falta cadastrar")
+  + passo("Imposto",
+          temImposto ? "&minus; "+brl(t.imposto) : null,
+          temImposto ? doBruto(t.imposto) : "falta configurar")
+  + passo("Anúncios (Ads)",
+          ads!=null ? "&minus; "+brl(ads) : null,
+          ads!=null ? "Mercado Livre · "+doBruto(ads) : "sem gasto no ML no período")
+  + passo(completo ? "Sobra" : "Sobra parcial", brl(sobra),
+          completo ? pctSobra+"% do faturamento"
+                   : "antes do custo e do imposto &mdash; "+pctSobra+"% do bruto",
+          "fim")
+  + `<div style="grid-column:1/-1;border-left:0;border-top:1px solid var(--l);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:.78rem;color:var(--t2)">${completo
+        ? "A conta está fechada: custo e imposto configurados."
+        : "Enquanto faltar custo ou imposto, este resultado é parcial &mdash; ele ainda vai diminuir."}</span>
+      <button class="mini" id="cfgFin" style="margin-left:auto">${completo?"Alterar custo e imposto":"Configurar custo e imposto"}</button>
+    </div>`;
+  document.getElementById("cfgFin").onclick = async()=>{
+    const c = prompt("% de CUSTO sobre o faturamento (ex.: 27.2):", cfg.custo_pct??"");
+    if(c===null) return;
+    const i = prompt("% de IMPOSTO (ex.: 8.63):", cfg.imposto_pct??"");
+    if(i===null) return;
+    await acaoApi("config_loja",{ set:{ custo_pct:+String(c).replace(",","."), imposto_pct:+String(i).replace(",",".") } });
+    carregarDash();
+  };
+}
+
 async function carregarDash(){
+  const fsCarr = document.getElementById("finstrip");
+  if(fsCarr) fsCarr.innerHTML = "";
   carregarLucroVendas();
   const res = await acaoApi("dados_pedidos", FDASH);
   const r = res.success ? res.resultado : { erro: res.error };
@@ -682,60 +744,6 @@ async function carregarDash(){
         if(bm) bm.onclick = async()=>{ const v = prompt("Meta de faturamento do mês (R$):","30000"); if(!v) return;
           await acaoApi("config_loja",{ set:{ meta_mes:+String(v).replace(/[^\d.,]/g,"").replace(",",".") } }); carregarDash(); };
       }
-    }
-    const fs = document.getElementById("finstrip");
-    if(fs){
-      // Cada passo é uma subtração explícita. Onde falta dado, a célula diz o que
-      // fazer em vez de mostrar um traço mudo.
-      const passo = (rot,valor,obs,cls)=>`<div class="${cls||""}">
-        <div class="r">${rot}</div>
-        ${valor!=null?`<div class="v">${valor}</div>`:""}
-        ${obs?`<div class="${valor!=null?"obs":"falta"}">${obs}</div>`:""}
-      </div>`;
-
-      const bruto = Number(r.dias30.total)||0;
-      const comissao = Number(f.taxa)||0;
-      const frete = Number(f.frete)||0;
-      const temCusto = f.custo!=null, temImposto = f.impostos!=null;
-      const completo = temCusto && temImposto && f.contribuicao!=null;
-      // Ads lido no MESMO período (só o ML libera o gasto)
-      const ads = r.lucro_real?.gasto_ads!=null ? Number(r.lucro_real.gasto_ads) : null;
-      const sobra = (completo ? Number(f.contribuicao)
-                              : bruto - comissao - frete) - (ads||0);
-      const pctSobra = bruto ? Math.round(sobra/bruto*100) : 0;
-
-      fs.innerHTML =
-        passo("Faturamento", brl(bruto), "tudo que entrou no período")
-      + passo("Comissão do canal", "&minus; "+brl(comissao),
-              (f.taxa_pct!=null?String(f.taxa_pct).replace(".",",")+"% do bruto":""))
-      + passo("Frete que você bancou", "&minus; "+brl(frete), "")
-      + passo("Custo dos produtos",
-              temCusto ? "&minus; "+brl(f.custo) : null,
-              temCusto ? (f.custo_pct!=null?f.custo_pct+"% do bruto":"") : "falta cadastrar")
-      + passo("Imposto",
-              temImposto ? "&minus; "+brl(f.impostos) : null,
-              temImposto ? (f.imposto_pct!=null?f.imposto_pct+"% do bruto":"") : "falta configurar")
-      + passo("Anúncios (Ads)",
-              ads!=null ? "&minus; "+brl(ads) : null,
-              ads!=null ? "Mercado Livre"+(bruto?" · "+String((ads/bruto*100).toFixed(1)).replace(".",",")+"% do bruto":"") : "sem gasto no ML no período")
-      + passo(completo ? "Sobra" : "Sobra parcial", brl(sobra),
-              completo ? pctSobra+"% do faturamento"
-                       : "antes do custo e do imposto &mdash; "+pctSobra+"% do bruto",
-              "fim")
-      + `<div style="grid-column:1/-1;border-left:0;border-top:1px solid var(--l);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-          <span style="font-size:.78rem;color:var(--t2)">${completo
-            ? "A conta está fechada: custo e imposto configurados."
-            : "Enquanto faltar custo ou imposto, este resultado é parcial &mdash; ele ainda vai diminuir."}</span>
-          <button class="mini" id="cfgFin" style="margin-left:auto">${completo?"Alterar custo e imposto":"Configurar custo e imposto"}</button>
-        </div>`;
-      document.getElementById("cfgFin").onclick = async()=>{
-        const c = prompt("% de CUSTO sobre o faturamento (ex.: 27.2):", f.custo_pct??"");
-        if(c===null) return;
-        const i = prompt("% de IMPOSTO (ex.: 8.63):", f.imposto_pct??"");
-        if(i===null) return;
-        await acaoApi("config_loja",{ set:{ custo_pct:+String(c).replace(",","."), imposto_pct:+String(i).replace(",",".") } });
-        carregarDash();
-      };
     }
     const gc = document.getElementById("grafcanal");
     if(gc) gc.innerHTML = grafCanais(r.por_canal||{});
