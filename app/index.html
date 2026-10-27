@@ -2371,7 +2371,7 @@ function viewAds(c){
       <div class="card" style="padding:16px 20px;overflow-x:auto"><table class="tabela">
       <tr><th>Anúncio</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">Vendas</th><th style="text-align:right">Venda</th><th style="text-align:right">Retorno</th></tr>
       ${top.map(x=>`<tr${x.pedidos===0?' style="background:var(--nof)"':""}>
-        <td>${x.link?`<a href="${esc(x.link)}" target="_blank" rel="noopener" style="color:var(--t)">${esc(String(x.titulo||x.id).slice(0,60))}</a>`:esc(String(x.titulo||x.id).slice(0,60))}</td>
+        <td>${x.link?`<a href="${esc(x.link)}" target="_blank" rel="noopener" style="color:var(--t)">${esc(String(x.titulo||x.id).slice(0,120))}</a>`:esc(String(x.titulo||x.id).slice(0,120))}</td>
         <td style="text-align:right">${brl(x.gasto)}</td>
         <td style="text-align:right">${x.cliques}</td>
         <td style="text-align:right">${x.pedidos}</td>
