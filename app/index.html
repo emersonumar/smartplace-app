@@ -90,6 +90,9 @@ input:focus{outline:2px solid #1F6B4A55}
 .pill.ok{color:var(--n);background:var(--nd)}
 .pill.ok2{color:var(--n);background:var(--nd)}
 .pill.ruim{color:var(--no);background:var(--nof)}
+.pill.est{color:var(--gold);background:#FBF4E6}
+#lucroVendas td:not(:first-child){white-space:nowrap}
+#lucroVendas td:first-child{min-width:220px}
 .impop{display:block;width:100%;text-align:left;background:none;border:0;color:var(--t);font-family:var(--sans);font-size:.8rem;padding:8px 10px;cursor:pointer}
 .impop:hover{background:var(--p2)}
 #porcanal .tabela{font-size:.82rem}
@@ -157,7 +160,7 @@ input:focus{outline:2px solid #1F6B4A55}
 .numeros .sub{font-size:.76rem;color:var(--t2);margin-top:3px}
 /* A conta vai até o fim e diz quando é parcial, em vez de parar no meio
    mostrando travessão. */
-.conta{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border:1px solid var(--l2);background:var(--p);margin-top:14px}
+.conta{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--l2);background:var(--p);margin-top:14px}
 .conta>div{padding:14px 18px;border-left:1px solid var(--l)}
 .conta>div:first-child{border-left:0}
 .conta .r{font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);font-weight:600}
@@ -205,7 +208,7 @@ function trocarLoja(id){
 const app = document.getElementById("app");
 const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#161616","TT","tiktok-tinta.svg"]};
 const ico = (c,s=18)=> NOMES[c]?`<img src="/icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["produtos","Produtos"],["canais","Integrações"],["fiscal","Fiscal"],["carteira","Carteira"]];
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["produtos","Produtos"],["pesquisa","Pesquisa"],["canais","Integrações"],["fiscal","Fiscal"],["carteira","Carteira"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -448,7 +451,7 @@ function shell(){
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   marcaAvisos();
   const av = avisosAbertos(d), urg = av.filter(avisoUrgente).length;
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira, produtos:viewProdutos, fiscal:viewFiscal };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira, produtos:viewProdutos, pesquisa:viewPesquisa, fiscal:viewFiscal };
   // só o Dashboard lembra, numa linha; a lista mora na Gestão IA
   app.innerHTML = (VIEW==="dashboard" && av.length
     ? `<div class="alerta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap${urg?";border-left-color:var(--no)":""}"><span style="flex:1"><b style="color:var(--t)">${av.length} aviso${av.length>1?"s":""} esperando você</b>${urg?` · ${urg} urgente${urg>1?"s":""}`:""}</span><button class="mini" id="verAvisos" style="flex:none">Ver na Gestão IA</button></div>`
@@ -565,6 +568,9 @@ function viewDashboard(c){
     <div class="numeros" id="kpis" style="margin-top:16px"><div><div class="vazio">carregando…</div></div></div>
     <div id="metaLinha"></div>
     <div class="conta" id="finstrip"></div>
+    <h2 style="display:flex;align-items:baseline;gap:10px">Lucro venda a venda
+      <span style="font-family:var(--sans);font-size:.76rem;letter-spacing:0;text-transform:none;color:var(--t2);font-weight:400">o que sobrou de cada pedido</span></h2>
+    <div class="card" id="lucroVendas" style="padding:14px 18px;overflow-x:auto"><p class="vazio">carregando…</p></div>
     <div class="grid" style="margin-top:12px">
       <div class="card"><b class="tit">Valor total de pedidos por dia</b><div id="grafico" style="margin-top:8px"><p class="vazio">carregando…</p></div><div id="situacao" style="margin-top:12px"></div></div>
       <div class="card"><b class="tit">Valor total por canal no período</b><div id="grafcanal" style="margin-top:8px"><p class="vazio">carregando…</p></div></div>
@@ -588,7 +594,56 @@ function viewDashboard(c){
   document.getElementById("fAte").onchange = e=>{ FDASH.ate=e.target.value; carregarDash(); };
   carregarDash();
 }
+// Lucro pedido a pedido: o que o marketplace cobrou de verdade (conciliado) ou
+// pela tabela do canal (estimado). Carrega à parte porque a 1ª vez confere os
+// valores com os marketplaces e leva alguns segundos.
+let LUCRO_LINHAS = 10;
+async function carregarLucroVendas(){
+  const el = document.getElementById("lucroVendas"); if(!el) return;
+  LUCRO_LINHAS = 10;
+  el.innerHTML = `<p class="vazio">conferindo os valores com os marketplaces…</p>`;
+  const res = await acaoApi("lucro_por_venda", FDASH);
+  if(!document.getElementById("lucroVendas")) return;
+  if(!res.success) return el.innerHTML = `<p class="vazio">${esc(humano(res.error))}</p>`;
+  const R = res.resultado, t = R.totais;
+  if(!R.linhas.length) return el.innerHTML = `<p class="vazio">Nenhuma venda no período.</p>`;
+  const lucroCompleto = t.sem_custo === 0;
+  const pct = v => v==null ? "—" : v.toFixed(1).replace(".",",")+"%";
+  const menos = v => v ? "&minus; "+brl(v) : "—";
+  const desenha = ()=>{
+    el.innerHTML = `
+      <div style="display:flex;gap:6px 18px;flex-wrap:wrap;font-size:.8rem;color:var(--t2);margin-bottom:12px">
+        <span><b style="color:var(--t)">${t.conciliados} de ${t.pedidos}</b> com os valores reais do marketplace</span>
+        ${R.ads.total_ml!=null?`<span>Ads do ML no período: <b style="color:var(--t)">${brl(R.ads.total_ml)}</b>${R.ads.sem_venda>0?` · ${brl(R.ads.sem_venda)} em anúncios que não venderam`:""}</span>`:""}
+        ${t.sem_custo?`<span style="color:var(--no)">${t.sem_custo} venda${t.sem_custo>1?"s":""} sem custo cadastrado: nelas aparece a sobra antes do custo</span>`:""}
+      </div>
+      <table class="tabela" style="min-width:880px">
+        <tr><th>Venda</th><th style="text-align:right">Valor</th><th style="text-align:right">Taxas</th><th style="text-align:right">Frete</th><th style="text-align:right">Ads</th><th style="text-align:right">Imposto</th><th style="text-align:right">Custo</th><th style="text-align:right">Lucro</th><th style="text-align:right">Margem</th><th></th></tr>
+        ${R.linhas.slice(0, LUCRO_LINHAS).map(l=>{
+          const fim = l.lucro!=null ? l.lucro : l.sobra;
+          return `<tr>
+          <td>${ico(l.canal,13)} <span style="font-size:.76rem;color:var(--t3)">${new Date(l.data).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span><br><span style="font-size:.8rem">${esc(l.produto)}</span></td>
+          <td style="text-align:right">${brl(l.receita)}</td>
+          <td style="text-align:right">${menos(l.taxa)}</td>
+          <td style="text-align:right">${menos(l.frete)}</td>
+          <td style="text-align:right">${menos(l.ads)}</td>
+          <td style="text-align:right">${menos(l.imposto)}</td>
+          <td style="text-align:right">${l.custo!=null?menos(l.custo)+(l.custo_estimado?'<br><span style="font-size:.68rem;color:var(--t3)">pelo % da loja</span>':""):'<span style="color:var(--t3);font-size:.78rem">falta</span>'}</td>
+          <td style="text-align:right;font-weight:600;color:${fim<0?"var(--no)":l.lucro!=null?"var(--n)":"var(--t2)"}">${brl(fim)}${l.lucro==null?'<br><span style="font-size:.68rem;font-weight:400;color:var(--t3)">antes do custo</span>':""}</td>
+          <td style="text-align:right">${pct(l.margem_pct)}</td>
+          <td><span class="pill ${l.situacao==="conciliado"?"ok":"est"}" title="${l.situacao==="conciliado"?"Taxa e frete como o marketplace cobrou":"Calculado pela tabela do canal: pode mudar"}">${l.situacao}</span></td></tr>`; }).join("")}
+        <tr style="font-weight:600"><td>Total · ${t.pedidos} venda${t.pedidos>1?"s":""}</td><td style="text-align:right">${brl(t.receita)}</td><td style="text-align:right">${menos(t.taxa)}</td><td style="text-align:right">${menos(t.frete)}</td><td style="text-align:right">${menos(t.ads)}</td><td style="text-align:right">${menos(t.imposto)}</td><td style="text-align:right">${lucroCompleto?menos(t.custo):"—"}</td><td style="text-align:right">${brl(lucroCompleto?t.lucro:t.sobra)}${lucroCompleto?"":'<br><span style="font-size:.68rem;font-weight:400;color:var(--t3)">antes do custo</span>'}</td><td></td><td></td></tr>
+      </table>
+      ${R.linhas.length>LUCRO_LINHAS?`<button class="mini" id="lucroMais" style="margin-top:10px">Ver todas as ${R.linhas.length}</button>`:""}
+      <div style="font-size:.74rem;color:var(--t3);margin-top:10px"><b>Conciliado</b>: taxa e frete como o marketplace cobrou. <b>Estimado</b>: pela tabela do canal, ainda pode mudar. ${esc(R.ads.nota)}</div>`;
+    const b = document.getElementById("lucroMais");
+    if(b) b.onclick = ()=>{ LUCRO_LINHAS = R.linhas.length; desenha(); };
+  };
+  desenha();
+}
+
 async function carregarDash(){
+  carregarLucroVendas();
   const res = await acaoApi("dados_pedidos", FDASH);
   const r = res.success ? res.resultado : { erro: res.error };
   {
@@ -643,8 +698,10 @@ async function carregarDash(){
       const frete = Number(f.frete)||0;
       const temCusto = f.custo!=null, temImposto = f.impostos!=null;
       const completo = temCusto && temImposto && f.contribuicao!=null;
-      const sobra = completo ? Number(f.contribuicao)
-                             : bruto - comissao - frete;
+      // Ads lido no MESMO período (só o ML libera o gasto)
+      const ads = r.lucro_real?.gasto_ads!=null ? Number(r.lucro_real.gasto_ads) : null;
+      const sobra = (completo ? Number(f.contribuicao)
+                              : bruto - comissao - frete) - (ads||0);
       const pctSobra = bruto ? Math.round(sobra/bruto*100) : 0;
 
       fs.innerHTML =
@@ -658,6 +715,9 @@ async function carregarDash(){
       + passo("Imposto",
               temImposto ? "&minus; "+brl(f.impostos) : null,
               temImposto ? (f.imposto_pct!=null?f.imposto_pct+"% do bruto":"") : "falta configurar")
+      + passo("Anúncios (Ads)",
+              ads!=null ? "&minus; "+brl(ads) : null,
+              ads!=null ? "Mercado Livre"+(bruto?" · "+String((ads/bruto*100).toFixed(1)).replace(".",",")+"% do bruto":"") : "sem gasto no ML no período")
       + passo(completo ? "Sobra" : "Sobra parcial", brl(sobra),
               completo ? pctSobra+"% do faturamento"
                        : "antes do custo e do imposto &mdash; "+pctSobra+"% do bruto",
@@ -2162,6 +2222,65 @@ async function renderZpl(zpl){
 }
 
 
+// ── Pesquisa de mercado (Mercado Livre) ──
+// A Shopee não libera dados de mercado pra aplicativos; o ML libera catálogo,
+// mais vendidos e termos em alta — e o produto é o mesmo nos dois canais.
+let PESQ = { termo:"", r:null };
+function viewPesquisa(c){
+  c.innerHTML = `
+    <h1>Pesquisa de mercado</h1><div class="sub-h1">O que mais vende no Mercado Livre, por quanto e o que o público está buscando: pra decidir o que anunciar e por qual preço.</div>
+    <div class="card" style="padding:16px 20px;margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <input id="pqTermo" class="busca" style="flex:1 1 240px" placeholder="ex.: cinta modeladora, ração para gato, fone bluetooth" value="${esc(PESQ.termo)}">
+      <button class="btn" id="pqBtn" style="padding:10px 22px">Pesquisar</button>
+    </div>
+    <div id="pqRes"></div>`;
+  const desenha = ()=>{
+    const el = document.getElementById("pqRes"); if(!el) return;
+    const r = PESQ.r;
+    if(!r) return el.innerHTML = `<p class="vazio" style="margin-top:14px">Digite um produto ou uma categoria. Os dados vêm do Mercado Livre: a Shopee não libera pesquisa de mercado pra aplicativos.</p>`;
+    if(r.erro) return el.innerHTML = `<p class="vazio" style="margin-top:14px;color:var(--no)">${esc(humano(r.erro))}</p>`;
+    if(r.aviso) return el.innerHTML = `<p class="vazio" style="margin-top:14px">${esc(r.aviso)}</p>`;
+    const f = r.faixa_preco;
+    el.innerHTML = `
+      <div style="font-size:.8rem;color:var(--t2);margin-top:16px">Categoria: <b style="color:var(--t)">${esc(r.categoria.caminho||r.categoria.nome)}</b></div>
+      <div class="numeros" style="margin-top:10px">
+        <div><div class="lbl">Preço dos mais vendidos</div><div class="val">${f?brl(f.mediana):"—"}</div><div class="sub">${f?`metade vende abaixo disso · de ${brl(f.menor)} a ${brl(f.maior)}`:"sem preço lido"}</div></div>
+        <div><div class="lbl">Concorrência</div><div class="val">${r.produtos_no_catalogo!=null?(r.produtos_no_catalogo>=10000?"10 mil+":r.produtos_no_catalogo.toLocaleString("pt-BR")):"—"}</div><div class="sub">produtos no catálogo com esse termo</div></div>
+        <div><div class="lbl">Mais vendidos lidos</div><div class="val">${r.mais_vendidos.length}</div><div class="sub">do ranking da categoria</div></div>
+      </div>
+      ${r.em_alta.length?`<h2>Em alta na busca${r.em_alta_de?` · ${esc(r.em_alta_de)}`:""}</h2>
+      <div class="chips">${r.em_alta.map(t=>`<button class="chip pqTermo" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}
+      <h2>Mais vendidos da categoria</h2>
+      <div class="card" style="padding:14px 18px;overflow-x:auto">
+        ${r.mais_vendidos.length?`<table class="tabela" style="min-width:620px">
+          <tr><th style="width:40px">#</th><th>Produto</th><th style="text-align:right">Menor preço</th><th style="text-align:right">Vendedores</th><th></th></tr>
+          ${r.mais_vendidos.map(m=>`<tr>
+            <td style="color:var(--t3)">${m.posicao}º</td>
+            <td style="display:flex;gap:10px;align-items:center">${m.foto?`<img src="${esc(m.foto)}" alt="" style="width:40px;height:40px;object-fit:contain;background:#fff;border:1px solid var(--l)">`:""}<span>${esc(m.nome)}</span></td>
+            <td style="text-align:right;font-weight:600">${m.menor_preco!=null?brl(m.menor_preco):"—"}</td>
+            <td style="text-align:right">${m.vendedores>=50?"50+":(m.vendedores||"—")}</td>
+            <td style="text-align:right"><a href="${esc(m.link)}" target="_blank" rel="noopener" style="color:var(--t2);font-size:.8rem">ver no ML</a></td></tr>`).join("")}
+        </table>`:`<p class="vazio">O Mercado Livre não devolveu produtos de catálogo no ranking dessa categoria.</p>`}
+      </div>
+      <div style="font-size:.74rem;color:var(--t3);margin-top:10px">Ranking e preços do Mercado Livre no momento da pesquisa. Anúncios fora do catálogo o ML não abre pra aplicativos.</div>`;
+    document.querySelectorAll(".pqTermo").forEach(b=>b.onclick=()=>{ document.getElementById("pqTermo").value = b.dataset.t; ir(); });
+  };
+  const ir = async()=>{
+    const termo = document.getElementById("pqTermo").value.trim();
+    if(!termo) return;
+    PESQ.termo = termo;
+    const btn = document.getElementById("pqBtn"); btn.disabled = true;
+    document.getElementById("pqRes").innerHTML = `<p class="vazio" style="margin-top:14px">pesquisando no Mercado Livre…</p>`;
+    const r = await acaoApi("pesquisa_mercado", { termo });
+    PESQ.r = r.success ? r.resultado : { erro: r.error };
+    if(document.getElementById("pqBtn")) document.getElementById("pqBtn").disabled = false;
+    desenha();
+  };
+  document.getElementById("pqBtn").onclick = ir;
+  document.getElementById("pqTermo").onkeydown = e=>{ if(e.key==="Enter") ir(); };
+  desenha();
+}
+
 // ── Precificação (calculadora + tabela precificadora) ──
 const PRESET_CANAL = { ml:["Mercado Livre",14,6], shopee:["Shopee",20,4], tiktok:["TikTok Shop",13.6,2] };
 function viewPrecos(c){
@@ -2248,7 +2367,37 @@ function viewPrecos(c){
             return `<tr><td>${n} — ${brl(p)}</td><td style="text-align:right;color:${x.luc>=0?"var(--n)":"var(--no)"}">${brl(x.luc)}</td><td style="text-align:right">${x.mg.toFixed(1).replace(".",",")}%</td></tr>`;}).join("")}
         </table>
         <small style="color:var(--t3);font-size:.76rem;display:block;margin-top:10px">Pra aplicar num anúncio, use a coluna <b>Sugerido</b> da tabela ao lado.</small>
+        ${document.getElementById("cCanal").value==="ml" ? `
+        <div style="border-top:1px solid var(--l2);margin-top:18px;padding-top:14px">
+          <h2 style="margin:0 0 4px">Comparar envio no Mercado Livre</h2>
+          <div style="font-size:.8rem;color:var(--t2)">Frete pela tabela da sua conta, no preço sugerido.</div>
+          <div class="campos" style="margin-top:10px">
+            <label class="lb">Peso da embalagem (g)<input id="eP" type="number" class="busca w100" placeholder="ex.: 350"></label>
+            <label class="lb">Medidas (cm)<input id="eD" class="busca w100" placeholder="ex.: 25x18x6"></label>
+            <label class="lb">Seu custo de entrega no Flex (R$)<input id="eFlex" type="number" step="0.01" class="busca w100" placeholder="opcional"></label>
+          </div>
+          <button class="mini" id="eBtn" style="margin-top:10px">Comparar modalidades</button>
+          <div id="eRes"></div>
+        </div>` : ""}
       </div>`;
+    const eBtn = document.getElementById("eBtn");
+    if(eBtn) eBtn.onclick = async()=>{
+      const out = document.getElementById("eRes");
+      out.innerHTML = `<p class="vazio" style="margin-top:10px">consultando o Mercado Livre…</p>`;
+      const r = await acaoApi("frete_modalidades", { preco: sug, peso_g: V("eP"), dims: document.getElementById("eD").value });
+      if(!r.success) return out.innerHTML = `<p class="vazio" style="margin-top:10px;color:var(--no)">${esc(humano(r.error))}</p>`;
+      const linhas = r.resultado.modalidades.map(m=>({ nome:m.nome, frete:m.frete, ok:m.disponivel }));
+      if(V("eFlex")>0) linhas.push({ nome:"Flex (você entrega)", frete:V("eFlex"), ok:true });
+      const sobraDe = fr => sug - custo - fr - sug*pct;
+      const melhor = Math.max(...linhas.filter(l=>l.ok).map(l=>sobraDe(l.frete)));
+      out.innerHTML = `<table class="tabela" style="margin-top:12px">
+        <tr><th>Modalidade</th><th style="text-align:right">Frete por venda</th><th style="text-align:right">Sobra por peça</th><th style="text-align:right">Margem</th></tr>
+        ${linhas.map(l=>{ if(!l.ok) return `<tr><td>${l.nome}</td><td colspan="3" style="text-align:right;color:var(--t3);font-size:.8rem">não disponível pra sua conta</td></tr>`;
+          const sb = sobraDe(l.frete), top = Math.abs(sb-melhor)<0.005;
+          return `<tr${top?' style="background:var(--nd)"':""}><td>${l.nome}${top?' <span class="pill ok">melhor</span>':""}</td><td style="text-align:right">${brl(l.frete)}</td><td style="text-align:right;color:${sb>=0?"var(--n)":"var(--no)"}">${brl(sb)}</td><td style="text-align:right">${(sb/sug*100).toFixed(1).replace(".",",")}%</td></tr>`; }).join("")}
+      </table>
+      <small style="color:var(--t3);font-size:.74rem;display:block;margin-top:8px">${r.resultado.nota?esc(r.resultado.nota)+" ":""}No Full o ML também cobra armazenagem, que não entra aqui. No Flex a entrega é sua: use o custo do seu entregador.</small>`;
+    };
   };
   document.getElementById("cCalc").onclick = calc;
 
