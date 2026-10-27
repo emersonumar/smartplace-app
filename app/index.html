@@ -262,8 +262,15 @@ async function render(){
   if(error){ app.innerHTML = "<p class='vazio'>Erro: "+esc(error.message)+"</p>"; return; }
   if(data?.sem_loja){ document.getElementById("topo").style.display="none"; return telaOnboarding(); }
   CACHE.painel = data;
+  // volta do Mercado Pago: confere a assinatura na hora, sem esperar a rotina
+  if(new URLSearchParams(location.search).has("assinatura")){
+    history.replaceState(null, "", "/app/");
+    const c = await acaoApi("assinatura_conferir");
+    if(c.success && c.resultado?.status && c.resultado.status !== data.loja.status) return render();
+    if(c.success && c.resultado?.assinatura_status === "pending") return telaPlanos({ ...data, loja:{ ...data.loja, assinatura_status:"pending" } }, true);
+  }
   const dias = diasDeTeste(data.loja);
-  if(dias !== null && dias <= 0) return telaTesteAcabou(data);
+  if((dias !== null && dias <= 0) || data.loja?.status === "suspensa") return telaPlanos(data);
   if(concluirTiktokPendente(data.loja?.id)) return;
   shell();
 }
@@ -274,21 +281,60 @@ function diasDeTeste(loja){
   return Math.ceil((new Date(loja.teste_ate) - Date.now()) / 86400000);
 }
 
-function telaTesteAcabou(d){
+// Escolha do plano e assinatura pelo Mercado Pago. Abre sozinha quando o teste
+// acaba ou a assinatura para; durante o teste, pelo selo "teste grátis" do topo.
+async function telaPlanos(d, voltar = false){
   document.getElementById("topo").style.display="none";
-  const assunto = encodeURIComponent("Quero assinar o SmartPlace - " + d.loja.nome);
+  const l = d.loja, dias = diasDeTeste(l), acabou = dias !== null && dias <= 0;
+  const titulo = l.status === "suspensa" ? "Sua assinatura está parada" : acabou ? "Seu teste grátis de 14 dias acabou" : "Escolha seu plano";
+  const sub = l.status === "suspensa" ? "O Mercado Pago cancelou ou pausou a cobrança. Seus dados e canais continuam guardados: assine de novo e a IA volta a trabalhar."
+    : acabou ? "Seus dados e seus canais continuam guardados. Escolha um plano e a IA volta a trabalhar na sua loja."
+    : l.teste_ate ? `Você continua no teste até ${new Date(l.teste_ate).toLocaleDateString("pt-BR")}. A primeira cobrança só acontece nesse dia.` : "";
+  const { data:{ session } } = await sb.auth.getSession();
   app.innerHTML = `
   <div class="centro" style="max-width:440px">
     <div class="logo" style="text-align:center;font-size:1.5rem">Smart<em>Place</em> AI</div>
-    <p style="text-align:center;font-weight:600;margin:0">Seu teste grátis de 14 dias acabou</p>
-    <p style="color:var(--t2);text-align:center;font-size:.9rem;margin:0">Seus dados e seus canais continuam guardados. Escolha um plano e a IA volta a trabalhar na sua loja.</p>
-    <div style="display:flex;justify-content:space-between;border:1px solid var(--l);padding:12px 14px;font-size:.9rem"><b>Essencial</b><span>R$ 199,90/mês</span></div>
-    <div style="display:flex;justify-content:space-between;border:1px solid var(--l);padding:12px 14px;font-size:.9rem"><b>Ilimitado</b><span>R$ 399,90/mês</span></div>
-    <a class="btn" style="text-align:center;text-decoration:none" href="mailto:emersonumar@gmail.com?subject=${assunto}">Quero assinar</a>
+    <p style="text-align:center;font-weight:600;margin:0">${titulo}</p>
+    <p style="color:var(--t2);text-align:center;font-size:.9rem;margin:0">${sub}</p>
+    ${l.assinatura_status === "pending" ? `<p style="font-size:.82rem;color:var(--gold);text-align:center;margin:0">Tem uma assinatura esperando a confirmação do Mercado Pago. Se você já autorizou o cartão, clique em "Já assinei".</p>` : ""}
+    <div id="planos"><p class="vazio">carregando planos…</p></div>
+    <label style="font-size:.8rem;color:var(--t2);display:flex;flex-direction:column;gap:4px">E-mail da sua conta do Mercado Pago
+      <input id="mpEmail" type="email" value="${esc(session?.user?.email || "")}"></label>
+    <button class="btn" id="assinarMp">Assinar com Mercado Pago</button>
+    <div class="erro" id="erro"></div>
+    <button class="link" id="jaAssinei">Já assinei: conferir</button>
     <a class="link" href="/#precos">Ver o que cada plano inclui</a>
-    <button class="link" id="sairFim">Sair</button>
+    <button class="link" id="sairFim">${voltar ? "Voltar ao painel" : "Sair"}</button>
   </div>`;
-  document.getElementById("sairFim").onclick = async()=>{ await sb.auth.signOut(); render(); };
+  const erro = m => document.getElementById("erro").textContent = m;
+  document.getElementById("sairFim").onclick = async()=>{ if(voltar) return render(); await sb.auth.signOut(); render(); };
+
+  const r = await acaoApi("assinatura_planos");
+  if(!r.success) return erro(r.error);
+  const planos = r.resultado.planos, vagas = r.resultado.vagas_fundador;
+  let escolhido = planos.some(p=>p.id==="essencial") ? "essencial" : planos[0]?.id;
+  const desenha = ()=>{
+    document.getElementById("planos").innerHTML = planos.map(p=>`
+      <label style="display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid ${p.id===escolhido?"var(--acc)":"var(--l)"};padding:12px 14px;font-size:.9rem;cursor:pointer;margin-bottom:8px">
+        <span><input type="radio" name="plano" value="${p.id}" ${p.id===escolhido?"checked":""} style="padding:0;margin:0 8px 0 0;vertical-align:middle">${esc(p.nome)}${p.id==="fundador"?`<br><span style="font-size:.74rem;color:var(--t3)">preço travado pra sempre · ${vagas} vaga${vagas===1?"":"s"}</span>`:""}</span>
+        <b style="white-space:nowrap">${brl(p.valor)}/mês</b></label>`).join("");
+    document.querySelectorAll("#planos input[name=plano]").forEach(i=>i.onchange=()=>{ escolhido = i.value; desenha(); });
+  };
+  desenha();
+
+  document.getElementById("assinarMp").onclick = async(e)=>{
+    e.target.disabled = true; erro("");
+    const a = await acaoApi("assinar", { plano: escolhido, email: document.getElementById("mpEmail").value });
+    if(!a.success){ e.target.disabled = false; return erro(a.error); }
+    location.href = a.resultado.link;
+  };
+  document.getElementById("jaAssinei").onclick = async(e)=>{
+    e.target.disabled = true;
+    const c = await acaoApi("assinatura_conferir");
+    e.target.disabled = false;
+    if(c.success && c.resultado?.status === "ativa") return render();
+    erro(c.success ? "A confirmação do Mercado Pago ainda não chegou. Se você acabou de autorizar, espere um minuto e clique de novo." : c.error);
+  };
 }
 
 // Instalação feita pela loja de apps do TikTok volta sem dizer a loja do
@@ -391,7 +437,10 @@ function shell(){
   document.getElementById("lojaNome").textContent = d.loja.nome;
   const ti = document.getElementById("testeInfo"), dias = diasDeTeste(d.loja);
   ti.style.display = dias === null ? "none" : "";
-  if(dias !== null) ti.textContent = dias <= 1 ? "teste grátis: último dia" : `teste grátis: faltam ${dias} dias`;
+  if(dias !== null){
+    ti.textContent = (dias <= 1 ? "teste grátis: último dia" : `teste grátis: faltam ${dias} dias`) + " · assinar";
+    ti.onclick = e=>{ e.preventDefault(); telaPlanos(d, true); };
+  }
   const aa = document.getElementById("autosAtivas");
   if(aa){ const n = (d.automacoes||[]).filter(a=>a.ligada).length; aa.textContent = n ? `${n} automaç${n>1?"ões":"ão"} ativa${n>1?"s":""}` : "nenhuma automação ligada"; }
   document.getElementById("nav").innerHTML = MENU.map(([v,n])=>`<button data-v="${v}" class="${v===VIEW?"atv":""}">${n}${v==="ia"?`<span class="qtd" id="qtdAvisos" style="display:none"></span>`:""}</button>`).join("");
