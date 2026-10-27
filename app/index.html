@@ -2279,9 +2279,11 @@ function viewAds(c){
       <button class="mini" id="adsIA" style="background:var(--acc);border-color:var(--acc);color:#FBFAF7">Análise da IA — o que pausar, o que escalar</button>
     </div>
     <div class="grid4" id="adskpi" style="margin-top:16px"><div class="card kpi"><p class="vazio">carregando…</p></div></div>
+    <div id="adsNotas"></div>
     <div id="adsAnalise"></div>
     <h2>Campanhas — últimos 30 dias</h2>
     <div class="card" style="padding:16px 20px;overflow-x:auto" id="adsCamp"><p class="vazio">carregando…</p></div>
+    <div id="adsTop"></div>
     <div style="border:1px solid var(--l2);background:var(--p);margin-top:14px;padding:14px 20px;display:flex;gap:13px;align-items:center">
       <div style="flex:1;min-width:0">
         <b style="font-size:.86rem">Avisar quando o saldo estiver acabando</b>
@@ -2297,34 +2299,40 @@ function viewAds(c){
     const s=cn.shopee, m=cn.mercado_livre, tt=cn.tiktok;
 
     // A fita do desenho: a pergunta é uma só, então os números são os dela.
-    // O "% do faturamento" cruza com as vendas do período; o saldo vira prazo.
-    const gasto30 = Number(s?.d30?.gasto||0);
-    const gmv30 = Number(s?.d30?.gmv||0);
+    // Soma os canais que entregam número (canal sem acesso não entra como zero);
+    // o "% do faturamento" cruza com as vendas do período; o saldo vira prazo.
+    const comNumero = [s, m].filter(x=>x?.d30);
+    const soma = (per, campo) => comNumero.reduce((t,x)=>t+Number(x[per]?.[campo]||0), 0);
+    const gasto30 = soma("d30","gasto"), gmv30 = soma("d30","gmv"), vendas30 = soma("d30","pedidos");
     const retorno = gasto30 ? gmv30/gasto30 : null;
     const fat30 = Number(base?.dias30?.total||0);
     const pctFat = fat30 && gasto30 ? gasto30/fat30*100 : null;
-    const gastoDia = Number(s?.d7?.gasto||0)/7;
+    const gastoDia = soma("d7","gasto")/7;
     const saldo = s?.saldo!=null ? Number(s.saldo) : null;
     const diasSaldo = saldo!=null && gastoDia>0 ? Math.round(saldo/gastoDia) : null;
+    const acos = gmv30 ? gasto30/gmv30*100 : null;
+    const semDado = [[s,"shopee","Shopee Ads"],[m,"mercado_livre","Mercado Ads"],[tt,"tiktok","TikTok Ads"]].filter(([x])=>x?.info);
 
-    if(s){
+    if(comNumero.length){
       k.innerHTML = `
         <div class="card kpi"><div class="lbl">Gasto</div><div class="val">${brl(gasto30)}</div><div class="sub">últimos 30 dias</div></div>
-        <div class="card kpi"><div class="lbl">Venda vinda de ads</div><div class="val">${brl(gmv30)}</div><div class="sub">${s.d30?.pedidos??0} pedido(s)</div></div>
+        <div class="card kpi"><div class="lbl">Venda vinda de ads</div><div class="val">${brl(gmv30)}</div><div class="sub">${vendas30} venda${vendas30===1?"":"s"}</div></div>
         <div class="card kpi"><div class="lbl">Retorno</div><div class="val" style="color:${retorno==null?"var(--t3)":retorno>=3?"var(--n)":retorno>=1.5?"var(--t)":"var(--no)"}">${retorno!=null?retorno.toFixed(1).replace(".",",")+"×":"—"}</div><div class="sub">por real gasto</div></div>
         <div class="card kpi"><div class="lbl">Do faturamento</div><div class="val">${pctFat!=null?pctFat.toFixed(1).replace(".",",")+"%":"—"}</div><div class="sub">virou anúncio</div></div>
-        <div class="card kpi" style="background:var(--p2)"><div class="lbl">Saldo</div><div class="val">${saldo!=null?brl(saldo):"—"}</div><div class="sub"${diasSaldo!=null&&diasSaldo<=7?' style="color:var(--no)"':""}>${diasSaldo!=null?`acaba em ~${diasSaldo} dia${diasSaldo===1?"":"s"}`:"ritmo ainda sem leitura"}</div></div>`;
+        ${saldo!=null
+          ? `<div class="card kpi" style="background:var(--p2)"><div class="lbl">Saldo</div><div class="val">${brl(saldo)}</div><div class="sub"${diasSaldo!=null&&diasSaldo<=7?' style="color:var(--no)"':""}>${diasSaldo!=null?`acaba em ~${diasSaldo} dia${diasSaldo===1?"":"s"}`:"ritmo ainda sem leitura"}</div></div>`
+          : `<div class="card kpi" style="background:var(--p2)"><div class="lbl">ACOS</div><div class="val">${acos!=null?acos.toFixed(1).replace(".",",")+"%":"—"}</div><div class="sub">da venda de ads foi gasto</div></div>`}`;
+      document.getElementById("adsNotas").innerHTML = [
+        `<div style="font-size:.76rem;color:var(--t3);margin-top:8px">Somando ${comNumero.map(x=>x===s?"Shopee":"Mercado Livre").join(" e ")} · últimos 30 dias</div>`,
+        ...semDado.map(([x,ic,nome])=>`<div style="font-size:.76rem;color:var(--t3);display:flex;gap:6px;align-items:flex-start;margin-top:4px">${ico(ic,13)}<span><b style="color:var(--t2)">${nome}:</b> ${esc(x.info)}</span></div>`)].join("");
     } else {
-      const cards=[];
-      if(m) cards.push(`<div class="card kpi"><div class="lbl">${ico("mercado_livre",15)} Mercado Ads</div><div class="val" style="color:var(--t3)">${m.advertiser_id?"ativo":"—"}</div><div class="sub">${esc(m.info||"")}</div></div>`);
-      if(tt) cards.push(`<div class="card kpi"><div class="lbl">${ico("tiktok",15)} TikTok Ads</div><div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(tt.info||"")}</div></div>`);
-      if(!cards.length) cards.push(`<div class="card kpi"><p class="vazio">Conecte um canal com anúncios pagos pra ver gasto e retorno aqui. A leitura mais completa hoje é a da Shopee.</p></div>`);
+      const cards = semDado.map(([x,ic,nome])=>`<div class="card kpi"><div class="lbl">${ico(ic,15)} ${nome}</div><div class="val" style="color:var(--t3)">—</div><div class="sub">${esc(x.info)}</div></div>`);
+      if(!cards.length) cards.push(`<div class="card kpi"><p class="vazio">Conecte um canal com anúncios pagos pra ver gasto e retorno aqui.</p></div>`);
       k.innerHTML = cards.join("");
     }
 
-    // Tabela única: performance da Shopee (que não deixa controlar) e controle
-    // do Mercado Livre (que ainda não entrega performance por campanha). Dizer
-    // qual metade cada canal oferece vale mais que fingir a tabela completa.
+    // Tabela única: Shopee (só leitura — pausa no Seller Center) e Mercado Livre
+    // (leitura e controle no mesmo lugar).
     const linhas = [];
     (s?.campanhas||[]).forEach(x=>linhas.push({
       nome:String(x.nome||"").slice(0,44), canal:"Shopee",
@@ -2334,7 +2342,7 @@ function viewAds(c){
     mlCamps.forEach(x=>{
       const pausada = String(x.status||"").toLowerCase()!=="active";
       linhas.push({ nome:String(x.nome||("Campanha "+x.id)).slice(0,44), canal:"Mercado Livre",
-        gasto:null, cliques:null, ctr:null, gmv:null, roas:null,
+        gasto:x.gasto??null, cliques:x.cliques??null, ctr:x.ctr??null, gmv:x.gmv??null, roas:x.roas??null,
         orc:x.orcamento_diario, pausada,
         acao:`<button class="mini mlCamp" data-id="${esc(String(x.id))}" data-alvo="${pausada?"active":"paused"}">${pausada?"Reativar":"Pausar"}</button>
               <button class="mini mlOrc" data-id="${esc(String(x.id))}">Orçamento</button>`});
@@ -2354,19 +2362,34 @@ function viewAds(c){
         <td style="text-align:right">${fmtRoas(x.roas)}</td>
         <td style="text-align:right">${x.orc!=null?brl(x.orc):`<span style="color:var(--t3)">—</span>`}</td>
         <td style="text-align:right;white-space:nowrap">${x.acao}</td></tr>`).join("")}
+      </table>`
+      : `<p class="vazio">${comNumero.length||mlCamps.length?"Nenhuma campanha encontrada nos últimos 30 dias.":"As campanhas aparecem quando um canal com ads estiver conectado."}</p>`;
+
+    // onde se decide o que pausar e o que escalar: os anúncios que mais gastam
+    const top = (m?.anuncios||[]).filter(x=>x.gasto>0);
+    if(top.length) document.getElementById("adsTop").innerHTML = `<h2>Anúncios que mais gastam — Mercado Livre</h2>
+      <div class="card" style="padding:16px 20px;overflow-x:auto"><table class="tabela">
+      <tr><th>Anúncio</th><th style="text-align:right">Gasto</th><th style="text-align:right">Cliques</th><th style="text-align:right">Vendas</th><th style="text-align:right">Venda</th><th style="text-align:right">Retorno</th></tr>
+      ${top.map(x=>`<tr${x.pedidos===0?' style="background:var(--nof)"':""}>
+        <td>${x.link?`<a href="${esc(x.link)}" target="_blank" rel="noopener" style="color:var(--t)">${esc(String(x.titulo||x.id).slice(0,60))}</a>`:esc(String(x.titulo||x.id).slice(0,60))}</td>
+        <td style="text-align:right">${brl(x.gasto)}</td>
+        <td style="text-align:right">${x.cliques}</td>
+        <td style="text-align:right">${x.pedidos}</td>
+        <td style="text-align:right">${brl(x.gmv)}</td>
+        <td style="text-align:right">${fmtRoas(x.pedidos?x.roas:0)}</td></tr>`).join("")}
       </table>
-      ${mlCamps.length?`<div style="font-size:.76rem;color:var(--t3);margin-top:10px">O Mercado Livre ainda não entrega gasto por campanha pela API — o controle funciona, a leitura fica com a Shopee.</div>`:""}`
-      : `<p class="vazio">${s||mlCamps.length?"Nenhuma campanha encontrada nos últimos 30 dias.":"As campanhas aparecem quando um canal com ads estiver conectado."}</p>`;
+      <div style="font-size:.76rem;color:var(--t3);margin-top:10px">Linha marcada = gastou e não vendeu nos últimos 30 dias.</div></div>`;
 
     // O aviso do desenho: campanha devolvendo menos do que come, dito sozinho —
     // sem esperar alguém pedir a análise.
-    const ruins = (s?.campanhas||[]).filter(x=>Number(x.gasto||0)>50 && x.roas!=null && Number(x.roas)<1.3);
+    const ruins = [...(s?.campanhas||[]).map(x=>({...x,canal:"shopee"})), ...mlCamps.map(x=>({...x,canal:"mercado_livre"}))]
+      .filter(x=>Number(x.gasto||0)>50 && x.roas!=null && Number(x.roas)<1.3);
     if(ruins.length){
       const r0 = ruins[0];
       t.insertAdjacentHTML("beforeend", `<div class="alerta" style="margin-top:14px">
         <b style="color:var(--t)">"${esc(String(r0.nome).slice(0,40))}" está devolvendo R$ ${Number(r0.roas).toFixed(2).replace(".",",")} por real gasto.</b>
         Com a comissão do canal em cima, essa campanha está no prejuízo — cada venda dela custa mais do que rende.
-        <div style="font-size:.8rem;color:var(--t3);margin-top:6px">A Shopee não deixa pausar campanha pela API — pausa no Seller Center, leva um minuto.${ruins.length>1?` E tem mais ${ruins.length-1} campanha(s) na mesma situação.`:""}</div>
+        <div style="font-size:.8rem;color:var(--t3);margin-top:6px">${r0.canal==="shopee"?"A Shopee não deixa pausar campanha pela API — pausa no Seller Center, leva um minuto.":"Dá pra pausar aqui mesmo, no botão Pausar da tabela."}${ruins.length>1?` E tem mais ${ruins.length-1} campanha(s) na mesma situação.`:""}</div>
       </div>`);
     }
 
