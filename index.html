@@ -2,198 +2,262 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SmartPlace AI — sua loja de marketplaces no piloto automático</title>
-<meta name="description" content="Conecte Mercado Livre, Shopee e TikTok Shop e deixe a IA operar: preço dentro das suas regras, promoção sempre no ar, pergunta respondida e pedido organizado. Teste grátis.">
+<meta name="description" content="Conecte Mercado Livre, Shopee e TikTok Shop: veja quanto sobrou de verdade em cada venda, gere etiqueta com o produto, calcule o preço certo e deixe a IA trabalhar. Teste grátis por 14 dias.">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-<meta name="theme-color" content="#050B14">
+<meta name="theme-color" content="#FBFAF7">
 <meta property="og:title" content="SmartPlace AI — sua loja de marketplaces no piloto automático">
-<meta property="og:description" content="O hub te mostra o painel e você trabalha. O SmartPlace trabalha.">
+<meta property="og:description" content="A IA mostra quanto sobrou de verdade e trabalha por você. Mercado Livre, Shopee e TikTok Shop. Teste grátis por 14 dias.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://smartplaceai.app">
+<meta property="og:image" content="https://smartplaceai.app/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{
-  --g:#050B14; --p:#0A1526; --p2:#071120; --l:#16324A;
-  --n:#38E1FF; --nd:#38E1FF1A; --acc:#F5A623;
-  --t:#E6F1FA; --t2:#A6BDD2; --t3:#6A87A3;
-  --ok:#3DD68C; --no:#FF6B6B;
-  --sans:'Manrope',system-ui,-apple-system,sans-serif;
-  --disp:'Sora',var(--sans); --mono:'JetBrains Mono',monospace;
-}
+/* Mesmo livro-caixa do painel: papel quente, tinta preta, régua no lugar do
+   cartão flutuante, verde só onde o dinheiro sobra. Tokens iguais aos de /app/. */
+:root{--g:#FBFAF7;--p:#FFFFFF;--p2:#F5F3EE;--l:#DCD7CC;--l2:#C9C3B6;--fina:#EFECE5;
+--n:#1F6B4A;--nd:#EDF3EE;--no:#A33A2A;--gold:#C08A2A;--acc:#1A1815;
+--t:#1A1815;--t2:#5C574E;--t3:#8A8378;
+--sans:'Public Sans',system-ui,-apple-system,sans-serif;--disp:'Instrument Serif',Georgia,serif}
 *{margin:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{background:var(--g);color:var(--t);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-.w{max-width:1180px;margin:0 auto;padding:0 22px}
-a{color:inherit;text-decoration:none}
+body{background:var(--g);color:var(--t);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.w{max-width:1180px;margin:0 auto;padding:0 28px}
+a{color:inherit}
+img{display:block;max-width:100%;height:auto}
+:focus-visible{outline:2px solid var(--n);outline-offset:3px}
+.num{font-variant-numeric:tabular-nums lining-nums}
 
-/* ── topo ─────────────────────────────────────── */
-.topo{position:sticky;top:0;z-index:50;background:#050B14E8;backdrop-filter:blur(10px);border-bottom:1px solid var(--l)}
-.topo .w{display:flex;align-items:center;gap:16px;min-height:60px}
-.marca{font-family:var(--disp);font-weight:800;font-size:1.06rem;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
-.marca img{width:26px;height:26px;border-radius:6px}
-.marca i{color:var(--n);font-style:normal}
-.topo nav{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.topo nav a.lnk{color:var(--t2);font-size:.87rem;padding:8px 10px;border-radius:8px}
-.topo nav a.lnk:hover{color:var(--t);background:var(--p)}
-.btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:.9rem;
-  padding:11px 20px;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:.16s}
-.btn-p{background:var(--acc);color:#1A0F00}
-.btn-p:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.btn-s{border-color:var(--l);color:var(--t)}
-.btn-s:hover{border-color:var(--n);color:var(--n)}
-.btn-g{background:var(--n);color:#05202B}
-.btn-g:hover{filter:brightness(1.08);transform:translateY(-1px)}
+/* ── topo ── */
+.topo{position:sticky;top:0;z-index:50;background:var(--p);border-bottom:1px solid var(--l2)}
+.topo .w{display:flex;align-items:center;gap:18px;min-height:60px}
+.logo{font-family:var(--disp);font-size:1.45rem;text-decoration:none;white-space:nowrap;letter-spacing:-.01em}
+.topo nav{margin-left:auto;display:flex;align-items:center;gap:6px}
+.topo nav a.lnk{color:var(--t2);font-size:.88rem;font-weight:500;padding:8px 10px;text-decoration:none}
+.topo nav a.lnk:hover{color:var(--t)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-weight:600;font-size:.92rem;
+  padding:12px 22px;border:1px solid var(--acc);text-decoration:none;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+.btn-p{background:var(--acc);color:#FBFAF7}
+.btn-p:hover{background:#000}
+.btn-s{background:transparent;color:var(--t)}
+.btn-s:hover{background:var(--p2)}
+.btn-v{background:var(--n);border-color:var(--n);color:#FFF}
+.btn-v:hover{background:#185A3D}
 
-/* ── hero ─────────────────────────────────────── */
-.hero{padding:76px 0 30px;position:relative}
-.hero::before{content:"";position:absolute;inset:-140px 0 auto 0;height:520px;pointer-events:none;
-  background:radial-gradient(58% 70% at 22% 0%,#38E1FF22,transparent 70%)}
-.selo{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.7rem;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--n);
-  background:var(--nd);border:1px solid #38E1FF33;padding:6px 13px;border-radius:100px}
-h1{font-family:var(--disp);font-weight:800;letter-spacing:-.035em;line-height:1.03;
-  font-size:clamp(2.15rem,5.6vw,4rem);margin:20px 0 0;max-width:16ch;text-wrap:balance}
-h1 em{font-style:normal;color:var(--n)}
-.sub{color:var(--t2);font-size:clamp(1rem,1.7vw,1.16rem);max-width:56ch;margin:20px 0 0}
-.cta{display:flex;gap:12px;flex-wrap:wrap;margin:30px 0 0}
-.mini{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0 0;color:var(--t3);font-size:.83rem}
-.mini span{display:flex;align-items:center;gap:7px}
-.mini b{color:var(--ok)}
+/* ── rótulos e títulos (os do painel) ── */
+section{padding:88px 0;scroll-margin-top:60px}
+.rot{font-size:.72rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t2)}
+h1,h2,h3{font-family:var(--disp);font-weight:400;letter-spacing:-.01em;text-wrap:balance}
+h1 em,h2 em,h3 em{color:var(--n)}
+h2{font-size:clamp(2.1rem,4.4vw,3.3rem);line-height:1.04;margin-top:10px;max-width:20ch}
+.cab{border-bottom:2px solid var(--acc);padding-bottom:22px;margin-bottom:40px}
+.lead{color:var(--t2);font-size:1.06rem;max-width:62ch;margin-top:14px}
+.cab+.tese,.cab+.passos,.cab+.vs,.cab+.chegando,.cab+.planos{border-top:0}
 
-/* ── tela do produto ──────────────────────────── */
-.shot{margin:46px 0 0;border:1px solid var(--l);border-radius:14px;overflow:hidden;
-  background:var(--p2);box-shadow:0 40px 90px -50px #38E1FF44, 0 20px 60px -40px #000}
-.shot img{display:block;width:100%;height:auto}
-.shot-bar{display:flex;align-items:center;gap:7px;padding:10px 14px;background:var(--p);border-bottom:1px solid var(--l)}
-.shot-bar i{width:9px;height:9px;border-radius:50%;background:var(--l);display:block}
-.shot-bar span{margin-left:8px;font-family:var(--mono);font-size:.7rem;color:var(--t3)}
+/* ── hero ── */
+.hero{padding:64px 0 40px}
+.hero .w{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+.canais{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:.86rem;font-weight:500;color:var(--t2)}
+.canais span{display:inline-flex;align-items:center;gap:7px}
+.canais img{width:18px;height:18px}
+h1{font-size:clamp(2.7rem,6.4vw,5rem);line-height:.98;margin-top:18px;max-width:13ch}
+.sub{color:var(--t2);font-size:clamp(1.02rem,1.6vw,1.14rem);max-width:56ch;margin-top:22px}
+.sub b{color:var(--t);font-weight:600}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.checks{display:flex;gap:6px 20px;flex-wrap:wrap;margin-top:18px;font-size:.84rem;color:var(--t2)}
+.checks span::before{content:"✓ ";color:var(--n);font-weight:700}
 
-/* ── seções ───────────────────────────────────── */
-section{padding:76px 0}
-.eyebrow{font-family:var(--mono);font-size:.71rem;letter-spacing:.14em;text-transform:uppercase;color:var(--n);margin-bottom:12px}
-h2{font-family:var(--disp);font-weight:700;letter-spacing:-.028em;line-height:1.1;
-  font-size:clamp(1.6rem,3.4vw,2.4rem);text-wrap:balance;max-width:20ch}
-.lead{color:var(--t2);max-width:60ch;margin:14px 0 0;font-size:1.03rem}
+/* a conta: o livro-caixa em miniatura, do faturamento à sobra */
+.conta{background:var(--p);border:1px solid var(--l2);padding:26px 28px 22px}
+.conta dl{margin-top:14px}
+.conta dl div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--fina);font-size:.95rem}
+.conta dt{color:var(--t2)}
+.conta dd{font-weight:500;font-variant-numeric:tabular-nums lining-nums;white-space:nowrap}
+.conta .sobra{display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-top:2px solid var(--acc);margin-top:8px;padding-top:14px}
+.conta .sobra span{font-weight:600}
+.conta .sobra strong{font-family:var(--disp);font-weight:400;font-size:clamp(2.2rem,4vw,2.9rem);line-height:1;color:var(--n);font-variant-numeric:lining-nums}
+.conta .pct{text-align:right;font-size:.82rem;color:var(--n);font-weight:600;margin-top:4px}
+.nota{font-size:.78rem;color:var(--t3);margin-top:12px}
 
-/* tese */
-.tese{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));margin-top:38px}
-.tcard{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:24px}
-.tcard .rot{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
-.tcard h3{font-family:var(--disp);font-size:1.06rem;font-weight:700;margin:9px 0 8px;letter-spacing:-.015em}
-.tcard p{color:var(--t2);font-size:.92rem}
-.tcard.destaque{border-color:#38E1FF55;background:linear-gradient(180deg,#0A1526,#071120)}
-.tcard.destaque h3{color:var(--n)}
+/* ── telas do produto ── */
+.tela{background:var(--p);border:1px solid var(--l2);box-shadow:0 30px 60px -38px rgba(26,24,21,.38)}
+.tela img{width:100%}
+figure figcaption{font-size:.8rem;color:var(--t3);margin-top:10px}
+.vitrine{padding:0 0 20px}
 
-/* canais */
-.canais{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
-.canal{display:flex;align-items:center;gap:9px;background:var(--p);border:1px solid var(--l);
-  border-radius:100px;padding:9px 17px;font-weight:600;font-size:.9rem}
-.canal img{width:19px;height:19px}
-.canal.tt{border-color:#38E1FF55}
-.canal.tt b{color:var(--n);font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;
-  text-transform:uppercase;background:var(--nd);padding:3px 8px;border-radius:100px}
+/* ── problema: três colunas de livro-caixa ── */
+.tese{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--l2)}
+.tese>div{padding:24px 26px 6px 0}
+.tese>div+div{padding-left:26px;border-left:1px solid var(--l)}
+.tese h3{font-size:1.75rem;line-height:1.1;margin:10px 0 8px}
+.tese p{color:var(--t2);font-size:.95rem}
+.tese .sim h3{color:var(--n)}
 
-/* funções */
-.funcs{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:38px}
-.f{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:22px;transition:.18s}
-.f:hover{border-color:#38E1FF44;transform:translateY(-2px)}
-.f .ic{font-size:1.25rem;margin-bottom:11px;display:block}
-.f h3{font-family:var(--disp);font-size:1rem;font-weight:700;letter-spacing:-.012em;margin-bottom:7px}
-.f p{color:var(--t2);font-size:.9rem}
+/* ── vídeo ── */
+.video .w{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:64px;align-items:center}
+.video video{width:100%;height:auto;aspect-ratio:9/16;object-fit:cover;background:var(--p2);border:1px solid var(--l2);display:block}
+.passos-video{list-style:none;padding:0;margin-top:24px;border-top:1px solid var(--l2)}
+.passos-video li{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--fina);color:var(--t2);font-size:.95rem}
+.passos-video li b{color:var(--t);font-weight:600;min-width:9.5em}
+.link-seta{display:inline-block;margin-top:20px;font-weight:600;color:var(--n);text-decoration:none;border-bottom:1px solid currentColor}
 
-/* comparativo */
-.vs{margin-top:34px;border:1px solid var(--l);border-radius:14px;overflow:hidden;background:var(--p)}
-.vs-row{display:grid;grid-template-columns:1fr auto 1fr;gap:0;border-bottom:1px solid var(--l)}
-.vs-row:last-child{border-bottom:0}
-.vs-row>div{padding:15px 20px;font-size:.92rem;display:flex;align-items:center;gap:10px}
+/* ── como funciona: a sequência é real, então leva número ── */
+.passos{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--l2)}
+.passos>div{padding:24px 24px 4px 0}
+.passos>div+div{padding-left:24px;border-left:1px solid var(--l)}
+.passos .n{font-family:var(--disp);font-size:2.6rem;line-height:1;color:var(--n)}
+.passos h3{font-family:var(--sans);font-weight:600;font-size:1.02rem;letter-spacing:0;margin:12px 0 6px}
+.passos p{color:var(--t2);font-size:.92rem}
+
+/* ── o que faz: registros alternados, texto e tela ── */
+.rec{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center;padding:52px 0;border-top:1px solid var(--l)}
+.rec:first-of-type{border-top:0;padding-top:8px}
+.rec.inv{grid-template-columns:1.1fr .9fr}
+.rec.inv .rec-txt{order:2}
+.rec h3{font-size:clamp(1.9rem,3.2vw,2.5rem);line-height:1.05;margin:10px 0 14px}
+.rec p{color:var(--t2)}
+.lista{list-style:none;padding:0;margin-top:18px}
+.lista li{padding:9px 0 9px 24px;border-top:1px solid var(--fina);font-size:.94rem;position:relative}
+.lista li::before{content:"";position:absolute;left:2px;top:17px;width:10px;height:2px;background:var(--n)}
+.lista b{font-weight:600}
+.par{position:relative;padding:0 72px 64px 0}
+.par .etq{position:absolute;right:0;bottom:0;width:36%}
+.aviso-canal{margin-top:16px;font-size:.84rem;color:var(--t3);border-left:2px solid var(--gold);padding:2px 0 2px 12px}
+
+.mais{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--acc);margin-top:56px}
+.mais>div{padding:22px 24px 22px 0;border-bottom:1px solid var(--l)}
+.mais>div:not(:nth-child(3n+1)){padding-left:24px;border-left:1px solid var(--l)}
+.mais h4{font-size:1rem;font-weight:600;margin-bottom:5px}
+.mais p{font-size:.9rem;color:var(--t2)}
+
+/* ── automações: como na Gestão IA ── */
+.grupos{display:grid;grid-template-columns:repeat(4,1fr);gap:0 28px}
+.grupo h4{font-size:.72rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--t2);padding-bottom:10px;border-bottom:2px solid var(--acc)}
+.auto{padding:14px 0;border-bottom:1px solid var(--l)}
+.auto b{display:block;font-weight:600;font-size:.94rem;line-height:1.35}
+.auto p{font-size:.84rem;color:var(--t2);margin-top:5px}
+.tag{display:inline-block;margin-top:7px;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--p2);color:var(--t2)}
+.tag.age{background:var(--nd);color:var(--n)}
+
+/* ── diferença ── */
+.vs{border-top:2px solid var(--acc)}
+.vs-row{display:grid;grid-template-columns:150px 1fr 1fr;border-bottom:1px solid var(--l)}
+.vs-row>div{padding:15px 18px 15px 0;font-size:.95rem}
+.vs-row .mid{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding-top:18px}
 .vs-row .esq{color:var(--t3)}
-.vs-row .mid{background:var(--p2);border-left:1px solid var(--l);border-right:1px solid var(--l);
-  font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);
-  justify-content:center;min-width:118px}
-.vs-row .dir{color:var(--t);font-weight:600}
-.vs-row .dir::before{content:"✓";color:var(--ok);font-weight:700}
-.vs-row .esq::before{content:"×";color:var(--no);font-weight:700}
+.vs-row .dir{font-weight:600}
+.vs-row .esq::before{content:"× ";color:var(--no);font-weight:700}
+.vs-row .dir::before{content:"✓ ";color:var(--n);font-weight:700}
+.vs-cab{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t2)}
+.vs-cab>div{padding-top:12px;padding-bottom:12px}
+.vs-cab .esq::before,.vs-cab .dir::before{content:none}
 
-/* preço */
-.planos{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-top:38px;align-items:start}
-.plano{background:var(--p);border:1px solid var(--l);border-radius:16px;padding:28px;display:flex;flex-direction:column;gap:14px}
-.plano.top{border-color:var(--n);background:linear-gradient(180deg,#0B1A2C,#071120);position:relative}
-.plano .tag{position:absolute;top:-11px;left:26px;background:var(--n);color:#05202B;
-  font-family:var(--mono);font-size:.63rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
-  padding:4px 11px;border-radius:100px}
-.plano h3{font-family:var(--disp);font-size:1.1rem;font-weight:700}
-.plano .val{font-family:var(--disp);font-size:2.1rem;font-weight:800;letter-spacing:-.03em}
-.plano .val small{font-size:.85rem;font-weight:600;color:var(--t3);letter-spacing:0}
-.plano ul{list-style:none;padding:0;display:grid;gap:9px;font-size:.9rem;color:var(--t2)}
-.plano li{display:flex;gap:9px;align-items:flex-start}
-.plano li::before{content:"✓";color:var(--n);font-weight:700;flex:none}
-.plano .btn{justify-content:center;margin-top:auto}
-.plano .nota-plano{font-size:.8rem;color:var(--t3);border-top:1px solid var(--l);padding-top:11px;margin-top:2px}
+/* ── chegando ── */
+.chegando{display:grid;grid-template-columns:1fr 1fr;gap:0 28px;border-top:1px solid var(--l2)}
+.chegando>div{padding:20px 0;border-bottom:1px solid var(--l)}
+.chegando h4{font-size:1rem;font-weight:600}
+.chegando p{color:var(--t2);font-size:.92rem;margin-top:4px}
 
-/* oferta de fundador — faixa, não cartão: é concessão, não item de menu */
-.fundador{margin-top:20px;background:linear-gradient(100deg,#0B1A2C,#071120);
-  border:1px solid var(--acc);border-radius:16px;padding:26px 30px;
-  display:flex;gap:26px;align-items:center;flex-wrap:wrap}
-.fundador .sel{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--acc);background:#F5A62318;border:1px solid #F5A62344;padding:5px 12px;border-radius:100px;white-space:nowrap}
+/* ── preços ── */
+.planos{display:grid;grid-template-columns:repeat(3,1fr);border-top:2px solid var(--acc)}
+.plano{padding:28px 28px 30px 0;display:flex;flex-direction:column;gap:14px}
+.plano+.plano{padding-left:28px;border-left:1px solid var(--l)}
+.plano.top{background:var(--p);padding-left:28px;outline:1px solid var(--n);outline-offset:-1px}
+.plano .marca-top{align-self:flex-start;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#FFF;background:var(--n);padding:3px 10px}
+.plano h3{font-family:var(--sans);font-weight:600;font-size:1.1rem;letter-spacing:0}
+.plano .val{font-family:var(--disp);font-size:2.9rem;line-height:1;font-variant-numeric:lining-nums}
+.plano .val small{font-family:var(--sans);font-size:.85rem;color:var(--t3)}
+.plano ul{list-style:none;padding:0}
+.plano li{padding:8px 0 8px 22px;border-top:1px solid var(--fina);font-size:.92rem;color:var(--t2);position:relative}
+.plano li::before{content:"✓";position:absolute;left:0;color:var(--n);font-weight:700}
+.plano li b{color:var(--t)}
+.plano .nota-plano{font-size:.8rem;color:var(--t3)}
+.plano .btn{margin-top:auto}
+.rodape-preco{font-size:.8rem;color:var(--t3);margin-top:14px;max-width:80ch}
+.fundador{margin-top:28px;background:var(--p);border:1px solid var(--gold);padding:24px 28px;display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.fundador .sel{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .fundador .txt{flex:1;min-width:260px}
-.fundador h3{font-family:var(--disp);font-size:1.14rem;font-weight:700;letter-spacing:-.018em;margin-bottom:5px}
-.fundador p{color:var(--t2);font-size:.92rem;margin:0}
-.fundador .val{font-family:var(--disp);font-size:1.9rem;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
-.fundador .val small{font-size:.8rem;font-weight:600;color:var(--t3);letter-spacing:0}
-@media (max-width:760px){.fundador{padding:22px}}
+.fundador h3{font-size:1.6rem;line-height:1.1;margin:6px 0 6px}
+.fundador p{color:var(--t2);font-size:.92rem}
+.fundador .val{font-family:var(--disp);font-size:2.4rem;line-height:1;white-space:nowrap}
+.fundador .val small{font-family:var(--sans);font-size:.8rem;color:var(--t3)}
 
-/* fecho */
-.fecho{background:linear-gradient(160deg,#0B1A2C,#050B14);border:1px solid #38E1FF33;
-  border-radius:20px;padding:clamp(34px,5vw,58px);text-align:center;margin:0 0 60px}
-.fecho h2{margin:0 auto;max-width:22ch}
+/* ── fecho ── */
+.fecho{border-top:2px solid var(--acc);border-bottom:1px solid var(--l2);padding:56px 0;text-align:center}
+.fecho h2{margin:12px auto 0}
+.fecho .lead{margin:16px auto 0}
 .fecho .cta{justify-content:center}
 
-footer{border-top:1px solid var(--l);padding:30px 0 46px;color:var(--t3);font-size:.84rem}
-footer .w{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
-footer a{color:var(--t3)}footer a:hover{color:var(--n)}
-footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
-@media (max-width:640px){
-  .vs-row{grid-template-columns:1fr;padding-bottom:6px}
-  .vs-row .mid{order:-1;background:transparent;border:0;justify-content:flex-start;
-    padding:14px 20px 2px;min-width:0;color:var(--n)}
-  .vs-row .esq,.vs-row .dir{padding-top:7px;padding-bottom:7px;align-items:flex-start}
+footer{padding:30px 0 46px;color:var(--t3);font-size:.84rem}
+footer .w{display:flex;gap:10px 20px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--t3);text-decoration:none}
+footer a:hover{color:var(--t)}
+footer .dir{margin-left:auto}
+
+/* ── tablet ── */
+@media (max-width:980px){
+  .hero .w,.rec,.rec.inv,.video .w{grid-template-columns:1fr;gap:36px}
+  .rec.inv .rec-txt{order:0}
+  .video .w{justify-items:start}
+  .video video{max-width:340px}
+  .passos{grid-template-columns:1fr 1fr}
+  .passos>div:nth-child(3){padding-left:0;border-left:0}
+  .passos>div{border-bottom:1px solid var(--l);padding-bottom:20px}
+  .grupos{grid-template-columns:1fr 1fr;gap:28px}
+  .mais{grid-template-columns:1fr 1fr}
+  .mais>div:not(:nth-child(3n+1)){padding-left:0;border-left:0}
+  .mais>div:nth-child(even){padding-left:24px;border-left:1px solid var(--l)}
+  .planos{grid-template-columns:1fr}
+  .plano+.plano{padding-left:28px;border-left:0;border-top:1px solid var(--l)}
+  .plano{padding-left:28px}
 }
-/* No celular o menu inteiro nao cabe ao lado da marca e quebra por cima dela.
-   Os tres links de secao saem: a pagina e uma rolagem so, entao eles nao levam
-   a lugar nenhum que o dedo ja nao alcance. Ficam os dois que decidem algo —
-   entrar e comecar — lado a lado, sem quebrar linha. */
+/* ── celular: sem rolagem lateral, gutter de 16 ── */
 @media (max-width:760px){
-  .topo .w{gap:10px;padding:0 16px}
-  .topo nav{gap:4px;flex-wrap:nowrap}
+  .w{padding:0 16px}
+  section{padding:56px 0}
+  .hero{padding:36px 0 28px}
+  .topo .w{gap:8px}
   .topo nav a.lnk{display:none}
-  .topo nav .btn{font-size:.82rem;padding:9px 13px;white-space:nowrap}
-  .topo nav .btn-s{border-color:transparent;padding-left:8px;padding-right:8px}
-  section{padding:44px 0}
-  .hero{padding:34px 0 20px}
+  .topo nav .btn{font-size:.82rem;padding:9px 13px}
+  .topo nav .btn-s{border-color:transparent;padding-left:6px;padding-right:6px}
+  .logo{font-size:1.25rem}
+  .tese,.passos,.mais,.chegando,.grupos{grid-template-columns:1fr}
+  .tese>div+div,.passos>div+div,.mais>div:nth-child(even){padding-left:0;border-left:0}
+  .tese>div{border-bottom:1px solid var(--l);padding:20px 0}
+  .mais>div{padding:18px 0}
+  .vs-row{grid-template-columns:1fr}
+  .vs-row>div{padding:4px 0}
+  .vs-row .mid{padding-top:14px}
+  .vs-row .dir{padding-bottom:14px}
+  .vs-cab{display:none}
+  .par{padding:0}
+  .par .etq{position:static;width:auto;max-width:240px;margin-top:16px}
+  .conta{padding:20px 18px 18px}
+  .plano,.plano+.plano,.plano.top{padding-left:18px;padding-right:18px}
+  .fundador{padding:22px 18px}
   footer .dir{margin-left:0}
-  .marca{font-size:.98rem}
-  .marca img{width:23px;height:23px}
 }
 @media (max-width:380px){
-  .marca{font-size:.88rem;gap:7px}
-  .marca img{width:21px;height:21px}
-  .topo nav .btn{font-size:.77rem;padding:8px 11px}
+  .logo{font-size:1.1rem}
+  .topo nav .btn{font-size:.76rem;padding:8px 10px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 </style>
 </head>
 <body>
 
 <header class="topo"><div class="w">
-  <a href="/" class="marca"><img src="/icons/favicon-192.png" alt=""> Smart<i>Place</i> AI</a>
-  <nav>
+  <a href="/" class="logo">SmartPlace AI</a>
+  <nav aria-label="Seções">
     <a class="lnk" href="#como">Como funciona</a>
-    <a class="lnk" href="#funcoes">O que ela faz</a>
+    <a class="lnk" href="#funcoes">O que faz</a>
     <a class="lnk" href="#precos">Preços</a>
     <a class="btn btn-s" href="/app/">Entrar</a>
     <a class="btn btn-p" href="/app/?criar=1">Teste grátis</a>
@@ -203,125 +267,271 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
 <main>
 
 <section class="hero"><div class="w">
-  <span class="selo">● Mercado Livre · Shopee · TikTok Shop</span>
-  <h1>Sua loja no <em>piloto automático</em>.</h1>
-  <p class="sub">Os outros sistemas te mostram um painel bonito e deixam o trabalho com você.
-    O SmartPlace conecta suas contas e <strong>executa</strong>: ajusta preço dentro das suas regras,
-    renova promoção antes de vencer, responde quem pergunta e organiza os pedidos dos três canais numa tela só.</p>
-  <div class="cta">
-    <a class="btn btn-p" href="/app/?criar=1">Começar teste grátis →</a>
-    <a class="btn btn-s" href="#como">Ver como funciona</a>
-  </div>
-  <div class="mini">
-    <span><b>✓</b> Sem cartão de crédito</span>
-    <span><b>✓</b> Conecta em 2 minutos</span>
-    <span><b>✓</b> Cancela quando quiser</span>
+  <div>
+    <p class="canais">
+      <span><img src="/icons/ml.png" alt="">Mercado Livre</span>
+      <span><img src="/icons/shopee.svg" alt="">Shopee</span>
+      <span><img src="/icons/tiktok-tinta.svg" alt="">TikTok Shop</span>
+    </p>
+    <h1>Sua loja no <em>piloto automático</em>.</h1>
+    <p class="sub">Os outros sistemas te mostram um painel e deixam o trabalho com você.
+      O SmartPlace conecta suas contas, mostra <b>quanto sobrou de verdade</b> em cada venda e <b>trabalha</b>:
+      renova promoção, responde cliente, vigia a reputação e junta os pedidos dos três canais numa tela só.</p>
+    <div class="cta">
+      <a class="btn btn-p" href="/app/?criar=1">Começar teste grátis</a>
+      <a class="btn btn-s" href="#video">Ver em 70 segundos</a>
+    </div>
+    <p class="checks"><span>Sem cartão de crédito</span><span>Conecta em 2 minutos</span><span>Cancela quando quiser</span></p>
   </div>
 
-  <div class="shot">
-    <div class="shot-bar"><i></i><i></i><i></i><span>smartplaceai.app</span></div>
-    <img src="/img/painel-dashboard.png" alt="Painel do SmartPlace AI com faturamento, pedidos e ticket médio dos canais conectados" loading="lazy">
+  <div class="conta">
+    <p class="rot">A conta do mês</p>
+    <dl class="num">
+      <div><dt>Faturamento</dt><dd>R$ 34.105,74</dd></div>
+      <div><dt>Comissão do canal</dt><dd>− R$ 6.897,23</dd></div>
+      <div><dt>Frete que você bancou</dt><dd>− R$ 1.697,65</dd></div>
+      <div><dt>Custo dos produtos</dt><dd>− R$ 12.509,80</dd></div>
+      <div><dt>Imposto</dt><dd>− R$ 2.045,41</dd></div>
+    </dl>
+    <div class="sobra"><span>Sobrou</span><strong>R$ 10.955,65</strong></div>
+    <p class="pct">32% do faturamento</p>
+    <p class="nota">Exemplo da loja de demonstração, últimos 30 dias. No painel, é a conta da sua loja.</p>
   </div>
 </div></section>
 
-<section id="problema"><div class="w">
-  <p class="eyebrow">O que ninguém te conta</p>
-  <h2>Faturamento alto não é lucro.</h2>
-  <p class="lead">O painel do marketplace mostra o que interessa a ele. Depois da comissão, do frete
-    que você bancou, do imposto e do que gastou em anúncio, a conta muda — e ninguém te avisa.</p>
+<div class="vitrine"><div class="w">
+  <figure>
+    <div class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-dash.webp" width="780" height="1300"><img src="/img/painel/dash.webp" width="1400" height="875" alt="Dashboard do SmartPlace: faturamento, pedidos, meta do mês e a conta do faturamento até a sobra"></picture></div>
+    <figcaption>Telas da loja de demonstração, com dados fictícios.</figcaption>
+  </figure>
+</div></div>
 
+<section id="problema"><div class="w">
+  <div class="cab">
+    <p class="rot">O que ninguém te conta</p>
+    <h2>Faturamento alto não é <em>lucro</em>.</h2>
+    <p class="lead">O painel do marketplace mostra o que interessa a ele. Depois da comissão, do frete que você bancou,
+      do custo, do imposto e do anúncio, a conta muda, e ninguém te avisa.</p>
+  </div>
   <div class="tese">
-    <div class="tcard">
-      <span class="rot">O que você vê</span>
-      <h3>R$ 62 mil no mês</h3>
-      <p>Faturamento subindo, pedidos entrando, gráfico bonito. Parece que está tudo certo.</p>
-    </div>
-    <div class="tcard">
-      <span class="rot">O que acontece</span>
-      <h3>Produto no prejuízo</h3>
-      <p>Alguns anúncios custam mais do que rendem. Você continua vendendo eles porque não tem como saber quais são.</p>
-    </div>
-    <div class="tcard destaque">
-      <span class="rot">O que o SmartPlace faz</span>
-      <h3>Mostra e corrige</h3>
-      <p>Calcula quanto sobra por produto com a venda real, aponta os que dão prejuízo e ajusta o preço — sempre dentro do piso que você definiu.</p>
-    </div>
+    <div><p class="rot">O que você vê</p><h3>R$ 62 mil no mês</h3>
+      <p>Faturamento subindo, pedidos entrando, gráfico bonito. Parece que está tudo certo.</p></div>
+    <div><p class="rot">O que acontece</p><h3>Produto no prejuízo</h3>
+      <p>Alguns anúncios custam mais do que rendem. Você continua vendendo porque não tem como saber quais são.</p></div>
+    <div class="sim"><p class="rot">O que o SmartPlace faz</p><h3>Mostra e corrige</h3>
+      <p>Faz a conta de cada venda com o valor real, aponta o que dá prejuízo e calcula o preço certo, sempre dentro do piso que você definiu.</p></div>
+  </div>
+</div></section>
+
+<section id="video" class="video"><div class="w">
+  <video controls playsinline preload="none" poster="/img/video-capa.jpg" width="1080" height="1920">
+    <source src="/demo/smartplace-ai-70s.mp4" type="video/mp4">
+  </video>
+  <div>
+    <p class="rot">Veja funcionando</p>
+    <h2>O painel inteiro em <em>70 segundos</em>.</h2>
+    <p class="lead">Gravado no celular, na loja de demonstração. Sem montagem: são as telas de verdade.</p>
+    <ul class="passos-video">
+      <li><b>Dashboard</b> Os três canais juntos e quanto sobrou</li>
+      <li><b>Lucro por venda</b> Cada pedido com taxa, frete, custo e imposto</li>
+      <li><b>Pedidos</b> A fila única de Mercado Livre, Shopee e TikTok</li>
+      <li><b>IA</b> Pergunta em português, resposta com os números da loja</li>
+      <li><b>Automações</b> O que ela faz sozinha, ligado por você</li>
+    </ul>
+    <a class="link-seta" href="/demo/smartplace-ai-completo.mp4">Ver a versão completa, com etiqueta, preço, Ads e pesquisa (2min30)</a>
   </div>
 </div></section>
 
 <section id="como"><div class="w">
-  <p class="eyebrow">Como funciona</p>
-  <h2>Conecte uma vez. Ela trabalha todo dia.</h2>
-
-  <div class="canais">
-    <span class="canal"><img src="/icons/ml.png" alt="">Mercado Livre</span>
-    <span class="canal"><img src="/icons/shopee.svg" alt="">Shopee</span>
-    <span class="canal tt"><img src="/icons/tiktok.svg" alt="">TikTok Shop <b>quase ninguém tem</b></span>
+  <div class="cab">
+    <p class="rot">Como funciona</p>
+    <h2>Conecte uma vez. Ela trabalha <em>todo dia</em>.</h2>
   </div>
-
-  <div class="funcs">
-    <div class="f"><span class="ic">🔗</span><h3>1. Conecte suas contas</h3>
-      <p>Autorização oficial de cada plataforma, em um clique. Nenhuma senha sua fica com a gente.</p></div>
-    <div class="f"><span class="ic">📊</span><h3>2. Ela lê sua operação</h3>
-      <p>Puxa anúncios, preços, promoções, pedidos e taxas. Calcula quanto sobra em cada produto.</p></div>
-    <div class="f"><span class="ic">⚙️</span><h3>3. Você define os limites</h3>
-      <p>Preço mínimo e máximo por produto. A IA nunca fura a sua margem — a trava é do sistema, não da boa vontade.</p></div>
-    <div class="f"><span class="ic">🤖</span><h3>4. A partir daí ela opera</h3>
-      <p>Ligue as automações ou peça em português. Tudo que ela faz fica registrado com data, hora e resultado.</p></div>
+  <div class="passos">
+    <div><span class="n">1</span><h3>Conecte suas contas</h3>
+      <p>A autorização é feita no site de cada marketplace, em um clique. Sua senha nunca passa por aqui.</p></div>
+    <div><span class="n">2</span><h3>Diga quanto custa cada produto</h3>
+      <p>Com o custo e o imposto, ela calcula quanto sobra em cada venda. Dá pra importar o catálogo do Tiny ou do Bling.</p></div>
+    <div><span class="n">3</span><h3>Defina os limites</h3>
+      <p>Preço mínimo e máximo por anúncio. A IA não fura a sua margem: a trava é do sistema, não da boa vontade.</p></div>
+    <div><span class="n">4</span><h3>Ligue o que ela faz sozinha</h3>
+      <p>Escolha as automações ou peça em português. Tudo que ela faz fica registrado com data, hora e resultado.</p></div>
   </div>
 </div></section>
 
 <section id="funcoes"><div class="w">
-  <p class="eyebrow">O que ela faz</p>
-  <h2>Não é um painel. É alguém trabalhando.</h2>
+  <div class="cab">
+    <p class="rot">O que faz hoje</p>
+    <h2>Não é um painel. É alguém <em>trabalhando</em>.</h2>
+  </div>
 
-  <div class="funcs">
-    <div class="f"><span class="ic">🏷️</span><h3>Promoção sempre no ar</h3>
-      <p>Renova a oferta antes de vencer e encontra os anúncios que ficaram sem desconto.</p></div>
-    <div class="f"><span class="ic">💬</span><h3>Pergunta respondida na hora</h3>
-      <p>Quem pergunta e não é respondido compra do concorrente. A IA responde no tom da sua marca — e deixa as delicadas com você.</p></div>
-    <div class="f"><span class="ic">💰</span><h3>Margem real por produto</h3>
-      <p>Quanto sobra depois de comissão, frete e imposto. Qual anúncio está te dando prejuízo.</p></div>
-    <div class="f"><span class="ic">🗂️</span><h3>Seu catálogo, não o do marketplace</h3>
-      <p>Um cadastro por produto, com custo, peso e dados fiscais — não um por anúncio. É o que faz a margem
-        ser real e o estoque conversar entre os três canais.</p></div>
-    <div class="f"><span class="ic">🧾</span><h3>Nota fiscal sem contratar outro sistema</h3>
-      <p>Você sobe seu certificado digital, configura as operações uma vez e emite a nota do pedido aqui
-        mesmo. Sem pagar um emissor à parte.</p></div>
-    <div class="f"><span class="ic">🔄</span><h3>Estoque igual nos três canais</h3>
-      <p>Vendeu a última no TikTok? Ela baixa no Mercado Livre antes de você tomar um cancelamento.</p></div>
-    <div class="f"><span class="ic">📦</span><h3>Pedidos dos três numa tela</h3>
-      <p>Fila unificada com etapa, valor e itens. Etiqueta de envio pronta pra imprimir.</p></div>
-    <div class="f"><span class="ic">⭐</span><h3>Reputação vigiada</h3>
-      <p>Avisa quando um indicador chega perto do limite — antes de cair de nível, não depois.</p></div>
-    <div class="f"><span class="ic">👥</span><h3>Anúncio competindo com anúncio</h3>
-      <p>Encontra produtos seus duplicados disputando entre si e derrubando o próprio preço.</p></div>
-    <div class="f"><span class="ic">📣</span><h3>Anúncio pago contra venda real</h3>
-      <p>Quanto do seu faturamento virou anúncio, canal por canal. O número que diz se a campanha está
-        pagando ou comendo a margem.</p></div>
-    <div class="f"><span class="ic">🗣️</span><h3>Peça em português</h3>
-      <p>"Quanto vendi essa semana?" · "Aplica 15% no que está sem promoção". Ela mostra o que vai fazer e espera seu sim.</p></div>
+  <article class="rec">
+    <div class="rec-txt">
+      <p class="rot">Dashboard</p>
+      <h3>Quanto sobrou, <em>venda por venda</em>.</h3>
+      <p>Do faturamento até a sobra, com cada desconto à vista. E a mesma conta pedido a pedido, pra achar o produto que vende muito e não deixa nada.</p>
+      <ul class="lista">
+        <li><b>Comissão, frete, custo, imposto e Ads</b> descontados de cada venda</li>
+        <li><b>Conciliado</b> quando o marketplace fecha o valor; <b>estimado</b> até lá</li>
+        <li>Meta do mês com o ritmo do dia, filtro por canal e exportação pra planilha</li>
+      </ul>
+    </div>
+    <figure class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-lucro.webp" width="780" height="1300"><img src="/img/painel/lucro.webp" width="1400" height="875" loading="lazy" alt="Tabela de lucro venda a venda com valor, taxas, frete, imposto, custo, lucro e margem de cada pedido"></picture></figure>
+  </article>
+
+  <article class="rec inv">
+    <div class="rec-txt">
+      <p class="rot">Pedidos e etiquetas</p>
+      <h3>Etiqueta com o <em>produto na mesma etiqueta</em>.</h3>
+      <p>Os pedidos dos três canais numa fila só. Marque, gere as etiquetas em lote e imprima direto na térmica.</p>
+      <ul class="lista">
+        <li>Etiqueta em <b>ZPL</b>, no tamanho e na resolução da sua impressora</li>
+        <li>Os <b>itens do pedido saem embaixo da etiqueta</b>: quem embala confere sem abrir a nota</li>
+        <li>Busca por pedido, cliente, produto ou SKU, e filtro por etapa e canal</li>
+      </ul>
+    </div>
+    <div class="par">
+      <figure class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-pedidos.webp" width="780" height="1300"><img src="/img/painel/pedidos.webp" width="1400" height="875" loading="lazy" alt="Fila de pedidos com Mercado Livre, Shopee e TikTok Shop juntos"></picture></figure>
+      <figure class="tela etq"><img src="/img/painel/etiqueta.webp" width="600" height="900" loading="lazy" alt="Etiqueta de envio com a lista de itens do pedido impressa na parte de baixo"></figure>
+    </div>
+  </article>
+
+  <article class="rec">
+    <div class="rec-txt">
+      <p class="rot">Gestão IA</p>
+      <h3>Peça <em>em português</em>.</h3>
+      <p>"Qual produto me dá mais lucro?", "quanto vendi essa semana?", "aplica 15% no que está sem promoção". Ela responde com os números da sua loja.</p>
+      <ul class="lista">
+        <li>Antes de mudar qualquer coisa, <b>mostra o que vai fazer e espera seu sim</b></li>
+        <li>Tarefas de um clique: checar a saúde da loja, igualar estoque, achar anúncio repetido</li>
+        <li>Histórico de tudo que ela executou na sua loja</li>
+      </ul>
+    </div>
+    <figure class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-ia.webp" width="780" height="1300"><img src="/img/painel/ia-chat.webp" width="1100" height="740" loading="lazy" alt="Conversa com a IA respondendo qual produto dá mais lucro, com valores e margens"></picture></figure>
+  </article>
+
+  <article class="rec inv">
+    <div class="rec-txt">
+      <p class="rot">Precificação</p>
+      <h3>O preço certo, com a <em>conta aberta</em>.</h3>
+      <p>Informe o custo, o canal e a margem. Ela mostra o preço sugerido linha por linha, e quanto sobra se você vender 5%, 10% ou 20% acima.</p>
+      <ul class="lista">
+        <li>Comissão e embalagem já vêm dos seus pedidos</li>
+        <li>Compara as modalidades de envio do Mercado Livre e marca a que deixa mais</li>
+        <li><b>Piso e teto por anúncio</b>: a IA não vende fora da faixa, nem se você pedir</li>
+        <li>Aponta anúncio abaixo do piso e aplica o preço novo no canal</li>
+      </ul>
+    </div>
+    <figure class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-precos.webp" width="780" height="1300"><img src="/img/painel/precos.webp" width="1400" height="875" loading="lazy" alt="Calculadora de preço com custo, comissão e imposto ao lado das regras de piso e teto por anúncio"></picture></figure>
+  </article>
+
+  <article class="rec">
+    <div class="rec-txt">
+      <p class="rot">Ads</p>
+      <h3>Anúncio pago que <em>paga a conta</em>.</h3>
+      <p>Quanto gastou, quanto vendeu por causa do anúncio e quanto do faturamento virou Ads. E avisa sozinha quando uma campanha está no prejuízo.</p>
+      <ul class="lista">
+        <li>Retorno e ACOS por campanha e por anúncio do Mercado Livre</li>
+        <li>Pausa e muda o orçamento ali mesmo</li>
+        <li>Análise da IA: o que pausar e o que aumentar</li>
+      </ul>
+      <p class="aviso-canal">Shopee e TikTok Shop ainda não liberam os números de Ads pra aplicativos de gestão. A tela avisa e mostra o Mercado Livre.</p>
+    </div>
+    <figure class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-ads.webp" width="780" height="1300"><img src="/img/painel/ads-campanhas.webp" width="1400" height="875" loading="lazy" alt="Campanhas com gasto, cliques, venda e retorno, e aviso de campanha devolvendo menos do que gasta"></picture></figure>
+  </article>
+
+  <article class="rec inv">
+    <div class="rec-txt">
+      <p class="rot">Pesquisa de mercado</p>
+      <h3>O que vende, e <em>por quanto</em>.</h3>
+      <p>Antes de anunciar, digite o produto: ela mostra a faixa de preço dos mais vendidos, o tamanho da concorrência e o que o público está buscando.</p>
+      <ul class="lista">
+        <li>Mais vendidos da categoria, com o menor preço e quantos vendem</li>
+        <li>Termos em alta na busca, pra usar no título</li>
+        <li>Dados do Mercado Livre (a Shopee não libera pesquisa pra aplicativos)</li>
+      </ul>
+    </div>
+    <figure class="tela"><picture><source media="(max-width:760px)" srcset="/img/painel/m-pesquisa.webp" width="780" height="1300"><img src="/img/painel/pesquisa.webp" width="1400" height="875" loading="lazy" alt="Pesquisa de mercado de garrafa térmica com faixa de preço, concorrência, termos em alta e mais vendidos"></picture></figure>
+  </article>
+
+  <div class="mais">
+    <div><h4>Catálogo próprio</h4><p>Um cadastro por produto, com custo, peso e NCM, não um por anúncio. Importa do Tiny ou do Bling.</p></div>
+    <div><h4>Copiar anúncio entre canais</h4><p>Leva o produto da Shopee pro Mercado Livre ou pro TikTok. O canal confere e você publica.</p></div>
+    <div><h4>Estoque igual em um clique</h4><p>Mostra o que está diferente entre os canais e ajusta, antes de você vender o que acabou.</p></div>
+    <div><h4>Saúde da loja</h4><p>Promoção, frete grátis, avaliações e estoque conferidos em cada canal, num clique.</p></div>
+    <div><h4>Carteira pra agências</h4><p>Várias lojas no mesmo login, com o que precisa de atenção em cada uma. Sem pedir a senha do cliente.</p></div>
+    <div><h4>Manual em cada tela</h4><p>Toda tela tem um "como usar" no rodapé. Dúvida resolvida sem abrir chamado.</p></div>
+  </div>
+</div></section>
+
+<section id="sozinha"><div class="w">
+  <div class="cab">
+    <p class="rot">Trabalhando sozinha</p>
+    <h2>Ligue o que ela faz <em>sem você pedir</em>.</h2>
+    <p class="lead">Tudo começa desligado. As que agem só repõem o que já existia, como renovar uma promoção que venceu.
+      As outras só avisam, e a decisão continua sua.</p>
+  </div>
+  <div class="grupos">
+    <div class="grupo"><h4>Preço e promoções</h4>
+      <div class="auto"><b>Promoção que nunca vence</b><p>Se a promoção some, repõe o mesmo valor. Sem registro anterior, só avisa: nunca inventa preço.</p><span class="tag age">age sozinha</span></div>
+      <div class="auto"><b>Renovar relâmpago do TikTok</b><p>Recria a relâmpago com os mesmos preços quando ela vence.</p><span class="tag age">age sozinha</span></div>
+      <div class="auto"><b>Vigiar posição no catálogo do ML</b><p>Avisa quando você perde a posição. Baixar preço é decisão sua.</p><span class="tag">só avisa</span></div>
+    </div>
+    <div class="grupo"><h4>Atendimento</h4>
+      <div class="auto"><b>Responder perguntas do Mercado Livre</b><p>A IA lê o anúncio e escreve. Você aprova antes ou deixa ela publicar; assunto delicado fica com você.</p><span class="tag age">age sozinha</span></div>
+      <div class="auto"><b>Responder avaliações</b><p>No tom da marca. Nota baixa com texto fica pra você. Hoje na Shopee.</p><span class="tag age">age sozinha</span></div>
+      <div class="auto"><b>Vigiar perguntas sem resposta</b><p>Avisa quem está esperando.</p><span class="tag">só avisa</span></div>
+      <div class="auto"><b>Vigiar devoluções e reclamações</b><p>Devolução da Shopee no prazo de 48h e reclamação aberta no Mercado Livre.</p><span class="tag">só avisa</span></div>
+    </div>
+    <div class="grupo"><h4>Anúncios e estoque</h4>
+      <div class="auto"><b>Avisar anúncio fora do ar</b><p>Quando a plataforma tira do ar, manda pra análise ou bloqueia.</p><span class="tag">só avisa</span></div>
+      <div class="auto"><b>Avisar estoque acabando</b><p>3 unidades ou menos, antes do cancelamento.</p><span class="tag">só avisa</span></div>
+      <div class="auto"><b>Anúncio 100%</b><p>Poucas fotos, descrição curta ou ficha incompleta: o que derruba a posição.</p><span class="tag">só avisa</span></div>
+      <div class="auto"><b>Avisar saldo do Ads acabando</b><p>Quando o saldo dá pra menos de 2 dias no ritmo atual.</p><span class="tag">só avisa</span></div>
+    </div>
+    <div class="grupo"><h4>Relatórios</h4>
+      <div class="auto"><b>Vigiar reputação</b><p>Indicador perto do limite, antes de cair de nível.</p><span class="tag">só avisa</span></div>
+      <div class="auto"><b>Sincronizar pedidos</b><p>Puxa os pedidos novos dos canais conectados.</p><span class="tag age">age sozinha</span></div>
+      <div class="auto"><b>Resumo semanal</b><p>Junta a semana e deixa o resultado no seu painel.</p><span class="tag age">age sozinha</span></div>
+    </div>
   </div>
 </div></section>
 
 <section id="diferenca"><div class="w">
-  <p class="eyebrow">A diferença</p>
-  <h2>Olhar não é operar.</h2>
+  <div class="cab">
+    <p class="rot">A diferença</p>
+    <h2>Olhar não é <em>operar</em>.</h2>
+  </div>
   <div class="vs">
-    <div class="vs-row"><div class="esq">Painel pra você ler</div><div class="mid">operação</div><div class="dir">Ações executadas por ela</div></div>
-    <div class="vs-row"><div class="esq">Você ajusta anúncio à noite</div><div class="mid">rotina</div><div class="dir">Ela ajusta enquanto você dorme</div></div>
-    <div class="vs-row"><div class="esq">Um canal por vez</div><div class="mid">canais</div><div class="dir">Mercado Livre, Shopee e TikTok Shop juntos</div></div>
-    <div class="vs-row"><div class="esq">Só anúncio</div><div class="mid">alcance</div><div class="dir">Anúncio, pedido, atendimento e nota fiscal</div></div>
-    <div class="vs-row"><div class="esq">Otimiza faturamento</div><div class="mid">objetivo</div><div class="dir">Otimiza o que sobra no fim do mês</div></div>
-    <div class="vs-row"><div class="esq">Alerta que vira ruído</div><div class="mid">aviso</div><div class="dir">Histórico do que foi feito e por quê</div></div>
+    <div class="vs-row vs-cab"><div class="mid"></div><div class="esq">Hub comum</div><div class="dir">SmartPlace AI</div></div>
+    <div class="vs-row"><div class="mid">Operação</div><div class="esq">Painel pra você ler</div><div class="dir">Ações executadas por ela</div></div>
+    <div class="vs-row"><div class="mid">Rotina</div><div class="esq">Você ajusta anúncio à noite</div><div class="dir">Ela repõe promoção e responde enquanto você dorme</div></div>
+    <div class="vs-row"><div class="mid">Canais</div><div class="esq">Um canal por vez</div><div class="dir">Mercado Livre, Shopee e TikTok Shop juntos</div></div>
+    <div class="vs-row"><div class="mid">Objetivo</div><div class="esq">Otimiza faturamento</div><div class="dir">Otimiza o que sobra no fim do mês</div></div>
+    <div class="vs-row"><div class="mid">Preço</div><div class="esq">Mexe no preço sem trava</div><div class="dir">Piso e teto que nem a IA fura</div></div>
+    <div class="vs-row"><div class="mid">Aviso</div><div class="esq">Alerta que vira ruído</div><div class="dir">Histórico do que foi feito e por quê</div></div>
+  </div>
+</div></section>
+
+<section id="chegando"><div class="w">
+  <div class="cab">
+    <p class="rot">Chegando</p>
+    <h2>O que entra <em>a seguir</em>.</h2>
+  </div>
+  <div class="chegando">
+    <div><h4>Nota fiscal direto da fila de pedidos</h4>
+      <p>A empresa, o certificado e as regras fiscais já se configuram no sistema. A emissão pela fila é a próxima entrega.</p></div>
+    <div><h4>Ads da Shopee</h4>
+      <p>Entra assim que a Shopee liberar os números de anúncio para o aplicativo.</p></div>
   </div>
 </div></section>
 
 <section id="precos"><div class="w">
-  <p class="eyebrow">Preços</p>
-  <h2>Comece grátis. Pague quando fizer sentido.</h2>
-  <p class="lead">Todos os planos incluem os três canais e a emissão de nota fiscal.
-    Sem fidelidade, cancela quando quiser.</p>
+  <div class="cab">
+    <p class="rot">Preços</p>
+    <h2>Comece grátis. Pague quando <em>fizer sentido</em>.</h2>
+    <p class="lead">Todos os planos incluem os três canais. Sem fidelidade, cancela quando quiser.</p>
+  </div>
 
   <div class="planos">
     <div class="plano">
@@ -330,7 +540,7 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
       <ul>
         <li>Conecta os três canais</li>
         <li>Pedidos e faturamento reais</li>
-        <li>Margem real por produto</li>
+        <li>Lucro de verdade por venda</li>
         <li>Diagnósticos completos</li>
       </ul>
       <p class="nota-plano">Sem cartão de crédito. Se não continuar, não acontece nada.</p>
@@ -338,7 +548,7 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
     </div>
 
     <div class="plano top">
-      <span class="tag">mais escolhido</span>
+      <span class="marca-top">Mais escolhido</span>
       <h3>Essencial</h3>
       <p class="val">R$ 199,90 <small>/ mês</small></p>
       <ul>
@@ -347,10 +557,10 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
         <li>Preço com trava de piso e teto</li>
         <li>Perguntas e avaliações respondidas</li>
         <li>Estoque igualado entre canais</li>
-        <li><strong>Até 2.000 notas fiscais por mês</strong></li>
+        <li><b>Até 2.000 notas fiscais por mês*</b></li>
       </ul>
       <p class="nota-plano">Cobre a grande maioria das operações. Se passar, a gente avisa antes.</p>
-      <a class="btn btn-g" href="/app/?criar=1">Começar teste grátis</a>
+      <a class="btn btn-v" href="/app/?criar=1">Começar teste grátis</a>
     </div>
 
     <div class="plano">
@@ -358,7 +568,7 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
       <p class="val">R$ 399,90 <small>/ mês</small></p>
       <ul>
         <li>Tudo do plano Essencial</li>
-        <li><strong>Notas fiscais sem limite</strong></li>
+        <li><b>Notas fiscais sem limite*</b></li>
         <li>Cadastro de produto nos três canais</li>
         <li>Prioridade no que é construído</li>
         <li>Suporte direto com quem construiu</li>
@@ -367,11 +577,12 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
       <a class="btn btn-s" href="/app/?criar=1">Começar teste grátis</a>
     </div>
   </div>
+  <p class="rodape-preco">* A emissão de nota pela fila de pedidos é a próxima entrega; a configuração fiscal já está no sistema. Os limites de nota valem a partir dela.</p>
 
   <div class="fundador">
-    <span class="sel">Oferta de fundador</span>
     <div class="txt">
-      <h3>As primeiras 5 lojas entram por R$ 147 — para sempre.</h3>
+      <span class="sel">Oferta de fundador</span>
+      <h3>As primeiras 5 lojas entram por R$ 147, para sempre.</h3>
       <p>Mesmo produto do plano Essencial, com o preço travado enquanto a conta existir.
          Em troca, você me diz o que construir primeiro. Quando as 5 vagas fecharem, a oferta acaba.</p>
     </div>
@@ -382,11 +593,10 @@ footer .dir{margin-left:auto;font-family:var(--mono);font-size:.74rem}
 
 <section><div class="w">
   <div class="fecho">
-    <p class="eyebrow" style="margin-bottom:14px">Comece agora</p>
-    <h2>Sua concorrência está renovando promoção na mão.</h2>
-    <p class="lead" style="margin:16px auto 0;text-align:left;max-width:52ch">
-      Conecte uma conta e veja, na sua própria loja, o que ela encontra em 2 minutos.</p>
-    <div class="cta"><a class="btn btn-p" href="/app/?criar=1">Testar grátis →</a></div>
+    <p class="rot">Comece agora</p>
+    <h2>Sua concorrência está renovando promoção <em>na mão</em>.</h2>
+    <p class="lead">Conecte uma conta e veja, na sua própria loja, quanto sobrou de verdade no último mês.</p>
+    <div class="cta"><a class="btn btn-p" href="/app/?criar=1">Testar grátis por 14 dias</a></div>
   </div>
 </div></section>
 
