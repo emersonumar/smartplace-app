@@ -208,7 +208,7 @@ function trocarLoja(id){
 const app = document.getElementById("app");
 const NOMES = {mercado_livre:["Mercado Livre","#FFE600","ML","ml.png"],shopee:["Shopee","#EE4D2D","S","shopee.svg"],tiktok:["TikTok Shop","#161616","TT","tiktok-tinta.svg"]};
 const ico = (c,s=18)=> NOMES[c]?`<img src="/icons/${NOMES[c][3]}" alt="${NOMES[c][0]}" style="width:${Math.round(s*1.15)}px;height:${s}px;object-fit:contain;vertical-align:middle">`:"";
-const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["produtos","Produtos"],["pesquisa","Pesquisa"],["canais","Integrações"],["fiscal","Fiscal"],["carteira","Carteira"]];
+const MENU = [["dashboard","Dashboard"],["pedidos","Pedidos"],["etiquetas","Etiquetas"],["ia","Gestão IA"],["precos","Precificação"],["ads","Ads"],["produtos","Produtos"],["pesquisa","Pesquisa"],["canais","Integrações"],["fiscal","Fiscal"],["carteira","Carteira"],["ajuda","Ajuda"]];
 
 function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 const brl = v => Number(v??0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -451,11 +451,14 @@ function shell(){
   document.getElementById("sair").onclick = async()=>{ await sb.auth.signOut(); HIST=[]; CACHE={painel:null,dados:null,ads:null,regras:null}; render(); };
   marcaAvisos();
   const av = avisosAbertos(d), urg = av.filter(avisoUrgente).length;
-  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira, produtos:viewProdutos, pesquisa:viewPesquisa, fiscal:viewFiscal };
+  const views = { dashboard:viewDashboard, pedidos:viewPedidos, etiquetas:viewEtiquetas, precos:viewPrecos, ia:viewIA, ads:viewAds, canais:viewCanais, carteira:viewCarteira, produtos:viewProdutos, pesquisa:viewPesquisa, fiscal:viewFiscal, ajuda:viewAjuda };
   // só o Dashboard lembra, numa linha; a lista mora na Gestão IA
   app.innerHTML = (VIEW==="dashboard" && av.length
     ? `<div class="alerta" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap${urg?";border-left-color:var(--no)":""}"><span style="flex:1"><b style="color:var(--t)">${av.length} aviso${av.length>1?"s":""} esperando você</b>${urg?` · ${urg} urgente${urg>1?"s":""}`:""}</span><button class="mini" id="verAvisos" style="flex:none">Ver na Gestão IA</button></div>`
-    : "") + `<div id="conteudo"></div>`;
+    : "") + `<div id="conteudo"></div>`
+    + (VIEW!=="ajuda" && AJUDA[VIEW] ? `<div style="margin:28px 0 8px;text-align:center"><button class="link" id="ajudaTela">Dúvida nesta tela? Veja como usar ${esc(AJUDA[VIEW].t)}</button></div>` : "");
+  const at = document.getElementById("ajudaTela");
+  if(at) at.onclick = ()=>{ AJUDA_ALVO = VIEW; VIEW="ajuda"; location.hash=VIEW; shell(); };
   const va = document.getElementById("verAvisos");
   if(va) va.onclick = ()=>{ VIEW="ia"; location.hash=VIEW; shell(); };
   (views[VIEW]||viewDashboard)(document.getElementById("conteudo"));
@@ -2768,6 +2771,130 @@ function viewCanais(c){
     });
   };
   desenha();
+}
+
+// ── Ajuda ──
+// O manual mora no painel: uma seção por tela do menu, na ordem do menu.
+// Quem chega pelo rodapé de uma tela cai direto na seção dela.
+let AJUDA_ALVO = "";
+const AJUDA = {
+  dashboard: { t:"Dashboard", p:"Quanto você vendeu e quanto sobrou no período.", passos:[
+    "Escolha as datas e o canal no topo. Todos os números da tela seguem esse filtro.",
+    "A faixa da conta vai do faturamento até a sobra: tira a comissão do canal, o frete que você pagou, o custo, o imposto e o Ads.",
+    "Em <b>Configurar custo e imposto</b> você informa o % de cada um. Enquanto faltar um deles, a sobra aparece como parcial.",
+    "<b>Lucro venda a venda</b> mostra cada venda. <b>Conciliado</b> é o valor que o marketplace já fechou; <b>estimado</b> usa a tabela do canal até ele fechar.",
+    "Em <b>definir meta</b> você coloca a meta de faturamento do mês e acompanha quanto falta. <b>Exportar CSV</b> baixa os pedidos pra planilha.",
+  ]},
+  pedidos: { t:"Pedidos", p:"Os pedidos de todos os canais num lugar só, com nota e etiqueta.", passos:[
+    "Os pedidos chegam sozinhos várias vezes por dia. Pra puxar agora, clique em <b>Sincronizar</b>.",
+    "Filtre pela etapa e pelo canal, ou busque por número do pedido, cliente, produto ou SKU.",
+    "Marque os pedidos e use <b>Emitir nota</b> (precisa da tela Fiscal pronta) ou <b>Gerar etiqueta</b>.",
+    "<b>Imprimir</b> tira a etiqueta de transporte, a DANFE simplificada ou a DANFE completa.",
+  ]},
+  etiquetas: { t:"Etiquetas", p:"Ver e imprimir etiquetas na impressora térmica.", passos:[
+    "O jeito mais rápido: marque os pedidos em <b>Pedidos</b> e gere as etiquetas de uma vez.",
+    "Se você já tem o código da etiqueta (ZPL), cole aqui ou use <b>Carregar Arquivo</b>.",
+    "Escolha o tamanho da etiqueta e a resolução da sua impressora, confira a pré-visualização e clique em <b>Imprimir</b>.",
+  ]},
+  ia: { t:"Gestão IA", p:"Onde você conversa com a IA e decide o que ela faz sozinha.", passos:[
+    "<b>Converse com a IA</b>: peça em português, do jeito que você falaria. Ex.: \"quanto vendi esta semana?\". Antes de mudar qualquer coisa, ela mostra o que vai fazer e espera seu sim.",
+    "<b>Precisa de você</b>: avisos que pedem atenção, como estoque acabando ou anúncio fora do ar. Resolveu? Clique em <b>Feito</b>.",
+    "<b>Faça agora</b>: tarefas de um clique, como checar a saúde da loja, responder avaliações ou igualar o estoque entre canais.",
+    "<b>Trabalhando sozinha</b>: ligue o que a IA deve fazer sem você pedir. Tudo começa desligado. As que agem só repõem o que já existia (ex.: renovar uma promoção que venceu); as outras só avisam.",
+    "<b>O que a IA fez</b>: o histórico de tudo que ela executou na sua loja.",
+  ]},
+  precos: { t:"Precificação", p:"Por quanto vender sem perder dinheiro, e a trava de preço.", passos:[
+    "<b>Calcular preço de venda</b>: informe o custo, o canal e a margem que você quer. A comissão e a embalagem já vêm dos seus pedidos.",
+    "Depois do cálculo aparece <b>Comparar envio no Mercado Livre</b>: com o peso e as medidas da embalagem, ele mostra quanto sobra em cada modalidade e marca a melhor.",
+    "<b>Regras de piso e teto</b>: digite o menor e o maior preço de cada anúncio. A IA não vende abaixo do piso nem acima do teto, nem se você pedir no chat.",
+    "A coluna <b>Situação</b> mostra quem está fora da faixa. O botão embaixo do preço sugerido aplica o preço novo no canal.",
+  ]},
+  ads: { t:"Ads", p:"Se o anúncio pago está dando lucro ou comendo a margem.", passos:[
+    "Mostra o que você gastou, quanto vendeu por causa do anúncio, o retorno e quanto do faturamento foi pro Ads, nos últimos 30 dias.",
+    "<b>Análise da IA</b> diz o que vale pausar e o que vale aumentar.",
+    "No Mercado Livre aparecem os anúncios que mais gastam. Na Shopee, os números dependem de uma liberação da própria Shopee: enquanto ela não sai, a tela avisa. O TikTok Shop ainda não libera esses números.",
+    "O SmartPlace não mexe em lance nem em verba. A decisão é sua.",
+  ]},
+  produtos: { t:"Produtos", p:"Seus anúncios nos canais e o cadastro de cada produto.", passos:[
+    "<b>Anúncios nos canais</b>: tudo que está à venda, com preço, estoque e em quais outros canais o produto já está.",
+    "<b>Só os que faltam em outro canal</b> filtra o que dá pra levar adiante. <b>Copiar para</b> monta o anúncio no outro canal; o canal confere e você clica em publicar.",
+    "<b>Cadastro por SKU</b>: um cadastro por produto (não por anúncio), com custo, peso e NCM. O custo entra no cálculo do lucro; o NCM, na nota.",
+    "<b>Importar do Tiny ou Bling</b> traz o catálogo pronto. <b>Ligar anúncios pelo SKU</b> junta cada anúncio ao produto dele.",
+  ]},
+  pesquisa: { t:"Pesquisa", p:"O que vende e por quanto, antes de você anunciar.", passos:[
+    "Digite o produto (ex.: \"cinta modeladora\") e clique em <b>Pesquisar</b>.",
+    "Você vê a faixa de preço dos mais vendidos, o tamanho da concorrência e os termos que estão em alta na busca.",
+    "Os dados vêm do Mercado Livre. A Shopee não libera pesquisa de mercado pra aplicativos.",
+  ]},
+  canais: { t:"Integrações", p:"Onde você conecta e desconecta cada marketplace.", passos:[
+    "<b>Conectar</b> abre o site do marketplace pra você autorizar. Sua senha nunca passa pelo SmartPlace.",
+    "<b>Sincronizar</b> puxa os pedidos na hora.",
+    "Apareceu <b>conexão caiu</b>? O marketplace pediu uma nova autorização. Clique em <b>Reconectar</b>: seus dados continuam aqui.",
+    "<b>Desconectar</b> para de sincronizar aquele canal. Dá pra reconectar quando quiser.",
+  ]},
+  fiscal: { t:"Fiscal", p:"Emitir nota fiscal pelos pedidos, sem contratar emissor à parte.", passos:[
+    "São 3 passos, feitos uma vez só: dados da empresa, certificado digital (o arquivo .pfx e a senha) e regras fiscais.",
+    "O certificado vai direto pro emissor, que guarda criptografado. O SmartPlace não grava o arquivo nem a senha.",
+    "Com isso pronto, marque os pedidos em <b>Pedidos</b> e clique em <b>Emitir nota</b>. As notas emitidas aparecem aqui.",
+  ]},
+  carteira: { t:"Carteira", p:"Pra quem atende várias lojas, como agência ou consultor.", passos:[
+    "Lista as lojas que você atende, com faturamento, pedidos e o que precisa de atenção em cada uma.",
+    "<b>Entrar</b> troca de loja: todas as telas passam a mostrar a loja escolhida, sem pedir a senha do cliente.",
+  ]},
+};
+const AJUDA_INICIO = [
+  ["canais","Conecte seus canais","Em Integrações, clique em Conectar e autorize no site do marketplace."],
+  ["produtos","Diga quanto custa cada produto","Em Produtos, no Cadastro por SKU, ou importe do Tiny ou do Bling."],
+  ["dashboard","Informe o seu imposto","No Dashboard, em Configurar custo e imposto. Com custo e imposto, a sobra é a de verdade."],
+  ["ia","Ligue o que a IA faz sozinha","Na Gestão IA, em Trabalhando sozinha. Tudo começa desligado."],
+  ["ia","Peça em português","Na Gestão IA, escreva o que precisa no chat."],
+];
+const AJUDA_DUVIDAS = [
+  ["A IA muda preço sozinha?", "Não. Preço só muda com o seu sim, e nunca fora do piso e do teto que você definiu em Precificação. As automações que agem só repõem o que já existia, como renovar uma promoção que venceu."],
+  ["Por que a sobra aparece como parcial?", "Falta o custo dos produtos ou o imposto. Informe os dois no Dashboard, em Configurar custo e imposto, ou cadastre o custo de cada produto em Produtos."],
+  ["Meu número não bate com o do marketplace.", "As vendas recentes ainda estão estimadas: o marketplace só fecha a comissão e o frete depois de alguns dias. Quando fecha, a venda vira conciliada e o número se ajusta sozinho."],
+  ["Conectei o canal e não apareceu nada.", "Clique em Sincronizar, em Integrações. Na primeira vez, uma conta com muitos pedidos pode levar alguns minutos."],
+  ["Como funciona o teste grátis?", "São 14 dias com tudo liberado. Se você assinar durante o teste, pelo Mercado Pago, a primeira cobrança só acontece quando os 14 dias acabam. Pra assinar, clique no selo do teste grátis, no topo."],
+];
+function viewAjuda(c){
+  const telas = MENU.map(([v])=>v).filter(v=>AJUDA[v]);
+  const secao = v => { const s = AJUDA[v]; return `
+    <div class="card" id="aj-${v}" style="margin-top:-1px;padding:18px 22px;scroll-margin-top:130px">
+      <div style="display:flex;align-items:baseline;gap:8px 14px;flex-wrap:wrap">
+        <b style="font-size:1rem">${s.t}</b>
+        <span style="flex:1 1 220px;color:var(--t2);font-size:.86rem">${s.p}</span>
+        <button class="mini ajIr" data-v="${v}" style="flex:none">Abrir ${s.t}</button>
+      </div>
+      <ul style="margin:10px 0 0;padding-left:18px;font-size:.86rem;line-height:1.6;max-width:72ch">${s.passos.map(x=>`<li>${x}</li>`).join("")}</ul>
+    </div>`; };
+  c.innerHTML = `
+    <div class="cabRel"><div>
+      <h1 style="margin:0">Como usar o SmartPlace</h1>
+      <div class="sub-h1">O que cada tela faz e por onde começar. No rodapé de cada tela tem um atalho pra parte dela aqui.</div>
+    </div></div>
+
+    <h2>Comece por aqui</h2>
+    <div class="card feed" style="padding:2px 22px">
+      ${AJUDA_INICIO.map(([v,tit,txt],i)=>`<div class="ev" style="align-items:baseline;gap:14px">
+        <b style="flex:none;width:18px;color:var(--n)">${i+1}</b>
+        <span style="flex:1"><b style="color:var(--t);font-size:.9rem">${tit}</b><br><span style="font-size:.84rem">${txt}</span></span>
+        <button class="mini ajIr" data-v="${v}" style="flex:none">Ir</button></div>`).join("")}
+    </div>
+
+    <h2>Cada tela</h2>
+    <div class="chips" style="margin:0 0 12px">${telas.map(v=>`<button class="chip ajVer" data-v="${v}">${AJUDA[v].t}</button>`).join("")}</div>
+    ${telas.map(secao).join("")}
+
+    <h2>Dúvidas comuns</h2>
+    <div class="card" style="padding:6px 22px">
+      ${AJUDA_DUVIDAS.map(([q,a])=>`<details style="padding:11px 0;border-bottom:1px solid var(--fina)">
+        <summary style="cursor:pointer;font-size:.88rem;font-weight:600">${q}</summary>
+        <p style="margin:8px 0 2px;font-size:.86rem;color:var(--t2);line-height:1.6;max-width:72ch">${a}</p></details>`).join("")}
+      <p style="font-size:.84rem;color:var(--t2);margin:12px 0 10px">Não achou o que precisava? Escreva pra <a href="mailto:contato@smartplaceai.app" style="color:var(--t)">contato@smartplaceai.app</a>.</p>
+    </div>`;
+  c.querySelectorAll(".ajIr").forEach(b=>b.onclick=()=>{ VIEW=b.dataset.v; location.hash=VIEW; shell(); window.scrollTo(0,0); });
+  c.querySelectorAll(".ajVer").forEach(b=>b.onclick=()=>document.getElementById("aj-"+b.dataset.v).scrollIntoView({behavior:"smooth",block:"start"}));
+  if(AJUDA_ALVO){ const alvo = document.getElementById("aj-"+AJUDA_ALVO); AJUDA_ALVO = ""; if(alvo) alvo.scrollIntoView({block:"start"}); }
 }
 
 window.addEventListener("hashchange",()=>{ const v=(location.hash||"#dashboard").slice(1); if(v!==VIEW){ VIEW=v; if(CACHE.painel) shell(); } });
