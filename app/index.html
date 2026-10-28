@@ -2788,8 +2788,8 @@ const AJUDA = {
   pedidos: { t:"Pedidos", p:"Os pedidos de todos os canais num lugar só, com nota e etiqueta.", passos:[
     "Os pedidos chegam sozinhos várias vezes por dia. Pra puxar agora, clique em <b>Sincronizar</b>.",
     "Filtre pela etapa e pelo canal, ou busque por número do pedido, cliente, produto ou SKU.",
-    "Marque os pedidos e use <b>Emitir nota</b> (precisa da tela Fiscal pronta) ou <b>Gerar etiqueta</b>.",
-    "<b>Imprimir</b> tira a etiqueta de transporte, a DANFE simplificada ou a DANFE completa.",
+    "Marque os pedidos e use <b>Gerar etiqueta</b>: sai a etiqueta de envio com os produtos do pedido na mesma etiqueta.",
+    "<b>Emitir nota</b> direto da fila está em integração. Por enquanto a nota sai pelo seu emissor de sempre; as DANFEs chegam junto com essa entrega.",
   ]},
   etiquetas: { t:"Etiquetas", p:"Ver e imprimir etiquetas na impressora térmica.", passos:[
     "O jeito mais rápido: marque os pedidos em <b>Pedidos</b> e gere as etiquetas de uma vez.",
@@ -2832,10 +2832,10 @@ const AJUDA = {
     "Apareceu <b>conexão caiu</b>? O marketplace pediu uma nova autorização. Clique em <b>Reconectar</b>: seus dados continuam aqui.",
     "<b>Desconectar</b> para de sincronizar aquele canal. Dá pra reconectar quando quiser.",
   ]},
-  fiscal: { t:"Fiscal", p:"Emitir nota fiscal pelos pedidos, sem contratar emissor à parte.", passos:[
+  fiscal: { t:"Fiscal", p:"Deixar a empresa pronta pra emitir nota pelos pedidos, sem contratar emissor à parte.", passos:[
     "São 3 passos, feitos uma vez só: dados da empresa, certificado digital (o arquivo .pfx e a senha) e regras fiscais.",
     "O certificado vai direto pro emissor, que guarda criptografado. O SmartPlace não grava o arquivo nem a senha.",
-    "Com isso pronto, marque os pedidos em <b>Pedidos</b> e clique em <b>Emitir nota</b>. As notas emitidas aparecem aqui.",
+    "A emissão direto da fila de <b>Pedidos</b> está em integração. Quando sair, é só marcar os pedidos e emitir; as notas aparecem aqui.",
   ]},
   carteira: { t:"Carteira", p:"Pra quem atende várias lojas, como agência ou consultor.", passos:[
     "Lista as lojas que você atende, com faturamento, pedidos e o que precisa de atenção em cada uma.",
